@@ -1,0 +1,129 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="content-section">
+    <form method="POST" action="" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        <fieldset class="form-group">
+            <legend class="border-bottom mb-4">{{ legend }}</legend>
+            <div class="form-group">
+                {{ form.title.label(class="form-control-label") }}
+                {% if form.title.errors %}
+                    {{ form.title(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.title.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.title(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.distribution.label(class="form-control-label") }}
+                {% if form.distribution.errors %}
+                    {{ form.distribution(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.distribution.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.distribution(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.keywords.label(class="form-control-label") }}
+                {% if form.keywords.errors %}
+                    {{ form.keywords(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.keywords.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.keywords(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+
+
+            <div class="form-group">
+                {{ form.signers.label(class="form-control-label") }}
+                {% if form.signers.errors %}
+                    {{ form.signers(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.signers.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.signers(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.references.label(class="form-control-label") }}
+                {% if form.references.errors %}
+                    {{ form.references(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.references.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.references(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+
+            <div class="form-check">
+                {{form.confidential.label}}
+                {{form.confidential(checked=False)}}
+            </div>
+            <div class="form-group">
+                {{ form.memodoc1(class="form-control-file") }}
+                {% if form.memodoc1.errors %}
+                    {% for error in form.memodoc1.errors %}
+                        <span class="text-danger">{{ error }}</span></br>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ form.memodoc2(class="form-control-file") }}
+                {% if form.memodoc2.errors %}
+                    {% for error in form.memodoc2.errors %}
+                        <span class="text-danger">{{ error }}</span></br>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ form.memodoc3(class="form-control-file") }}
+                {% if form.memodoc3.errors %}
+                    {% for error in form.memodoc1.errors %}
+                        <span class="text-danger">{{ error }}</span></br>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ form.memodoc4(class="form-control-file") }}
+                {% if form.memodoc1.errors %}
+                    {% for error in form.memodoc4.errors %}
+                        <span class="text-danger">{{ error }}</span></br>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                {{ form.memodoc5(class="form-control-file") }}
+                {% if form.memodoc5.errors %}
+                    {% for error in form.memodoc5.errors %}
+                        <span class="text-danger">{{ error }}</span></br>
+                    {% endfor %}
+                {% endif %}
+            </div>
+        </fieldset>
+        <div class="form-group">
+            {{ form.submit(class="btn btn-outline-info") }}
+        </div>
+    </form>
+</div>
+{% endblock content %}

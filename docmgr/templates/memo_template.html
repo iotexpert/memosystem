@@ -1,0 +1,63 @@
+<article class="media content-section">
+    <img class="rounded-circle article-img" src="{{ url_for('static', filename='profile_pics/' + memo.user.image_file) }}">
+    <div class="media-body">
+      <div class="article-metadata">
+        <a class="mr-2" href="/memo/{{memo.user.username}}/{{ memo.number}}">{{ memo.user.username }}-{{memo.number}}</a>v{{ memo.version }}
+        <small class="text-muted">{{ memo.memo_date.strftime('%Y-%m-%d') }}</small>
+        {% if memo.memo_state.compare_short_name("Draft") == 1 %}
+          <small class="text-primary">
+        {% elif memo.memo_state.compare_short_name("Signoff") %}
+            <small class="text-primary">
+        {% elif memo.memo_state.compare_short_name("Active") %}
+            <small class="text-success">
+        {% elif memo.memo_state.compare_short_name("Obsolete") %}
+            <small class="text-danger">
+        {% elif memo.memo_state.compare_short_name("Canceled") %}
+        <small class="text-danger">
+        {% else %}
+        <small class="text-success"> 
+        {% endif %}
+        {{ memo.memo_state.short_name() }}</small>
+       
+        {% if memo.has_access(user) %}
+          {% for n in range(memo.num_files) %}
+            <a class="mr-0" href="/file/memo/{{memo.user.username}}/{{memo.number}}/{{memo.version}}/{{n}}">{{n+1}}{% if n < memo.num_files-1 %},{% endif %}</a>
+          {% endfor %}
+
+          {% if user != None and memo.can_revise(delegate=user) %}
+          <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('memos.create_revise_submit',username=memo.user.username,memo_number=memo.number) }}">Revise</a>
+          {% endif %}
+       
+          {% if user != None and memo.can_sign(signer=user,delegate=delegate) %}
+          <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('memos.sign',username=memo.user.username,memo_number=memo.number,memo_version=memo.version,signer=user.username) }}">Sign</a>
+          {% endif %}
+
+          {% if user != None and memo.can_unsign(signer=user,delegate=delegate) %}
+          <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('memos.unsign',username=memo.user.username,memo_number=memo.number,memo_version=memo.version,signer=user.username) }}">Unsign</a>
+          {% endif %}        
+
+          {% if user != None and memo.can_obsolete(delegate=user) %}
+            <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('memos.obsolete',username=memo.user.username,memo_number=memo.number,memo_version=memo.version) }}">Obsolete</a> 
+          {% endif %}
+
+          {% if user != None and memo.can_cancel(delegate=user) %}
+              <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('memos.cancel',username=memo.user.username,memo_number=memo.number,memo_version=memo.version) }}">Cancel</a> 
+          {% endif %}
+
+          {% if user != None and memo.can_cancel(delegate=user) %}
+            <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('memos.create_revise_submit',username=memo.user.username,memo_number=memo.number,memo_version=memo.version) }}">Edit</a> 
+          {% endif %}
+
+          {% if user != None and memo.can_reject(signer=user,delegate=delegate) %}
+          <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('memos.reject',username=memo.user.username,memo_number=memo.number,memo_version=memo.version,signer=user.username) }}">Reject</a>
+          {% endif %}
+            </div>
+            <h2><a class="article-title" href="/memo/{{memo.user.username}}/{{memo.number}}/{{memo.version}}?detail">{{ memo.title }}</a></h2>
+          {% if detail == True %}
+          {% include 'memo_detail.html'%}
+          {% endif %}
+          {% else %}
+          <h2>Confidential</h2>
+        </div>
+        {% endif %}
+    </article>

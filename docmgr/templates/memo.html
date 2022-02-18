@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+{% block content %}
+  {% for memo in memos.items %}
+    {% include 'memo_template.html'%}
+  {% endfor %}
+  {% for page_num in memos.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+    {% if page_num %}
+      {% if memos.page == page_num %}
+        <a class="btn btn-info mb-4" href="{{ url_for('memos.memo_main', page=page_num) }}">{{ page_num }}</a>
+      {% else %}
+        <a class="btn btn-outline-info mb-4" href="{{ url_for('memos.memo_main', page=page_num) }}">{{ page_num }}</a>
+      {% endif %}
+    {% else %}
+      ...
+    {% endif %}
+    {% endfor %}
+      <!-- Modal -->
+  <div class="modal fade" id="obsoleteModal" tabindex="-1" role="dialog" aria-labelledby="obsoleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="obsoleteModalLabel">Obsolete Post?</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <-- TODO: ARH -!>
+          <form action="{{ url_for('memos.obsolete',username=current_user.username,memo_number=1,memo_version=1) }}" method="POST">
+            <input class="btn btn-danger" type="submit" value="Obsolete">
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock content %}

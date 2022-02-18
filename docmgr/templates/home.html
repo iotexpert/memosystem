@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% block content %}
+  {% for memo in memos.items %}
+    <article class="media content-section">
+      <img class="rounded-circle article-img" src="{{ url_for('static', filename='profile_pics/' + memo.user.image_file) }}">
+      <div class="media-body">
+        <div class="article-metadata">
+          <a class="mr-2" href="">{{ memo.user.username }}-{{ memo.number }}-{{ memo.version }}</a>
+          <small class="text-muted">{{ memo.memo_date.strftime('%Y-%m-%d') }}</small>
+        </div>
+        <h2><a class="article-title" href="/memo/{{memo.user.username}}/{{memo.number}}/{{memo.version}}">{{ memo.title }}</a></h2>
+      </div>
+    </article>
+  {% endfor %}
+  {% for page_num in memos.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+    {% if page_num %}
+      {% if memos.page == page_num %}
+        <a class="btn btn-info mb-4" href="{{ url_for('memos.memo_main', page=page_num) }}">{{ page_num }}</a>
+      {% else %}
+        <a class="btn btn-outline-info mb-4" href="{{ url_for('memos.memo_main', page=page_num) }}">{{ page_num }}</a>
+      {% endif %}
+    {% else %}
+      ...
+    {% endif %}
+    {% endfor %}
+{% endblock content %}

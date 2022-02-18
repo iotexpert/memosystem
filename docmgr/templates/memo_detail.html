@@ -1,0 +1,16 @@
+Status of the signers<br>
+{% if memo.keywords|length >0 %}
+Keywords:{{memo.keywords}}<br>
+{% endif %}
+{% if memo.distribution|length > 0 %}
+Distribution:{{memo.distribution}}<br>
+{% endif %}
+{% if memo.references|length > 0 %}
+References:{{memo.references}}<br>
+{% endif %}
+{% if memo.backrefs|length %}
+Back References: {{memo.backrefs}} <br>
+{% endif %}
+{% for file in memo.get_files() %}
+<a class="mr-2" href="/file/memo/{{memo.user.username}}/{{memo.number}}/{{memo.version}}/{{file.uuid}}">{{file.filename}}</a><br>
+{% endfor %}
