@@ -35,3 +35,8 @@ class MemoReference(db.Model):
         db.session.commit()
         current_app.logger.info(f"Adding Reference {new_ref}")
 
+
+    @staticmethod
+    def delete(memo):
+        MemoReference.query.filter_by(id=memo.id).delete()
+        

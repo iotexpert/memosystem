@@ -35,3 +35,7 @@ class MemoFile(db.Model):
         files = MemoFile.query.filter_by(memo_id=memo_id).order_by(MemoFile.id)
         return files
    
+    @staticmethod
+    def delete(memo):
+        MemoFile.query.filter_by(memo_id=memo.id).delete()
+       

@@ -8,11 +8,11 @@ from docmgr.models.MemoState import MemoState
 from docmgr.models.MemoFile import MemoFile
 from docmgr.models.MemoSignature import MemoSignature
 from docmgr.models.MemoReference import MemoReference
+import shutil
 
 import re
 import os
 import json
-import numpy
 
 class Memo(db.Model):
     """[summary]
@@ -470,15 +470,26 @@ class Memo(db.Model):
         self.save()
         return True
 
-# Owner Function       
+# Owner Function
     def cancel(self,delegate=None):
         current_app.logger.info(f"Cancel: {self} Delegate={delegate}")
         
         if not self.can_cancel(delegate=delegate):
             return False
-
-        self.memo_state = MemoState.Canceled
-        self.save()
+        
+        current_app.logger.info(f"Canceling: {self} Delegate={delegate}")
+        
+        MemoFile.delete(self)
+        # delete all of the files in that directory & the directory
+        
+        shutil.rmtree(self.get_fullpath())
+        
+        MemoReference.delete(self)
+        MemoSignature.delete_signers(self)
+        db.session.delete(self)
+        db.session.commit()       
+        current_app.logger.info(f"Canceled: {self} ")
+        
         return True
 
 # signer function
