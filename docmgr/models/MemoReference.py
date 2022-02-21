@@ -1,8 +1,6 @@
 
 from docmgr import db
-from docmgr.models.MemoState import MemoState
 from flask import current_app
-import re
 
 class MemoReference(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -18,12 +16,13 @@ class MemoReference(db.Model):
         ref_list = MemoReference.query.filter_by(source_id=memo.id).all()
         for ref in ref_list:
             rval.append([ref.ref_user_id,ref.ref_memo_number,ref.ref_memo_version])
+        current_app.logger.info(f"References = {rval}")
         return rval
     
     @staticmethod
     def get_back_refs(memo):
         rval=[]
-        ref_list = MemoReference.query.filter_by(reference_id=memo.id).all()
+        ref_list = MemoReference.query.filter_by(ref_user_id=memo.userid,ref_memo_number=memo.number,ref_memo_version=memo.version).all()
         for ref in ref_list:
             rval.append(ref.source_id)
         return rval

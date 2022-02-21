@@ -11,10 +11,12 @@ class MemoSignature(db.Model):
     signed = db.Column(db.Boolean,default=False)
     date_signed = db.Column(db.DateTime, nullable=True)
     
-    
-        
-    
 
+    @staticmethod
+    def get_signers(memo):
+        signlist =  MemoSignature.query.filter_by(memo_id=memo.id).all()
+        return signlist
+    
     @staticmethod
     def sign(memo_id=memo_id,signer=None,delegate=None):
      
@@ -47,8 +49,6 @@ class MemoSignature(db.Model):
 
     @staticmethod
     def unsign(memo_id=memo_id,signer=None,delegate=None):
-        
-                
         #assert signer!=None and type(signer)==type(User)    
         
         current_app.logger.info(f"Type for user = {type(signer)}")      
@@ -84,7 +84,7 @@ class MemoSignature(db.Model):
             db.session.commit()
 
     @staticmethod
-    def add_signer(memo,signer=None):
+    def add_signer(memo=None,signer=None):
         
         current_app.logger.info(f"signing memo={memo}")
         
@@ -121,8 +121,7 @@ class MemoSignature(db.Model):
        
         if signer == None:
             return {'is_signer':False,'status':False,'signature':None}
-
-        
+    
         msig = MemoSignature.query.filter_by(memo_id=memo_id,signer_id=signer.id).first()
         if msig != None:
             return {'is_signer':True,'status':msig.signed,'signature':msig}
@@ -131,26 +130,19 @@ class MemoSignature(db.Model):
 
     @staticmethod
     def get_signatures(signer=None,signed=True):
+        """
+        This function creates a list of signatures needed to be signed by "signer"
+        This function is used by the inbox to figure out what the person needs to sign
+        """
         rval = []
         if signer == None:
             return rval  #TODO: I wonder if I should actually throw an error... probably yes
         
-        
-
+    
         memosig = MemoSignature.query.filter_by(signer_id=signer.id,signed=signed).order_by(MemoSignature.signed).all()
 
         for sig in memosig:
             rval.append(sig.memo_id)
         current_app.logger.info(f"User={signer.username} Signatures = {memosig} Rval={rval}")
         return rval
-
-    # return a string concatenated list of signer names
-    @staticmethod
-    def get_signers(memo):
-        rval = ''
-        memosig = MemoSignature.query.filter_by(memo_id=memo.id).all()
-        for signer in memosig:
-            user = User.find(userid=signer.signer_id)
-            rval = rval + user.username + ' '
-        return rval
-        
+    

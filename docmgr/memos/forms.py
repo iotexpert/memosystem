@@ -26,17 +26,18 @@ class MemoForm(FlaskForm):
     memodoc5 = FileField('Memo')
 
     submit = SubmitField('Submit')
-
+    save   = SubmitField('Save',render_kw={'formnovalidate': True})
+    cancel = SubmitField('Cancel',render_kw={'formnovalidate': True})
 
     def validate_distribution(self, distribution):
         users = User.valid_usernames(distribution.data)
-        if len(users['invalid_users']) > 0:
-            raise ValidationError(f'Invalid users {users["invalid_users"]}')
+        if len(users['invalid_usernames']) > 0:
+            raise ValidationError(f'Invalid users {users["invalid_usernames"]}')
 
     def validate_signers(self, distribution):
         users = User.valid_usernames(distribution.data)
-        if len(users['invalid_users']) > 0:
-            raise ValidationError(f'Invalid users {users["invalid_users"]}')
+        if len(users['invalid_usernames']) > 0:
+            raise ValidationError(f'Invalid users {users["invalid_usernames"]}')
     
     def validate_references(self,references):
         current_app.logger.info(f"References = {references.data}")

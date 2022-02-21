@@ -7,6 +7,8 @@ import re
 import numpy
 from sqlalchemy.orm import relationship
 
+from docmgr.models.MemoSubscription import MemoSubscription
+
 # TODO: ARH Why is this here
 @login_manager.user_loader
 def load_user(user_id):
@@ -67,8 +69,12 @@ class User(db.Model, UserMixin):
     image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
     password = db.Column(db.String(60), nullable=False)
     admin = db.Column(db.Boolean,default=False)
+    next_memo = db.Column(db.Integer, default = None)
+    pagesize = db.Column(db.Integer, nullable=False, default = 20)
+    _subscriptions = db.Column(db.String(128))
         
     memos = db.relationship('Memo',backref=db.backref('user', lazy=True))
+
 
     def get_reset_token(self, expires_sec=1800):
         s = Serializer(current_app.config['SECRET_KEY'], expires_sec)
@@ -104,6 +110,24 @@ class User(db.Model, UserMixin):
     def is_delegate(self,delegate=None):
         return Delegate.is_delegate(self,delegate)
  
+    @property
+    def subscriptions(self):
+        sublist = MemoSubscription.get(self)
+        for sub in sublist:
+            current_app.logger.info(f"{sub.subscriber_id} {sub.subscription_id}")
+        return self._subscriptions 
+    
+    @subscriptions.setter
+    def subscriptions(self,sub_names):
+        self._subscriptions = sub_names
+        users = User.valid_usernames(sub_names)
+        MemoSubscription.delete(self)
+        for user in users['valid_users']:
+            current_app.logger.info(f"adding subscription {self} to {user}")
+            ms = MemoSubscription(subscriber_id=self.id,subscription_id=user.id)
+            db.session.add(ms)
+            db.session.commit()
+    
     @staticmethod
     def create_hash_pw(plaintext):
         return bcrypt.generate_password_hash(plaintext).decode('utf-8')
@@ -160,20 +184,24 @@ class User(db.Model, UserMixin):
     # this function takes a string of "users" where they are seperated by , or space and checks if they are valid
     @staticmethod
     def valid_usernames(userlist):
-        invalid_users = []
-        valid_users = []
+        invalid_usernames = []
+        valid_usernames = []
         users = re.split(r'\s|\,',userlist)
         if '' in users: users.remove('')
         #current_app.logger.info(f"User = {users}")
         for username in users:
-            if username != "" and User.find(username=username) == None:
-                invalid_users.append(username)
+            user = User.find(username=username)
+            if username != "" and  user == None:
+                invalid_usernames.append(username)
             else:
-                valid_users.append(username)
+                valid_usernames.append(username)
 
-        valid_users = numpy.unique(valid_users)
+        valid_usernames = numpy.unique(valid_usernames)
+        valid_users = []
+        for username in valid_usernames:
+            valid_users.append(User.find(username=username))
 
-        return {'valid_users':valid_users,'invalid_users':invalid_users}
+        return {'valid_usernames':valid_usernames,'invalid_usernames':invalid_usernames,'valid_users':valid_users}
 
     @staticmethod
     def is_admin(username=None):

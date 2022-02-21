@@ -100,7 +100,7 @@ def process_file(new_memo,formfield):
 @memos.route("/cu/memo/<string:username>/<int:memo_number>",methods=['GET', 'POST'])
 @login_required
 def create_revise_submit(username=None,memo_number=None):
-
+    
     current_app.logger.info(f"In create update {username} {memo_number}")
     if username == None:
         username = current_user.username  
@@ -121,6 +121,52 @@ def create_revise_submit(username=None,memo_number=None):
     memo = None
 
     form = MemoForm()
+    
+#    def cancel(username=None,memo_number=0,memo_version=0):
+
+    if request.method == 'POST' and form.cancel.data == True:
+        return redirect(url_for('memos.cancel',username=form.username.data,memo_number=form.memo_number.data,memo_version=form.memo_version.data))    
+
+        
+    if request.method == 'POST' and form.save.data == True:
+        current_app.logger.info('They Pressed Save')
+        memo_number = int(form.memo_number.data)
+        memo_version = int(form.memo_version.data)
+
+        current_app.logger.info(f"Find {form.username.data} {memo_number} {memo_version}")
+
+        memo = Memo.find(username=form.username.data,memo_number=memo_number,memo_version=memo_version)  
+
+    
+        if memo == None:
+            current_app.logger.info("memo not found WTF")
+            return abort(404)
+        
+        if memo.memo_state != MemoState.Draft: 
+            flash(f'You may only revise Draft memos','error')
+            return redirect(url_for('memos.memo_main'))    
+
+        current_app.logger.info(f"Memo in draft state... that is good")
+
+        memo.title = form.title.data
+        memo.distribution = form.distribution.data
+        memo.keywords = form.keywords.data
+        memo.signers = form.signers.data
+        memo.confidential = form.confidential.data        
+        memo.references = form.references.data
+
+        process_file(memo,form.memodoc1)
+        process_file(memo,form.memodoc2)  
+        process_file(memo,form.memodoc3)
+        process_file(memo,form.memodoc4)
+        process_file(memo,form.memodoc5)
+
+        # make a json backup
+        memo.save()
+
+        flash(f'{memo} has been saved!', 'success')
+        return redirect(url_for('memos.memo_main'))
+
 
     # just user case
     if request.method == 'GET':
@@ -131,7 +177,8 @@ def create_revise_submit(username=None,memo_number=None):
         form.distribution.data = memo.distribution
         form.signers.data = memo.signers
         form.confidential.data = memo.confidential
-
+        form.references.data = memo.references['refs']
+        
         form.username.data = username
         form.memo_number.data = memo.number
         form.memo_version.data = memo.version
@@ -341,3 +388,6 @@ def reject(username,memo_number,memo_version):
         flash(f'Cannot unsign memo {username}-{memo_number}-{memo_version}', 'failure')
     return redirect(url_for('memos.memo_main'))
 
+@memos.route("/search")
+def search():
+    return redirect(url_for('memos.memo_main'))

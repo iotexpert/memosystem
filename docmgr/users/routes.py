@@ -61,6 +61,9 @@ def account():
         current_user.username = form.username.data
         current_user.email = form.email.data
         current_user.delegates = form.delegates.data
+        current_user.next_memo = form.next_memo.data
+        current_user.pagesize = form.pagesize.data
+        current_user.subscriptions = form.subscriptions.data
         db.session.commit()
         flash('Your account has been updated!', 'success')
         return redirect(url_for('users.account'))
@@ -68,6 +71,9 @@ def account():
         form.username.data = current_user.username
         form.email.data = current_user.email
         form.delegates.data = current_user.delegates
+        form.pagesize.data = current_user.pagesize
+        form.next_memo.data = current_user.next_memo
+        form.subscriptions.data = current_user.subscriptions       
         current_app.logger.info(f"Type = {type(current_user)} Delegates = {current_user.delegates}")
         
     image_file = url_for('static', filename='profile_pics/' + current_user.image_file)

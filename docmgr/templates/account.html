@@ -52,7 +52,48 @@
                         {{ form.delegates(class="form-control form-control-lg") }}
                     {% endif %}
                 </div>
-                
+
+                <div class="form-group">
+                    {{ form.subscriptions.label(class="form-control-label") }}
+                    {% if form.subscriptions.errors %}
+                        {{ form.subscriptions(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.subscriptions.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.subscriptions(class="form-control form-control-lg") }}
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    {{ form.next_memo.label(class="form-control-label") }}
+                    {% if form.next_memo.errors %}
+                        {{ form.next_memo(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.next_memo.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.next_memo(class="form-control form-control-lg") }}
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    {{ form.pagesize.label(class="form-control-label") }}
+                    {% if form.pagesize.errors %}
+                        {{ form.pagesize(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.pagesize.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.pagesize(class="form-control form-control-lg") }}
+                    {% endif %}
+                </div>
+
                 <div class="form-group">
                     {{ form.picture.label() }}
                     {{ form.picture(class="form-control-file") }}
@@ -62,6 +103,7 @@
                         {% endfor %}
                     {% endif %}
                 </div>
+
             </fieldset>
             <div class="form-group">
                 {{ form.submit(class="btn btn-outline-info") }}

@@ -1,15 +1,38 @@
-Status of the signers<br>
+{% if memo.signers|length > 0%}
+Signers:<br>
+{% for sig in memo.signers %}
+{{sig.signer.username}}
+{% if sig.signed == True %}
+{% if sig.signer != sig.delegate %}
+by {{sig.delegate.username}} 
+{% endif %}
+on {{sig.date_signed}}
+{% else %}
+Unsigned
+{% endif %}
+<br>
+{% endfor %}
+{% endif %}
 {% if memo.keywords|length >0 %}
 Keywords:{{memo.keywords}}<br>
 {% endif %}
 {% if memo.distribution|length > 0 %}
-Distribution:{{memo.distribution}}<br>
+Distribution:
+{{memo.distribution}}<br>
 {% endif %}
-{% if memo.references|length > 0 %}
-References:{{memo.references}}<br>
+{% if memo.references['reflist']|length > 0 %}
+References: 
+{% for memoref in memo.references['reflist'] %}
+<a class="mr-2" href="/memo/{{memoref.1.user.username}}/{{memoref.1.number}}/{{memoref.1.version}}">{{memoref.0}}</a>
+{% endfor %}
+<br>
 {% endif %}
 {% if memo.backrefs|length %}
-Back References: {{memo.backrefs}} <br>
+Back References:
+{% for memoref in memo.backrefs %}
+<a class="mr-2" href="/memo/{{memoref.1.user.username}}/{{memoref.1.number}}/{{memoref.1.version}}">{{memoref.0}}</a>
+{% endfor %}
+<br>
 {% endif %}
 {% for file in memo.get_files() %}
 <a class="mr-2" href="/file/memo/{{memo.user.username}}/{{memo.number}}/{{memo.version}}/{{file.uuid}}">{{file.filename}}</a><br>

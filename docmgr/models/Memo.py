@@ -32,7 +32,9 @@ class Memo(db.Model):
     num_files = db.Column(db.Integer,default=0)
     memo_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'),nullable=False)
-    
+    _signers = db.Column(db.String(128),default='')
+    _references = db.Column(db.String(128),default='')
+        
     memo_state = db.Column(db.Enum(MemoState))
 
     def __init__(self, **kwargs):
@@ -215,34 +217,29 @@ class Memo(db.Model):
         f.close()
 
 
-
-    def add_distribution(self,distribution):
-        users = User.valid_usernames(distribution)
-        users = numpy.unique(users['valid_users'])
-        self.distribution = ' '.join(users)
-
-
     # get the signers from the singing table and turn it back to a string
     @property 
     def signers(self):
-        return MemoSignature.get_signers(self)
+        return self._signers
+    
+        siglist = MemoSignature.get_signers(self)
+        for sig in siglist:
+            sig.signer = User.find(userid=sig.signer_id)
+            sig.delegate = User.find(userid=sig.delegate_id)
+        return siglist
         
-
-# TODO: ARH... The problem is that the memo doenst exist yet
-    # turn a string of signers and put them in the table
     @signers.setter
     def signers(self,signer_names):
+        
+        self._signers = signer_names
         
         current_app.logger.info(f"Adding signers={signer_names}")
         MemoSignature.delete_signers(self)
 
         users = User.valid_usernames(signer_names)
-        users = numpy.unique(users['valid_users'])
 
-        for signer in users:
-            user = User.find(username=signer)
-            print(f"Signing User = {user} memo={self.id}")
-            MemoSignature.add_signer(self,signer=user)
+        for signer in users['valid_users']:
+            MemoSignature.add_signer(memo=self,signer=signer)
 
 ######################################################################
 # References
@@ -290,6 +287,7 @@ class Memo(db.Model):
             
     @property
     def references(self):
+    
         refs = MemoReference.get_refs(self)
         rval = []
         for ref in refs:
@@ -300,11 +298,13 @@ class Memo(db.Model):
             else:
                 refstring=f"{user.username}-{ref[1]}-{ref[2]}"
             rval.append((refstring,memo))
-        return rval
+        return {'reflist':rval,'refs':self._references}
     
     @references.setter
     def references(self,references):
         current_app.logger.info(f"Adding References {references}")
+        self._references = references
+        
         refs = Memo.valid_references(references)
         for i in range(len(refs['valid_refs'])):
             parsed_ref = Memo.parse_reference(refs['valid_refs'][i])
@@ -553,12 +553,28 @@ class Memo(db.Model):
     @staticmethod
     def get_next_number(user=None):
         assert user!=None
+        
+        if user.next_memo == None:
+            next_memo = 1
+        else:
+            next_memo = user.next_memo
+        
+        current_app.logger.info(f"Next Memo # = {next_memo}")
+        memo_list = Memo.query.join(User).filter(User.username==user.username, Memo.number >= next_memo-1)\
+            .order_by(Memo.number).all()
+        
+        current_app.logger.info(f"MemoList = {memo_list}")
+        
+        for memo in memo_list:
+            if memo.number == next_memo:
+                next_memo = next_memo + 1
+                continue
+            else:
+                break
             
-        memo_list = Memo.query.join(User).filter(User.username==user.username)\
-            .order_by(Memo.number.desc()).first()
-        if memo_list:
-            return memo_list.number + 1
-        return 1
+        current_app.logger.info(f"Next Memo Number = {next_memo}")
+        
+        return next_memo
     
 
     @staticmethod

@@ -46,6 +46,10 @@ class UpdateAccountForm(FlaskForm):
     delegates = StringField('Delegates',
                         validators=[])
 
+    subscriptions = StringField('Subscriptions')
+    pagesize = StringField('Page Size')
+    next_memo = StringField('Next Memo')
+    
     picture = FileField('Update Profile Picture', validators=[FileAllowed(['jpg', 'png'])])
     submit = SubmitField('Update')
 
@@ -60,6 +64,11 @@ class UpdateAccountForm(FlaskForm):
             user = User.query.filter_by(email=email.data).first()
             if user:
                 raise ValidationError('That email is taken. Please choose a different one.')
+
+    def validate_subscriptions(self,subscriptions):
+        users = User.valid_usernames(subscriptions.data)
+        if len(users['invalid_usernames']) > 0:
+            raise ValidationError(f'Invalid users {users["invalid_usernames"]}')
 
 
 class RequestResetForm(FlaskForm):

@@ -6,8 +6,6 @@ Bugs
 0   bug     memo detail page - lists signature
 0   bug     Fix backreferences
 
-0   enh     memo page - add cancel button back into the drafts
-
 0   enh     code review verify of functions
 0   enh     add comments
 0   bug     next page and next screen & paginate
@@ -19,7 +17,6 @@ Bugs
 2   bug     new memo screen - make the uploaded saved file stay attacted
 2   bug     new memo screen - be able to delete files that were attached
 2   bug     new memo screen - add a save button
-2   bug     new memo screen - add a cancel button
 
 2   enh     search
 
@@ -30,9 +27,9 @@ Bugs
 3   enh     admin interface
 3   enh     memo model - email updates to memos
 
-3   enh     usermodel - configure page size
-3   enh     usermodel - add subscriptions
-3   enh     usermodel - configure next memo number
+3   enh     user model - configure page size
+3   enh     user model - add subscriptions
+3   enh     user model - configure next memo number
 
 4   enh     create memo - number of file attachment hardcode
 4   enh     add license
