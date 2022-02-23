@@ -160,7 +160,7 @@ class Memo(db.Model):
 
 
         # you alway have access to your own memo's
-        if self.username == user.username:
+        if self.user.username == user.username:
             return True
 
         if user.admin:

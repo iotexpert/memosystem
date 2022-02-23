@@ -5,7 +5,7 @@ from flask_login import current_user, login_required
 from docmgr.models.MemoSignature import MemoSignature
 
 from docmgr.models.User import User
-from docmgr.memos.forms import MemoForm
+from docmgr.memos.forms import MemoForm, MemoSearch
 from docmgr.models.User import User
 from docmgr.models.Memo import Memo,MemoState
 from docmgr.models.MemoFile import MemoFile
@@ -380,4 +380,5 @@ def reject(username,memo_number,memo_version):
 
 @memos.route("/search",methods=['GET', 'POST'])
 def search():
-    return redirect(url_for('memos.memo_main'))
+    form = MemoSearch()
+    return render_template('memo_search.html', title='New Memo 123 ',form=form)

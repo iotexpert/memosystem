@@ -47,3 +47,9 @@ class MemoForm(FlaskForm):
         
         
         
+class MemoSearch(FlaskForm):
+    username = StringField('username')
+    title = StringField('Title')
+    keywords = StringField('Keywords')
+    
+    search = SubmitField('Search')
