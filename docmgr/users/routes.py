@@ -61,7 +61,7 @@ def account():
         current_user.username = form.username.data
         current_user.email = form.email.data
         current_user.delegates = form.delegates.data
-        current_user.next_memo = form.next_memo.data
+#        current_user.next_memo = form.next_memo.data
         current_user.pagesize = form.pagesize.data
         current_user.subscriptions = form.subscriptions.data
         db.session.commit()
@@ -72,7 +72,7 @@ def account():
         form.email.data = current_user.email
         form.delegates.data = current_user.delegates
         form.pagesize.data = current_user.pagesize
-        form.next_memo.data = current_user.next_memo
+#      form.next_memo.data = current_user.next_memo
         form.subscriptions.data = current_user.subscriptions       
         current_app.logger.info(f"Type = {type(current_user)} Delegates = {current_user.delegates}")
         

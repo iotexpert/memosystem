@@ -4,7 +4,7 @@ Bugs
 ----------------------
 
 
-0   bug     next page and next screen & paginate
+0   bug     next page and next screen & paginate (Memo.get_memo_list/memo_main,get_inbox/inbox,get_drafts/ )
 0   enh     search
 0   bug     new memo screen - make the uploaded saved file stay attacted
 0   bug     new memo screen - be able to delete files that were attached

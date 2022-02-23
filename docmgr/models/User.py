@@ -69,7 +69,7 @@ class User(db.Model, UserMixin):
     image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
     password = db.Column(db.String(60), nullable=False)
     admin = db.Column(db.Boolean,default=False)
-    next_memo = db.Column(db.Integer, default = None)
+#    next_memo = db.Column(db.Integer, default = None)
     pagesize = db.Column(db.Integer, nullable=False, default = 20)
     _subscriptions = db.Column(db.String(128))
         

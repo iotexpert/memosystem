@@ -563,29 +563,14 @@ class Memo(db.Model):
     @staticmethod
     def get_next_number(user=None):
         assert user!=None
+                
+        memo_list = Memo.query.join(User).filter(User.username==user.username)\
+            .order_by(Memo.number.desc()).first()
         
-        if user.next_memo == None:
-            next_memo = 1
-        else:
-            next_memo = user.next_memo
+        if memo_list == None:
+            return 1
+        return memo_list.number+1
         
-        current_app.logger.info(f"Next Memo # = {next_memo}")
-        memo_list = Memo.query.join(User).filter(User.username==user.username, Memo.number >= next_memo-1)\
-            .order_by(Memo.number).all()
-        
-        current_app.logger.info(f"MemoList = {memo_list}")
-        
-        for memo in memo_list:
-            if memo.number == next_memo:
-                next_memo = next_memo + 1
-                continue
-            else:
-                break
-            
-        current_app.logger.info(f"Next Memo Number = {next_memo}")
-        
-        return next_memo
-    
 
     @staticmethod
     def get_inbox(user=None):
