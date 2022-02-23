@@ -222,6 +222,7 @@ class Memo(db.Model):
     def signers(self):
     
         siglist = MemoSignature.get_signers(self)
+        current_app.logger.info(f"Siglist = {siglist}")
         for sig in siglist:
             sig.signer = User.find(userid=sig.signer_id)
             sig.delegate = User.find(userid=sig.delegate_id)
@@ -396,6 +397,7 @@ class Memo(db.Model):
 # TODO: Enforce the security right here
 
         memo = Memo.query.join(User).filter(User.id==owner.id,Memo.number==memo_number).first()
+        
  
         # create a new memo
         if memo_number == None or memo==None:
@@ -420,6 +422,7 @@ class Memo(db.Model):
  
     # TODO: ARH the references copy doesnt work...
         # revise an existing memo
+        current_app.logger.info(f"Signers = {memo.signers['signers']} _signers={memo._signers}")
         new_memo = Memo(number = memo_number,\
                             version = memo.get_next_version(),\
                             confidential = memo.confidential,\
@@ -429,7 +432,9 @@ class Memo(db.Model):
                             num_files = 0,\
                             user_id = memo.user_id,\
                             memo_state = MemoState.Draft,\
-                            signers = memo.signers )
+                             )
+        new_memo.save()
+        new_memo.signers = memo._signers
         new_memo.save()
         return new_memo
     
