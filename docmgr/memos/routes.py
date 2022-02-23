@@ -45,17 +45,7 @@ def memo_main(username=None,memo_number=None,memo_version=None):
         flash('No memos match that criteria','failure')
 
     return render_template('memo.html', memos=memo_list, title="memo", details=False, user=user,delegate=user, signer=None, detail=detail)
-
-
-@memos.route("/getfn/<int:filenumber>")
-def getfn(filenumber=None):
-    current_app.logger.info(f"Filename = {filenumber}")
-    filename="test.jpg"
-#    return send_from_directory('static',filename, as_attachment=True)
-    attachment_filename="asdf.jpg"
-    return send_from_directory('static',filename,attachment_filename=attachment_filename,as_attachment=True)
-    
-
+ 
 
 @memos.route("/file/memo/<string:username>/<int:memo_number>/<int:memo_version>/<string:uuid>")
 def getfile(username,memo_number,memo_version,uuid):
@@ -175,7 +165,7 @@ def create_revise_submit(username=None,memo_number=None):
         form.title.data = memo.title
         form.keywords.data = memo.keywords
         form.distribution.data = memo.distribution
-        form.signers.data = memo.signers
+        form.signers.data = memo.signers['signers']
         form.confidential.data = memo.confidential
         form.references.data = memo.references['refs']
         
@@ -388,6 +378,6 @@ def reject(username,memo_number,memo_version):
         flash(f'Cannot unsign memo {username}-{memo_number}-{memo_version}', 'failure')
     return redirect(url_for('memos.memo_main'))
 
-@memos.route("/search")
+@memos.route("/search",methods=['GET', 'POST'])
 def search():
     return redirect(url_for('memos.memo_main'))

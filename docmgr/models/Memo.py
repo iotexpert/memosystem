@@ -220,13 +220,12 @@ class Memo(db.Model):
     # get the signers from the singing table and turn it back to a string
     @property 
     def signers(self):
-        return self._signers
     
         siglist = MemoSignature.get_signers(self)
         for sig in siglist:
             sig.signer = User.find(userid=sig.signer_id)
             sig.delegate = User.find(userid=sig.delegate_id)
-        return siglist
+        return {'signers':self._signers,'siglist':siglist}
         
     @signers.setter
     def signers(self,signer_names):

@@ -3,36 +3,27 @@
 Bugs
 ----------------------
 
-0   bug     memo detail page - lists signature
-0   bug     Fix backreferences
 
-0   enh     code review verify of functions
-0   enh     add comments
 0   bug     next page and next screen & paginate
+0   enh     search
+0   bug     new memo screen - make the uploaded saved file stay attacted
+0   bug     new memo screen - be able to delete files that were attached
 
-1   enh     your inbox should show all of the memos insignoff that you are delegated to sign
+1   enh     code review verify of functions
+1   enh     add comments
 
-2   enh     cancel route - make cancel completely delete the memo
+2   enh     active directory
 
-2   bug     new memo screen - make the uploaded saved file stay attacted
-2   bug     new memo screen - be able to delete files that were attached
-2   bug     new memo screen - add a save button
+2   enh     your inbox should show all of the memos insignoff that you are delegated to sign
+2   bug     Fix backreferences
 
-2   enh     search
-
-3   bug     memo model - save json missing stuff
-3   enh     memo model - write user meta data json
+3   bug     Memo model - write memo json missing stuff
+3   enh     User model - write user meta data json
 3   bug     memo model - verify that table field lengths make sense
 
-3   enh     admin interface
-3   enh     memo model - email updates to memos
-
-3   enh     user model - configure page size
-3   enh     user model - add subscriptions
-3   enh     user model - configure next memo number
+3   enh     admin interface - load a user table from json or excel
 
 4   enh     create memo - number of file attachment hardcode
-4   enh     add license
 
 ------------------------------
 State Machine description
