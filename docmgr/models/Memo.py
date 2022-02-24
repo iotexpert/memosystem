@@ -544,9 +544,8 @@ class Memo(db.Model):
         return memo
 
     @staticmethod
-    def get_memo_list(username=None,memo_number=None,memo_version=None,pagesize=0,page=1):
+    def get_memo_list(username=None,memo_number=None,memo_version=None,page=1,pagesize=None):
 
-        
         if memo_version:
             memo_list = Memo.query.join(User).filter(User.username==username,\
                                                 Memo.number==memo_number,\
@@ -578,13 +577,11 @@ class Memo(db.Model):
         
 
     @staticmethod
-    def get_inbox(user=None):
+    def get_inbox(user=None,page=1,pagesize=None):
         
         if user == None:
             return None  # TODO: ARH... not really what you want to return
         
-        page=1
-        pagesize=10
         msigs = MemoSignature.get_signatures(user,signed=False)
         
         memolist = Memo.query.join(User).filter(Memo.memo_state==MemoState.Signoff,Memo.id.in_(msigs)).paginate(page = page,per_page=pagesize)      
@@ -592,13 +589,11 @@ class Memo(db.Model):
         return memolist
     
     @staticmethod
-    def get_drafts(user=None):
+    def get_drafts(user=None,page=1,pagesize=None):
     
         if user == None:
             return None  # TODO: ARH... not really what you want to return
         
-        page=1
-        pagesize=10
         
         memolist = Memo.query.join(User).filter(Memo.memo_state==MemoState.Draft,User.id==user.id).paginate(page = page,per_page=pagesize)      
         current_app.logger.info(f"Drafts for {user.username} = Items={len(memolist.items)} {memolist}")

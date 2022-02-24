@@ -2,7 +2,6 @@ import os
 from flask import (render_template, url_for, flash,current_app,
                    redirect, request, abort, Blueprint, send_from_directory)
 from flask_login import current_user, login_required
-from docmgr.models.MemoSignature import MemoSignature
 
 from docmgr.models.User import User
 from docmgr.memos.forms import MemoForm, MemoSearch
@@ -14,18 +13,18 @@ memos = Blueprint('memos', __name__)
 
 @memos.route("/")
 @memos.route("/memo")
-@memos.route("/memo/<string:username>")
+@memos.route("/memo/<username>")
 @memos.route("/memo/<string:username>/<int:memo_number>")
 @memos.route("/memo/<string:username>/<int:memo_number>/<int:memo_version>")
 def memo_main(username=None,memo_number=None,memo_version=None):
-    pagesize = 10
+    pagesize = User.get_pagesize(current_user)
     page = request.args.get('page', 1, type=int)
     detail = request.args.get('detail')
     if detail == None:
         detail = False
     else:
         detail = True
-            
+                   
     current_app.logger.info(f"User = {current_user} username={username} memo_number={memo_number} memo_version={memo_version}")
 
     
@@ -35,11 +34,24 @@ def memo_main(username=None,memo_number=None,memo_version=None):
         user = User.find(userid=current_user.id)
 
 
-    memo_list = Memo.get_memo_list(username,memo_number,memo_version,pagesize,page)
+    if memo_version == None and memo_number == None and username != None and  '-' in username:
+        sstring = username.split('-')
+        detail = True
+        if len(sstring) == 2:
+             username = sstring[0]
+             memo_number = int(sstring[1])
+             
+        if len(sstring) == 3:
+            username = sstring[0]
+            memo_number = int(sstring[1])
+            memo_version = int(sstring[2])
+    
+    pagesize = User.get_pagesize(current_user)
+    current_app.logger.info(f"memo = {username} {memo_number} {memo_version}")
+    memo_list = Memo.get_memo_list(username,memo_number,memo_version,page,pagesize)
     for memo in memo_list.items:
         current_app.logger.info(f"References = {memo.references}")
 
-    files = None       
 
     if len(memo_list.items) == 0:
         flash('No memos match that criteria','failure')
@@ -220,43 +232,52 @@ def create_revise_submit(username=None,memo_number=None):
         flash(f'{memo} has been created!', 'success')
         return redirect(url_for('memos.memo_main'))
     
-    return render_template('create_memo.html', title='New Memo 123 ',form=form, legend=f'New Memo {memo}', user=delegate, memo=memo)
+    return render_template('create_memo.html', title=f'New Memo {memo}',form=form, legend=f'New Memo {memo}', user=delegate, memo=memo)
 
 # bring up the list of all of the memos that the current user can sign
 @memos.route("/inbox")
 @memos.route("/inbox/<string:username>")
 @login_required
 def inbox(username=None):
+    pagesize = User.get_pagesize(current_user)
+    page = request.args.get('page', 1, type=int)
+    detail = request.args.get('detail')
+    if detail == None:
+        detail = False
+    else:
+        detail = True
+                   
+
     if username==None:
         username = current_user.username
 
     user = User.find(username=username)
-
-
     delegate = User.find(username=current_user.username)
-    
-    current_app.logger.info(f"Sign memos for {user}")
-    
-    current_app.logger.info(f"{delegate.get_who_delegated()}")
-    
-    page = request.args.get('page', 1, type=int)
-    memo_list = Memo.get_inbox(user)
+        
+    memo_list = Memo.get_inbox(user,page,pagesize)
     current_app.logger.info(f"Memoslist for {user.username} memo_list={memo_list}")
-    return render_template('memo.html', memos=memo_list, title=f"Inbox {username}", user=user, delegate=delegate)
+    return render_template('memo.html', memos=memo_list, title=f"Inbox {username}", legend=f'Inbox: {username}', user=user, delegate=delegate)
 
 
 @memos.route("/drafts")
 @memos.route("/drafts/<string:username>")
 @login_required
 def drafts(username=None):
+    pagesize = User.get_pagesize(current_user)
+    page = request.args.get('page', 1, type=int)
+    detail = request.args.get('detail')
+    if detail == None:
+        detail = False
+    else:
+        detail = True
+                   
     if username==None:
         username = current_user.username
 
     user = User.find(username=username)
     delegate = User.find(username=current_user.username)
 
-    page = request.args.get('page', 1, type=int)
-    memo_list = Memo.get_drafts(user)
+    memo_list = Memo.get_drafts(user,page,pagesize)
     return render_template('memo.html', memos=memo_list, title=f"Inbox {username}", user=user, delegate=delegate)
 
 
@@ -381,4 +402,36 @@ def reject(username,memo_number,memo_version):
 @memos.route("/search",methods=['GET', 'POST'])
 def search():
     form = MemoSearch()
-    return render_template('memo_search.html', title='New Memo 123 ',form=form)
+    if request.method == 'GET':
+        pass
+    
+    
+    
+    if form.validate_on_submit():
+        current_app.logger.info(f"Title = {form.title.data}")
+        current_app.logger.info(f"Keywords = {form.keywords.data}")
+        current_app.logger.info(f"Memo = {form.memo_ref.data}")
+        current_app.logger.info(f"Username = {form.username.data}")
+        current_app.logger.info(f"Inbox = {form.inbox.data}")
+
+#TODO: ARH Fix this
+        if form.title.data != '':
+            return redirect(url_for("memos.memo_main",username=form.username.data))
+
+#TODO: ARH Fix this
+        if form.keywords.data != '':
+            return redirect(url_for("memos.memo_main",username=form.username.data))
+    
+        if form.memo_ref.data != '':
+            return redirect(url_for("memos.memo_main",username=form.memo_ref.data))
+
+        if form.username.data != '':
+            return redirect(url_for("memos.memo_main",username=form.username.data))
+
+        if form.inbox.data != '':
+            return redirect(url_for("memos.inbox",username=form.inbox.data))
+        
+        
+        current_app.logger.info("None of the above")
+
+    return render_template('memo_search.html', title='Memo Search ',legend=f'Search',form=form)

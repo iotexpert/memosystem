@@ -33,6 +33,50 @@
                 {% endif %}
             </div>
 
+            <div class="form-group">
+                {{ form.memo_ref.label(class="form-control-label") }}
+                {% if form.memo_ref.errors %}
+                    {{ form.memo_ref(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.memo_ref.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.memo_ref(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.username.label(class="form-control-label") }}
+                {% if form.username.errors %}
+                    {{ form.username(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.username.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.username(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.inbox.label(class="form-control-label") }}
+                {% if form.inbox.errors %}
+                    {{ form.inbox(class="form-control form-control-lg is-invalid") }}
+                    <div class="invalid-feedback">
+                        {% for error in form.inbox.errors %}
+                            <span>{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {{ form.inbox(class="form-control form-control-lg") }}
+                {% endif %}
+            </div>
+            
+
+
         <div class="form-group">
             {{ form.search(class="btn btn-outline-info") }}
         </div>

@@ -211,3 +211,11 @@ class User(db.Model, UserMixin):
         else:
             return False
         
+
+    @staticmethod
+    def get_pagesize(user):
+        
+        try:
+            return user.pagesize
+        except:
+            return 10

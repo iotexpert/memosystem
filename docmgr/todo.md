@@ -54,3 +54,7 @@ method .... lowercase with underscores
 module ... lowercase.. potentially with underscores
 package
 
+memos_main
+inbox       get_inbox
+drafts      get_drafts
+search      
