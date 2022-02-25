@@ -20,6 +20,8 @@ def memo_main(username=None,memo_number=None,memo_version=None):
     pagesize = User.get_pagesize(current_user)
     page = request.args.get('page', 1, type=int)
     detail = request.args.get('detail')
+    next_page = request.base_url
+    current_app.logger.info(f'Base URL={next_page}')
     if detail == None:
         detail = False
     else:
@@ -56,7 +58,8 @@ def memo_main(username=None,memo_number=None,memo_version=None):
     if len(memo_list.items) == 0:
         flash('No memos match that criteria','failure')
 
-    return render_template('memo.html', memos=memo_list, title="memo", details=False, user=user,delegate=user, signer=None, detail=detail)
+    
+    return render_template('memo.html', memos=memo_list, title="memo",user=user,delegate=user, signer=None, detail=detail,next_page=next_page)
  
 
 @memos.route("/file/memo/<string:username>/<int:memo_number>/<int:memo_version>/<string:uuid>")
@@ -242,6 +245,7 @@ def inbox(username=None):
     pagesize = User.get_pagesize(current_user)
     page = request.args.get('page', 1, type=int)
     detail = request.args.get('detail')
+    next_page = request.base_url
     if detail == None:
         detail = False
     else:
@@ -256,7 +260,7 @@ def inbox(username=None):
         
     memo_list = Memo.get_inbox(user,page,pagesize)
     current_app.logger.info(f"Memoslist for {user.username} memo_list={memo_list}")
-    return render_template('memo.html', memos=memo_list, title=f"Inbox {username}", legend=f'Inbox: {username}', user=user, delegate=delegate)
+    return render_template('memo.html', memos=memo_list, title=f"Inbox {username}", legend=f'Inbox: {username}', user=user, delegate=delegate,next_page=next_page)
 
 
 @memos.route("/drafts")
@@ -266,6 +270,7 @@ def drafts(username=None):
     pagesize = User.get_pagesize(current_user)
     page = request.args.get('page', 1, type=int)
     detail = request.args.get('detail')
+    next_page = request.base_url
     if detail == None:
         detail = False
     else:
@@ -278,7 +283,7 @@ def drafts(username=None):
     delegate = User.find(username=current_user.username)
 
     memo_list = Memo.get_drafts(user,page,pagesize)
-    return render_template('memo.html', memos=memo_list, title=f"Inbox {username}", user=user, delegate=delegate)
+    return render_template('memo.html', next_page=next_page,memos=memo_list, title=f"Inbox {username}", user=user, delegate=delegate)
 
 
 ###########################################################################
