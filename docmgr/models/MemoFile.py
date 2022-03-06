@@ -2,6 +2,8 @@
 from sqlalchemy import Column
 from docmgr import db
 import uuid
+import os
+from flask import current_app
 
 class MemoFile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -38,4 +40,16 @@ class MemoFile(db.Model):
     @staticmethod
     def delete(memo):
         MemoFile.query.filter_by(memo_id=memo.id).delete()
-       
+    
+    def remove_file(self,memo=None):
+        
+        path = memo.get_fullpath()
+        try:
+            os.remove(os.path.join(path, self.uuid))
+        except:
+            pass # TODO: ARH... really? seriously really?
+        memo.num_files = memo.num_files - 1
+        memo.save()
+        
+        db.session.delete(self)
+        db.session.commit()  

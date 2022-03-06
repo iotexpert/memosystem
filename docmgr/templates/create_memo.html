@@ -76,6 +76,13 @@
                 {% endif %}
             </div>
 
+
+            <div>
+            {% for i in memo.get_files() %}
+                {{ form.getField('file_' ~ ((loop.index-1)|string))(class="btn btn-outline-info") }}   {{i.filename}}<br>
+            {% endfor %}
+            </div>
+
             <div class="form-check">
                 {{form.confidential.label}}
                 {{form.confidential(checked=False)}}

@@ -8,6 +8,7 @@ from docmgr.memos.forms import MemoForm, MemoSearch
 from docmgr.models.User import User
 from docmgr.models.Memo import Memo,MemoState
 from docmgr.models.MemoFile import MemoFile
+from wtforms import SubmitField
 
 memos = Blueprint('memos', __name__)
 
@@ -28,13 +29,11 @@ def memo_main(username=None,memo_number=None,memo_version=None):
         detail = True
                    
     current_app.logger.info(f"User = {current_user} username={username} memo_number={memo_number} memo_version={memo_version}")
-
-    
+   
     if current_user.is_anonymous:
         user = None
     else:
         user = User.find(userid=current_user.id)
-
 
     if memo_version == None and memo_number == None and username != None and  '-' in username:
         sstring = username.split('-')
@@ -48,17 +47,11 @@ def memo_main(username=None,memo_number=None,memo_version=None):
             memo_number = int(sstring[1])
             memo_version = int(sstring[2])
     
-    pagesize = User.get_pagesize(current_user)
-    current_app.logger.info(f"memo = {username} {memo_number} {memo_version}")
-    memo_list = Memo.get_memo_list(username,memo_number,memo_version,page,pagesize)
-    for memo in memo_list.items:
-        current_app.logger.info(f"References = {memo.references}")
-
-
+    memo_list = Memo.get_memo_list(username=username,memo_number=memo_number,memo_version=memo_version,page=page,pagesize=pagesize)
+    
     if len(memo_list.items) == 0:
         flash('No memos match that criteria','failure')
 
-    
     return render_template('memo.html', memos=memo_list, title="memo",user=user,delegate=user, signer=None, detail=detail,next_page=next_page)
  
 
@@ -100,6 +93,9 @@ def process_file(new_memo,formfield):
         new_memo.num_files = new_memo.num_files + 1
         new_memo.save()
 
+
+
+
 @memos.route("/cu/memo",methods=['GET', 'POST'])
 @memos.route("/cu/memo/<string:username>",methods=['GET'])
 @memos.route("/cu/memo/<string:username>/<int:memo_number>",methods=['GET', 'POST'])
@@ -123,60 +119,31 @@ def create_revise_submit(username=None,memo_number=None):
     if not Memo.can_create(owner=owner,delegate=delegate):
         return abort(403)
 
-    memo = None
 
-    form = MemoForm()
+# Right here you need to lookup the memo
+    memo = Memo.create_revise(owner=owner,delegate=delegate,memo_number=memo_number)
+
+    class FileForm(MemoForm):
+        @staticmethod    
+        def create(memo):
+            for idx,file in enumerate(memo.get_files()):
+                button_name = f"file_{idx}"
+                setattr(FileForm, button_name, SubmitField('Remove'))
+                current_app.logger.info(f"adding button_name {button_name} ")
+        def getField(self, fieldName):
+            current_app.logger.info(f"Fieldname = {fieldName}")
+            for f in self:
+                if f.name == fieldName:
+                    return f
+            return None
+
+
+    FileForm.create(memo)            
+    form = FileForm()
     
-#    def cancel(username=None,memo_number=0,memo_version=0):
-
-    if request.method == 'POST' and form.cancel.data == True:
-        return redirect(url_for('memos.cancel',username=form.username.data,memo_number=form.memo_number.data,memo_version=form.memo_version.data))    
-
-        
-    if request.method == 'POST' and form.save.data == True:
-        current_app.logger.info('They Pressed Save')
-        memo_number = int(form.memo_number.data)
-        memo_version = int(form.memo_version.data)
-
-        current_app.logger.info(f"Find {form.username.data} {memo_number} {memo_version}")
-
-        memo = Memo.find(username=form.username.data,memo_number=memo_number,memo_version=memo_version)  
-
-    
-        if memo == None:
-            current_app.logger.info("memo not found WTF")
-            return abort(404)
-        
-        if memo.memo_state != MemoState.Draft: 
-            flash(f'You may only revise Draft memos','error')
-            return redirect(url_for('memos.memo_main'))    
-
-        current_app.logger.info(f"Memo in draft state... that is good")
-
-        memo.title = form.title.data
-        memo.distribution = form.distribution.data
-        memo.keywords = form.keywords.data
-        memo.signers = form.signers.data
-        memo.confidential = form.confidential.data        
-        memo.references = form.references.data
-
-        process_file(memo,form.memodoc1)
-        process_file(memo,form.memodoc2)  
-        process_file(memo,form.memodoc3)
-        process_file(memo,form.memodoc4)
-        process_file(memo,form.memodoc5)
-
-        # make a json backup
-        memo.save()
-
-        flash(f'{memo} has been saved!', 'success')
-        return redirect(url_for('memos.memo_main'))
-
-
-    # just user case
     if request.method == 'GET':
-        memo = Memo.create_revise(owner=owner,delegate=delegate,memo_number=memo_number)
-
+        
+        current_app.logger.info(f"owner={owner} delegate={delegate} memo_number={memo_number}")
         form.title.data = memo.title
         form.keywords.data = memo.keywords
         form.distribution.data = memo.distribution
@@ -189,53 +156,54 @@ def create_revise_submit(username=None,memo_number=None):
         form.memo_version.data = memo.version
 
         current_app.logger.info(f"User= {form.username.data} Memo={form.memo_number.data} Version={form.memo_version.data}")
+        return render_template('create_memo.html', title=f'New Memo {memo}',form=form, legend=f'New Memo {memo}', user=delegate, memo=memo)
+
+# Everthing from here down is POST
+
+    if form.cancel.data == True:
+        return redirect(url_for('memos.cancel',username=form.username.data,memo_number=form.memo_number.data,memo_version=form.memo_version.data))    
+    
+
+    memo.title = form.title.data
+    memo.distribution = form.distribution.data
+    memo.keywords = form.keywords.data
+    memo.signers = form.signers.data
+    memo.references = form.references.data
+    memo.confidential = form.confidential.data        
+
+    process_file(memo,form.memodoc1)
+    process_file(memo,form.memodoc2)  
+    process_file(memo,form.memodoc3)
+    process_file(memo,form.memodoc4)
+    process_file(memo,form.memodoc5)
+
+    # make a json backup
+    memo.save()
+
+    # Look and see if they pressed a remove button on one of the files.
+    for idx,file in enumerate(memo.get_files()):
+        if hasattr(form,f'file_{idx}'):
+            status = getattr(form,f'file_{idx}')
+            if status.data == True:
+                current_app.logger.info(f"Remove {idx} {type(file)}")
+                file.remove_file(memo)
+                flash(f"Remove {file}",'success')
+                return redirect(request.url)  # redirect back to edit instead...
+        
+    if form.save.data == True:
+        current_app.logger.info('They Pressed Save') 
+        flash(f'{memo} has been saved!', 'success')
+        return redirect(url_for('memos.memo_main'))
 
     if form.validate_on_submit():
-
-        current_app.logger.info(f"Form is validated... now deal with the data")
-        memo_number = int(form.memo_number.data)
-        memo_version = int(form.memo_version.data)
-
-        current_app.logger.info(f"Find {form.username.data} {memo_number} {memo_version}")
-
-        memo = Memo.find(username=form.username.data,memo_number=memo_number,memo_version=memo_version)  
-
-        current_app.logger.info(f"ARH Memo = {memo}")
-    
-        if memo == None:
-            current_app.logger.info("memo not found WTF")
-            return abort(404)
-        
-        if memo.memo_state != MemoState.Draft: 
-            flash(f'You may only revise Draft memos','error')
-            return redirect(url_for('memos.memo_main'))    
-
-        current_app.logger.info(f"Memo in draft state... that is good")
-
-        memo.title = form.title.data
-        memo.distribution = form.distribution.data
-        memo.keywords = form.keywords.data
-        memo.signers = form.signers.data
-        memo.confidential = form.confidential.data
-        
-        memo.references = form.references.data
-
-        process_file(memo,form.memodoc1)
-        process_file(memo,form.memodoc2)  
-        process_file(memo,form.memodoc3)
-        process_file(memo,form.memodoc4)
-        process_file(memo,form.memodoc5)
-
         # creation is all done... all documents added... signatures etc.
         memo.process_state()
-
         # make a json backup
         memo.save()
-
         flash(f'{memo} has been created!', 'success')
         return redirect(url_for('memos.memo_main'))
-    
     return render_template('create_memo.html', title=f'New Memo {memo}',form=form, legend=f'New Memo {memo}', user=delegate, memo=memo)
+   
 
 # bring up the list of all of the memos that the current user can sign
 @memos.route("/inbox")
@@ -406,6 +374,21 @@ def reject(username,memo_number,memo_version):
 
 @memos.route("/search",methods=['GET', 'POST'])
 def search():
+    
+    pagesize = User.get_pagesize(current_user)
+    page = request.args.get('page', 1, type=int)
+    detail = request.args.get('detail')
+    next_page = request.base_url
+    if detail == None:
+        detail = False
+    else:
+        detail = True
+                   
+    
+    user = User.find(username=current_user.username)
+    delegate = User.find(username=current_user.username)
+
+
     form = MemoSearch()
     if request.method == 'GET':
         pass
@@ -421,7 +404,8 @@ def search():
 
 #TODO: ARH Fix this
         if form.title.data != '':
-            return redirect(url_for("memos.memo_main",username=form.username.data))
+            memos = Memo.search(title=form.title.data)
+            return render_template('memo.html', memos=memos, title="memo",user=user,delegate=user,  detail=detail,next_page=next_page)
 
 #TODO: ARH Fix this
         if form.keywords.data != '':

@@ -1,5 +1,6 @@
 
 from datetime import datetime
+from ensurepip import version
 from weakref import ref
 from flask import current_app
 from docmgr import db
@@ -167,7 +168,7 @@ class Memo(db.Model):
             return True
 
         # if the username is in the distribution list then provide access
-        if user.username in re.split(r'\s|\,',self.distribution):
+        if user.username in re.split('\s|\,|\t|\;|\:',self.distribution):
             return True
 
         return False
@@ -258,7 +259,7 @@ class Memo(db.Model):
         valid_memos = []
         valid_refs = []
         invalid = []
-        for memo_ref in re.split(r'\s|\,',references):
+        for memo_ref in re.split(r'\s|\,|\t|\;|\:',references):
             current_app.logger.info(f"Reference = {memo_ref}")
             if memo_ref == '':
                 continue
@@ -396,8 +397,9 @@ class Memo(db.Model):
 
 # TODO: Enforce the security right here
 
-        memo = Memo.query.join(User).filter(User.id==owner.id,Memo.number==memo_number).first()
+        memo = Memo.query.join(User).filter(User.id==owner.id,Memo.number==memo_number).order_by(Memo.version.desc()).first()
         
+        current_app.logger.info(f"Memo = {memo}")
  
         # create a new memo
         if memo_number == None or memo==None:
@@ -563,8 +565,13 @@ class Memo(db.Model):
             .order_by(Memo.memo_date.desc()).paginate(page = page,per_page=pagesize)
     
         return memo_list
+    
+    @staticmethod 
+    def search(title=None,keywords=None,page=1,pagesize=None):
+        memo_list = Memo.query.filter(Memo.title.like(title)).paginate(page = page,per_page=pagesize)
+        return memo_list
 
-    @staticmethod
+    @staticmethod   
     def get_next_number(user=None):
         assert user!=None
                 

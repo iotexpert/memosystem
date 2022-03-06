@@ -12,7 +12,7 @@ from docmgr.models.MemoSubscription import MemoSubscription
 # TODO: ARH Why is this here
 @login_manager.user_loader
 def load_user(user_id):
-    current_app.logger.info("calling the load user function")
+    #current_app.logger.info("calling the load user function")
     return User.query.get(int(user_id))
 
         
@@ -24,7 +24,7 @@ class Delegate(db.Model, UserMixin):
 
     @staticmethod
     def is_delegate(owner,delegate):
-        current_app.logger.info(f"Owner={owner} delegate={delegate}")
+    #current_app.logger.info(f"Owner={owner} delegate={delegate}")
         if owner.id == delegate.id:
             return True
         
@@ -37,7 +37,7 @@ class Delegate(db.Model, UserMixin):
     @staticmethod    
     def get_who_delegated(owner=None):
         delegate_list = Delegate.query.filter_by(owner_id=owner.id).all()
-        current_app.logger.info(f"Delegate_list = {delegate_list}")
+        #current_app.logger.info(f"Delegate_list = {delegate_list}")
         rval = []
         for delegate_entry in delegate_list:
             user = User.find(userid=delegate_entry.delegate_id)
@@ -98,7 +98,7 @@ class User(db.Model, UserMixin):
         Delegate.delete(owner=self)
         for delegate_name in re.split(r'\s|\,',delegates):
             delegate = User.find(username=delegate_name)
-            current_app.logger.info(f"Delegate = {delegate}")
+            #current_app.logger.info(f"Delegate = {delegate}")
             if delegate != None:
                 Delegate.add(self,delegate)
     
@@ -114,16 +114,16 @@ class User(db.Model, UserMixin):
     def subscriptions(self):
         sublist = MemoSubscription.get(self)
         for sub in sublist:
-            current_app.logger.info(f"{sub.subscriber_id} {sub.subscription_id}")
-        return self._subscriptions 
-    
+            #current_app.logger.info(f"{sub.subscriber_id} {sub.subscription_id}")
+            return self._subscriptions 
+        
     @subscriptions.setter
     def subscriptions(self,sub_names):
         self._subscriptions = sub_names
         users = User.valid_usernames(sub_names)
         MemoSubscription.delete(self)
         for user in users['valid_users']:
-            current_app.logger.info(f"adding subscription {self} to {user}")
+            #current_app.logger.info(f"adding subscription {self} to {user}")
             ms = MemoSubscription(subscriber_id=self.id,subscription_id=user.id)
             db.session.add(ms)
             db.session.commit()
