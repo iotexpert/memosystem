@@ -6,7 +6,7 @@ from flask_login import current_user, login_required
 from docmgr.models.User import User
 from docmgr.memos.forms import MemoForm, MemoSearch
 from docmgr.models.User import User
-from docmgr.models.Memo import Memo,MemoState
+from docmgr.models.Memo import Memo
 from docmgr.models.MemoFile import MemoFile
 from wtforms import SubmitField
 
@@ -17,7 +17,7 @@ memos = Blueprint('memos', __name__)
 @memos.route("/memo/<username>")
 @memos.route("/memo/<string:username>/<int:memo_number>")
 @memos.route("/memo/<string:username>/<int:memo_number>/<int:memo_version>")
-def memo_main(username=None,memo_number=None,memo_version=None):
+def main(username=None,memo_number=None,memo_version=None):
     pagesize = User.get_pagesize(current_user)
     page = request.args.get('page', 1, type=int)
     detail = request.args.get('detail')
@@ -33,8 +33,8 @@ def memo_main(username=None,memo_number=None,memo_version=None):
     if current_user.is_anonymous:
         user = None
     else:
-        user = User.find(userid=current_user.id)
-
+        user = current_user
+        
     if memo_version == None and memo_number == None and username != None and  '-' in username:
         sstring = username.split('-')
         detail = True
@@ -62,11 +62,10 @@ def getfile(username,memo_number,memo_version,uuid):
     current_app.logger.info(f'Find File {username}/{memo_number}/{memo_version}/{uuid} memo={memo}')
     
     if current_user.is_anonymous:
-        usr = None
+        user = None
     else:
-        usr = current_user.username
+        user = current_user
 
-    user = User.find(usr)
     if memo.has_access(user) == False:
         abort(403)
 
@@ -193,7 +192,7 @@ def create_revise_submit(username=None,memo_number=None):
     if form.save.data == True:
         current_app.logger.info('They Pressed Save') 
         flash(f'{memo} has been saved!', 'success')
-        return redirect(url_for('memos.memo_main'))
+        return redirect(url_for('memos.main'))
 
     if form.validate_on_submit():
         # creation is all done... all documents added... signatures etc.
@@ -201,7 +200,7 @@ def create_revise_submit(username=None,memo_number=None):
         # make a json backup
         memo.save()
         flash(f'{memo} has been created!', 'success')
-        return redirect(url_for('memos.memo_main'))
+        return redirect(url_for('memos.main'))
     return render_template('create_memo.html', title=f'New Memo {memo}',form=form, legend=f'New Memo {memo}', user=delegate, memo=memo)
    
 
@@ -218,14 +217,14 @@ def inbox(username=None):
         detail = False
     else:
         detail = True
-                   
-
+                       
     if username==None:
-        username = current_user.username
-
-    user = User.find(username=username)
-    delegate = User.find(username=current_user.username)
-        
+        user = current_user
+    else:
+        user = User.find(username=username)
+    
+    delegate = current_user
+    
     memo_list = Memo.get_inbox(user,page,pagesize)
     current_app.logger.info(f"Memoslist for {user.username} memo_list={memo_list}")
     return render_template('memo.html', memos=memo_list, title=f"Inbox {username}", legend=f'Inbox: {username}', user=user, delegate=delegate,next_page=next_page)
@@ -245,10 +244,11 @@ def drafts(username=None):
         detail = True
                    
     if username==None:
-        username = current_user.username
-
-    user = User.find(username=username)
-    delegate = User.find(username=current_user.username)
+        user = current_user
+    else:
+        user = User.find(username=username)
+    
+    delegate = current_user
 
     memo_list = Memo.get_drafts(user,page,pagesize)
     return render_template('memo.html', next_page=next_page,memos=memo_list, title=f"Inbox {username}", user=user, delegate=delegate)
@@ -264,13 +264,12 @@ def sign(username,memo_number,memo_version):
     
     signer = request.args.get('signer', type=str)
 
-    signer_username = current_user.username
+    if signer == None:
+        signer = current_user
+    else:
+        signer = User.find(username=username)
 
-    if signer != None:
-       signer_username = signer
-    
-    signer = User.find(username=signer_username)
-    delegate = User.find(username=current_user.username)
+    delegate = current_user
     
     memo = Memo.find(username=username,memo_number=memo_number,memo_version=memo_version)
     if memo:
@@ -280,7 +279,7 @@ def sign(username,memo_number,memo_version):
             flash(f'Sign {memo} Failed', 'error')
     else:
         flash(f'Sign {username}-{memo_number}-{memo_version} Failed', 'error')
-    return redirect(url_for('memos.memo_main'))
+    return redirect(url_for('memos.main'))
 
 
 
@@ -290,32 +289,32 @@ def unsign(username,memo_number,memo_version):
     
     signer = request.args.get('signer', type=str)
 
-    signer_username = current_user.username
+    if signer == None:
+        signer = current_user
+    else:
+        signer = User.find(username=username)
 
-    if signer != None:
-       signer_username = signer
-    
-    signer = User.find(username=signer_username)
-    delegate = User.find(username=current_user.username)
+    delegate = current_user
+
     
     memo = Memo.find(username=username,memo_number=memo_number,memo_version=memo_version)
     if memo:
         if memo.unsign(signer,delegate):            
             flash(f'Unsign {memo} success', 'success')
-            return redirect(url_for('memos.memo_main'))
+            return redirect(url_for('memos.main'))
         else:
             flash(f'Unsign {memo} Failed', 'error')
     else:
         flash(f'Unsign {username}-{memo_number}-{memo_version} Failed', 'error')
-    return redirect(url_for('memos.memo_main'))
+    return redirect(url_for('memos.main'))
 
 
 @memos.route("/obsolete/memo/<string:username>/<int:memo_number>/<int:memo_version>")
 @login_required
 def obsolete(username,memo_number,memo_version):
     
-    delegate = User.find(username=current_user.username)
-  
+    delegate = current_user
+    
     memo = Memo.find(username=username,memo_number=memo_number,memo_version=memo_version)
     
     current_app.logger.info(f"Found memo={memo}")
@@ -326,14 +325,15 @@ def obsolete(username,memo_number,memo_version):
             flash(f'Obsolete {memo} Failed', 'error')
     else:
         flash(f'Obsolete {username}-{memo_number}-{memo_version } Failed', 'error')
-    return redirect(url_for('memos.memo_main'))
+    return redirect(url_for('memos.main'))
 
 
 
 @memos.route("/cancel/memo/<string:username>/<int:memo_number>/<int:memo_version>",methods=['GET'])
 @login_required
 def cancel(username=None,memo_number=0,memo_version=0):
-    user = User.find(username=current_user.username)
+    user = current_user
+    
     memo = Memo.find(username=username,memo_number=memo_number,memo_version=memo_version)
     
     current_app.logger.info(f"Found memo={memo}")
@@ -345,22 +345,21 @@ def cancel(username=None,memo_number=0,memo_version=0):
     else:
         flash(f'Cannot cancel memo {username}-{memo_number}-{memo_version}', 'error')
 
-    return redirect(url_for('memos.memo_main'))
+    return redirect(url_for('memos.main'))
 
 
 @memos.route("/reject/memo/<string:username>/<int:memo_number>/<int:memo_version>")
 @login_required
 def reject(username,memo_number,memo_version):
-    
+     
     signer = request.args.get('signer', type=str)
 
-    signer_username = current_user.username
+    if signer == None:
+        signer = current_user
+    else:
+        signer = User.find(username=username)
 
-    if signer != None:
-       signer_username = signer
-    
-    signer = User.find(username=signer_username)
-    delegate = User.find(username=current_user.username)
+    delegate = current_user
     
     memo = Memo.find(username=username,memo_number=memo_number,memo_version=memo_version)
     if memo:
@@ -370,7 +369,7 @@ def reject(username,memo_number,memo_version):
             flash(f'Rejected {memo.user.username}-{memo.number}-{memo.version}', 'success')
     else:
         flash(f'Cannot unsign memo {username}-{memo_number}-{memo_version}', 'failure')
-    return redirect(url_for('memos.memo_main'))
+    return redirect(url_for('memos.main'))
 
 @memos.route("/search",methods=['GET', 'POST'])
 def search():
@@ -384,11 +383,11 @@ def search():
     else:
         detail = True
                    
+    if current_user.is_anonymous:
+        user = None
+    else:
+        user = current_user
     
-    user = User.find(username=current_user.username)
-    delegate = User.find(username=current_user.username)
-
-
     form = MemoSearch()
     if request.method == 'GET':
         pass
@@ -409,13 +408,13 @@ def search():
 
 #TODO: ARH Fix this
         if form.keywords.data != '':
-            return redirect(url_for("memos.memo_main",username=form.username.data))
+            return redirect(url_for("memos.main",username=form.username.data))
     
         if form.memo_ref.data != '':
-            return redirect(url_for("memos.memo_main",username=form.memo_ref.data))
+            return redirect(url_for("memos.main",username=form.memo_ref.data))
 
         if form.username.data != '':
-            return redirect(url_for("memos.memo_main",username=form.username.data))
+            return redirect(url_for("memos.main",username=form.username.data))
 
         if form.inbox.data != '':
             return redirect(url_for("memos.inbox",username=form.inbox.data))

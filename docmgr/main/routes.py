@@ -1,12 +1,16 @@
-from flask import render_template, request, Blueprint, redirect, url_for
+from flask import render_template, Blueprint, redirect, url_for
+from flask import current_app
+import os
 
 main = Blueprint('main', __name__)
 
-@main.route("/about")
-def about():
-    return render_template('about.html', title='About')
+@main.route("/help")
+def help():
+    md_text= open(os.path.join(current_app.root_path,"static","doc","help.md"),"r").read()
+    return render_template('help.html', title='Help', md_text=md_text)
 
 
 @main.route("/home")
 def home():
-    return redirect(url_for("memos.memo_main"))
+    return redirect(url_for("memos.main"))
+

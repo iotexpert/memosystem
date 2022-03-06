@@ -27,7 +27,6 @@
           <div class="collapse navbar-collapse" id="navbarToggle">
             <div class="navbar-nav mr-auto">
               <a class="nav-item nav-link" href="{{ url_for('main.home') }}">Home</a>
-              <a class="nav-item nav-link" href="{{ url_for('main.about') }}">About</a>
               <a class="nav-item nav-link" href="{{ url_for('memos.search') }}">Search</a>
             </div>
             <!-- Navbar Right Side -->
@@ -36,6 +35,8 @@
                 <a class="nav-item nav-link" href="{{ url_for('memos.inbox') }}">Inbox</a>
                 <a class="nav-item nav-link" href="{{ url_for('memos.create_revise_submit') }}">New Memo</a>
                 <a class="nav-item nav-link" href="{{ url_for('memos.drafts') }}">Drafts</a>
+                <a class="nav-item nav-link" href="{{ url_for('memos.main',username=current_user.username) }}">My Memos</a>
+                
                 {% if user and user.admin %}
                   <a class="nav-item nav-link" href="{{ url_for('main.home') }}">Admin</a>
                 {% endif %}
@@ -45,6 +46,7 @@
                 <a class="nav-item nav-link" href="{{ url_for('users.login') }}">Login</a>
                 <a class="nav-item nav-link" href="{{ url_for('users.register') }}">Register</a>
               {% endif %}
+              <a class="nav-item nav-link" href="{{ url_for('main.help') }}">Help</a>
             </div>
           </div>
         </div>

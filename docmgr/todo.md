@@ -4,9 +4,9 @@ Bugs
 ----------------------
 
 
+0   enh     make memo versions be a letter
+0   enh     make a route for /memo/arh-1a
 0   enh     search
-0   bug     new memo screen - make the uploaded saved file stay attacted
-0   bug     new memo screen - be able to delete files that were attached
 
 1   enh     code review verify of functions
 1   enh     add comments
@@ -16,13 +16,26 @@ Bugs
 2   enh     your inbox should show all of the memos insignoff that you are delegated to sign
 2   bug     Fix backreferences
 
+2   bug     in memo signoff the signers needs to be able to view the memo
+
+2   bug     Memo should be able to have only 1 draft
+
 3   bug     Memo model - write memo json missing stuff
 3   enh     User model - write user meta data json
 3   bug     memo model - verify that table field lengths make sense
 
 3   enh     admin interface - load a user table from json or excel
 
+4   enh     create memo - require at least 1 attachment
 4   enh     create memo - number of file attachment hardcode
+4   enh     create memo - if you upload a file in word with right tags it will fix the meta-data
+4   enh     create memo - add a link to get a template
+4   enh     help - add configuration insturctions for administrator
+
+4   enh     create memo - add the ability to add an email address to the distribution list (what does this do to security?)
+4   enh     create memo - when you revise a memo the references are copied automatically
+
+
 
 ------------------------------
 State Machine description

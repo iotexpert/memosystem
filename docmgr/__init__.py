@@ -4,7 +4,7 @@ from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
 from flask_mail import Mail
 from docmgr.config import Config
-
+from flaskext.markdown import Markdown
 
 db = SQLAlchemy()
 bcrypt = Bcrypt()
@@ -16,6 +16,7 @@ mail = Mail()
 
 def create_app(config_class=Config):
     app = Flask(__name__)
+    Markdown(app)
     app.config.from_object(Config)
 
     db.init_app(app)
