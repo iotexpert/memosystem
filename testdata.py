@@ -29,17 +29,17 @@ for user in users:
 
 
 memos = [
-    Memo(number=1, version=1,title="u1 memo1-1",user_id=2,memo_state=MemoState.Obsolete,keywords="asdf asdf asdf qwer ",num_files=0),
-    Memo(number=1, version=2,title="u1 memo1-2",user_id=2,memo_state=MemoState.Obsolete,keywords="asdf asdf asdf qwer ",num_files=0),
-    Memo(number=1, version=3,title="u1 memo1-3",user_id=2,memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0),
-    Memo(number=2, version=1,title="u1 memo2-1",user_id=2,memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0),
-    Memo(number=3, version=1,title="u1 memo3-1",user_id=2,memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0),
-    Memo(number=1, version=1,title="u2-1-1",user_id=3,memo_state=MemoState.Obsolete,keywords="asdf asdf asdf qwer ",num_files=0),
-    Memo(number=1, version=2,title="u2-1-2",user_id=3,memo_state=MemoState.Obsolete,keywords="asdf asdf asdf qwer ",num_files=0),
-    Memo(number=1, version=3,title="u2-1-3",user_id=3,memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0),
-    Memo(number=2, version=1,title="u2-2-1",user_id=3,memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0),
-    Memo(number=3, version=1,title="u2-3-1",user_id=3,memo_state=MemoState.Draft,keywords="asdf asdf asdf qwer ",num_files=0),
-    Memo(number=4, version=1,title="u2-4-1",user_id=3,memo_state=MemoState.Draft,keywords="asdf asdf asdf qwer ",num_files=0),
+    Memo(number=1, version='A',title="u1 memo1-1",user_id=2,memo_state=MemoState.Obsolete,keywords="asdf asdf asdf qwer ",num_files=0),
+    Memo(number=1, version='B',title="u1 memo1-2",user_id=2,memo_state=MemoState.Obsolete,keywords="asdf asdf asdf qwer ",num_files=0),
+    Memo(number=1, version='C',title="u1 memo1-3",user_id=2,memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0),
+    Memo(number=2, version='A',title="u1 memo2-1",user_id=2,memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0),
+    Memo(number=3, version='A',title="u1 memo3-1",user_id=2,memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0),
+    Memo(number=1, version='A',title="u2-1-1",user_id=3,memo_state=MemoState.Obsolete,keywords="asdf asdf asdf qwer ",num_files=0),
+    Memo(number=1, version='B',title="u2-1-2",user_id=3,memo_state=MemoState.Obsolete,keywords="asdf asdf asdf qwer ",num_files=0),
+    Memo(number=1, version='C',title="u2-1-3",user_id=3,memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0),
+    Memo(number=2, version='A',title="u2-2-1",user_id=3,memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0),
+    Memo(number=3, version='A',title="u2-3-1",user_id=3,memo_state=MemoState.Draft,keywords="asdf asdf asdf qwer ",num_files=0),
+    Memo(number=4, version='A',title="u2-4-1",user_id=3,memo_state=MemoState.Draft,keywords="asdf asdf asdf qwer ",num_files=0),
 ]
 for memo in memos:
     db.session.add(memo)

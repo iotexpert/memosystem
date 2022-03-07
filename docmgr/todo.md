@@ -4,8 +4,7 @@ Bugs
 ----------------------
 
 
-0   enh     make memo versions be a letter
-0   enh     make a route for /memo/arh-1a
+
 0   enh     search
 
 1   enh     code review verify of functions
@@ -34,7 +33,7 @@ Bugs
 
 4   enh     create memo - add the ability to add an email address to the distribution list (what does this do to security?)
 4   enh     create memo - when you revise a memo the references are copied automatically
-
+4   bug     Implement username rules (a-Z etc)
 
 
 ------------------------------

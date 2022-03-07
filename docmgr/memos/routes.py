@@ -1,4 +1,5 @@
 import os
+import re
 from flask import (render_template, url_for, flash,current_app,
                    redirect, request, abort, Blueprint, send_from_directory)
 from flask_login import current_user, login_required
@@ -15,8 +16,8 @@ memos = Blueprint('memos', __name__)
 @memos.route("/")
 @memos.route("/memo")
 @memos.route("/memo/<username>")
-@memos.route("/memo/<string:username>/<int:memo_number>")
-@memos.route("/memo/<string:username>/<int:memo_number>/<int:memo_version>")
+@memos.route("/memo/<username>/<memo_number>")
+@memos.route("/memo/<username>/<memo_number>/<memo_version>")
 def main(username=None,memo_number=None,memo_version=None):
     pagesize = User.get_pagesize(current_user)
     page = request.args.get('page', 1, type=int)
@@ -27,7 +28,26 @@ def main(username=None,memo_number=None,memo_version=None):
         detail = False
     else:
         detail = True
-                   
+        
+    if memo_number == None:
+        combo = re.split("-",username)
+        if len(combo) == 2:
+            username = combo[0]
+            memo_number = combo[1]
+        if len(combo) == 3:
+            username = combo[0]
+            memo_number = combo[1]
+            memo_version == combo[2]
+
+    if memo_number != None and re.match("^[0-9]+[a-zA-Z]+",memo_number):
+        split = re.split("[a-zA-Z]",memo_number)
+        memo_version = memo_number[len(split[0]):]
+        memo_number = split[0]
+
+
+    if memo_version != None:
+        memo_version = memo_version.upper()                 
+                  
     current_app.logger.info(f"User = {current_user} username={username} memo_number={memo_number} memo_version={memo_version}")
    
     if current_user.is_anonymous:
@@ -45,7 +65,7 @@ def main(username=None,memo_number=None,memo_version=None):
         if len(sstring) == 3:
             username = sstring[0]
             memo_number = int(sstring[1])
-            memo_version = int(sstring[2])
+            memo_version = sstring[2]
     
     memo_list = Memo.get_memo_list(username=username,memo_number=memo_number,memo_version=memo_version,page=page,pagesize=pagesize)
     
@@ -55,7 +75,7 @@ def main(username=None,memo_number=None,memo_version=None):
     return render_template('memo.html', memos=memo_list, title="memo",user=user,delegate=user, signer=None, detail=detail,next_page=next_page)
  
 
-@memos.route("/file/memo/<string:username>/<int:memo_number>/<int:memo_version>/<string:uuid>")
+@memos.route("/file/memo/<string:username>/<int:memo_number>/<string:memo_version>/<string:uuid>")
 def getfile(username,memo_number,memo_version,uuid):
 
     memo = Memo.find(username=username,memo_number=memo_number,memo_version=memo_version)
@@ -73,7 +93,7 @@ def getfile(username,memo_number,memo_version,uuid):
     for file in memo_list:
         current_app.logger.info(f"File = {file.uuid} {file.filename}")
         if file.uuid == uuid:
-            directory = os.path.join('static','memos',str(memo.user_id),str(memo_number),str(memo_version))
+            directory = os.path.join('static','memos',str(memo.user_id),str(memo_number),memo_version)
             current_app.logger.info(f"Found Match directory={directory}")
             return send_from_directory(directory,file.uuid,attachment_filename=file.filename,as_attachment=True)
 
@@ -258,7 +278,7 @@ def drafts(username=None):
 # State Machine Functions
 ###########################################################################
 
-@memos.route("/sign/memo/<string:username>/<int:memo_number>/<int:memo_version>")
+@memos.route("/sign/memo/<string:username>/<int:memo_number>/<string:memo_version>")
 @login_required
 def sign(username,memo_number,memo_version):
     
@@ -283,7 +303,7 @@ def sign(username,memo_number,memo_version):
 
 
 
-@memos.route("/unsign/memo/<string:username>/<int:memo_number>/<int:memo_version>")
+@memos.route("/unsign/memo/<string:username>/<int:memo_number>/<string:memo_version>")
 @login_required
 def unsign(username,memo_number,memo_version):
     
@@ -309,7 +329,7 @@ def unsign(username,memo_number,memo_version):
     return redirect(url_for('memos.main'))
 
 
-@memos.route("/obsolete/memo/<string:username>/<int:memo_number>/<int:memo_version>")
+@memos.route("/obsolete/memo/<string:username>/<int:memo_number>/<string:memo_version>")
 @login_required
 def obsolete(username,memo_number,memo_version):
     
@@ -329,7 +349,7 @@ def obsolete(username,memo_number,memo_version):
 
 
 
-@memos.route("/cancel/memo/<string:username>/<int:memo_number>/<int:memo_version>",methods=['GET'])
+@memos.route("/cancel/memo/<string:username>/<int:memo_number>/<string:memo_version>",methods=['GET'])
 @login_required
 def cancel(username=None,memo_number=0,memo_version=0):
     user = current_user
@@ -348,7 +368,7 @@ def cancel(username=None,memo_number=0,memo_version=0):
     return redirect(url_for('memos.main'))
 
 
-@memos.route("/reject/memo/<string:username>/<int:memo_number>/<int:memo_version>")
+@memos.route("/reject/memo/<string:username>/<int:memo_number>/<string:memo_version>")
 @login_required
 def reject(username,memo_number,memo_version):
      

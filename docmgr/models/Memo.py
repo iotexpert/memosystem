@@ -9,6 +9,8 @@ from docmgr.models.MemoState import MemoState
 from docmgr.models.MemoFile import MemoFile
 from docmgr.models.MemoSignature import MemoSignature
 from docmgr.models.MemoReference import MemoReference
+from revletter import b10_to_rev,rev_to_b10
+
 import shutil
 
 import re
@@ -25,7 +27,7 @@ class Memo(db.Model):
     """
     id = db.Column(db.Integer, primary_key=True)
     number = db.Column(db.Integer)
-    version = db.Column(db.Integer)
+    version = db.Column(db.String)
     confidential = db.Column(db.Boolean,default=False)
     distribution = db.Column(db.String(128),default='') 
     keywords = db.Column(db.String(128),default='') 
@@ -326,9 +328,11 @@ class Memo(db.Model):
             .order_by(Memo.version.desc()).first()
 
         current_app.logger.info(f"get_next_version {memo.id} {memo.number} {memo.version}")
+        # TODO: ARH this is DEFINATELY A Bug
         if memo:
-            return memo.version + 1
-        return 1
+            return b10_to_rev(rev_to_b10(memo.version)+1)
+    
+        return b10_to_rev(1) # also known as 'A'
 
 
         
@@ -406,7 +410,7 @@ class Memo(db.Model):
             memo_number = Memo.get_next_number(owner)
         
             new_memo = Memo(number = memo_number,\
-                            version = 1,\
+                            version = 'A',\
                             confidential = False,\
                             distribution = '',\
                             keywords = '',\
@@ -518,14 +522,10 @@ class Memo(db.Model):
 ################################################################################       
 
     @staticmethod
-    def find(memo_id=None,username=None,memo_number=None,memo_version=0):
+    def find(memo_id=None,username=None,memo_number=None,memo_version=None):
         
         if memo_id != None:
             return Memo.query.filter_by(id=memo_id).first()
-            
-             
-        if memo_version == None:
-            memo_version = 0
 
         current_app.logger.info(f"FIND: Looking for {username}/{memo_number}/{memo_version}")
         
@@ -534,7 +534,7 @@ class Memo(db.Model):
         if user == None:
             return None
 
-        if memo_version != 0:
+        if memo_version != None:
             memo = Memo.query.join(User).filter(User.id==user.id,Memo.number==memo_number,Memo.version==memo_version).first()
             current_app.logger.info(f"Memo Status = {memo}")
         else:
