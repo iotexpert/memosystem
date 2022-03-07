@@ -29,7 +29,7 @@ def main(username=None,memo_number=None,memo_version=None):
     else:
         detail = True
         
-    if memo_number == None:
+    if username != None and memo_number == None:
         combo = re.split("-",username)
         if len(combo) == 2:
             username = combo[0]
