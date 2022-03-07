@@ -24,6 +24,7 @@ def main(username=None,memo_number=None,memo_version=None):
     detail = request.args.get('detail')
     next_page = request.base_url
     current_app.logger.info(f'Base URL={next_page}')
+    
     if detail == None:
         detail = False
     else:
@@ -68,6 +69,7 @@ def main(username=None,memo_number=None,memo_version=None):
             memo_version = sstring[2]
     
     memo_list = Memo.get_memo_list(username=username,memo_number=memo_number,memo_version=memo_version,page=page,pagesize=pagesize)
+    
     
     if len(memo_list.items) == 0:
         flash('No memos match that criteria','failure')
