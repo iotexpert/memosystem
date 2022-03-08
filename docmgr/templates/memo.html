@@ -1,5 +1,12 @@
 {% extends "layout.html" %}
 {% block content %}
+{% if inbox_list  %}
+    Current Inbox: <a class="mr-2" href="{{ url_for('memos.inbox',username=inbox_list[0].username) }}">{{ inbox_list[0].username }}</a> Available: 
+    {% for inbox in inbox_list[1:] %}
+      <a class="mr-2" href="{{ url_for('memos.inbox',username=inbox.username) }}">{{ inbox.username }}</a>
+    {% endfor %}
+{% endif %}
+
   {% for memo in memos.items %}
     {% include 'memo_template.html'%}
   {% endfor %}

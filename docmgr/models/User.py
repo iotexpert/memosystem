@@ -35,7 +35,7 @@ class Delegate(db.Model, UserMixin):
             return False
     
     @staticmethod    
-    def get_who_delegated(owner=None):
+    def get_delegated_users(owner=None):
         delegate_list = Delegate.query.filter_by(owner_id=owner.id).all()
         #current_app.logger.info(f"Delegate_list = {delegate_list}")
         rval = []
@@ -69,7 +69,6 @@ class User(db.Model, UserMixin):
     image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
     password = db.Column(db.String(60), nullable=False)
     admin = db.Column(db.Boolean,default=False)
-#    next_memo = db.Column(db.Integer, default = None)
     pagesize = db.Column(db.Integer, nullable=False, default = 20)
     _subscriptions = db.Column(db.String(128))
         
@@ -86,24 +85,22 @@ class User(db.Model, UserMixin):
 
     @property
     def delegates(self):
-        delegate_list = Delegate.get_who_delegated(owner=self)
+        delegate_list = Delegate.get_delegated_users(owner=self)
+        current_app.logger.info(f"Delegate List = {delegate_list}")
         rval = ''
         for delegate in delegate_list:
             rval = rval + delegate.username + ' '
-        return rval
+        return {"usernames":rval,"users":delegate_list}
         
     @delegates.setter
     def delegates(self,delegates):
 
         Delegate.delete(owner=self)
-        for delegate_name in re.split(r'\s|\,',delegates):
+        for delegate_name in re.split(r'\s|\,|\t|\;|\:',delegates):
             delegate = User.find(username=delegate_name)
-            #current_app.logger.info(f"Delegate = {delegate}")
             if delegate != None:
                 Delegate.add(self,delegate)
     
-    def get_who_delegated(self):
-        return Delegate.get_who_delegated(self)
         
     
     # is the userid a valid delgate for "self"

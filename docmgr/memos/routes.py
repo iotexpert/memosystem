@@ -6,9 +6,10 @@ from flask_login import current_user, login_required
 
 from docmgr.models.User import User
 from docmgr.memos.forms import MemoForm, MemoSearch
-from docmgr.models.User import User
+from docmgr.models.User import User, Delegate
 from docmgr.models.Memo import Memo
 from docmgr.models.MemoFile import MemoFile
+
 from wtforms import SubmitField
 
 memos = Blueprint('memos', __name__)
@@ -23,7 +24,6 @@ def main(username=None,memo_number=None,memo_version=None):
     page = request.args.get('page', 1, type=int)
     detail = request.args.get('detail')
     next_page = request.base_url
-    current_app.logger.info(f'Base URL={next_page}')
     
     if detail == None:
         detail = False
@@ -49,7 +49,7 @@ def main(username=None,memo_number=None,memo_version=None):
     if memo_version != None:
         memo_version = memo_version.upper()                 
                   
-    current_app.logger.info(f"User = {current_user} username={username} memo_number={memo_number} memo_version={memo_version}")
+#    current_app.logger.info(f"User = {current_user} username={username} memo_number={memo_number} memo_version={memo_version}")
    
     if current_user.is_anonymous:
         user = None
@@ -81,8 +81,7 @@ def main(username=None,memo_number=None,memo_version=None):
 def getfile(username,memo_number,memo_version,uuid):
 
     memo = Memo.find(username=username,memo_number=memo_number,memo_version=memo_version)
-    current_app.logger.info(f'Find File {username}/{memo_number}/{memo_version}/{uuid} memo={memo}')
-    
+
     if current_user.is_anonymous:
         user = None
     else:
@@ -93,10 +92,8 @@ def getfile(username,memo_number,memo_version,uuid):
 
     memo_list = memo.get_files()
     for file in memo_list:
-        current_app.logger.info(f"File = {file.uuid} {file.filename}")
         if file.uuid == uuid:
             directory = os.path.join('static','memos',str(memo.user_id),str(memo_number),memo_version)
-            current_app.logger.info(f"Found Match directory={directory}")
             return send_from_directory(directory,file.uuid,attachment_filename=file.filename,as_attachment=True)
 
     abort(404)
@@ -108,13 +105,10 @@ def process_file(new_memo,formfield):
         path = new_memo.get_fullpath()
         os.makedirs(path,exist_ok=True)
         mfile = MemoFile(memo_id=new_memo.id,filename=f.filename)
-        current_app.logger.info(f"Mfile ={mfile.filename} UUID={mfile.uuid}")
         mfile.save()
         f.save(os.path.join(path, mfile.uuid))
         new_memo.num_files = new_memo.num_files + 1
         new_memo.save()
-
-
 
 
 @memos.route("/cu/memo",methods=['GET', 'POST'])
@@ -123,7 +117,6 @@ def process_file(new_memo,formfield):
 @login_required
 def create_revise_submit(username=None,memo_number=None):
     
-    current_app.logger.info(f"In create update {username} {memo_number}")
     if username == None:
         username = current_user.username  
 
@@ -134,9 +127,7 @@ def create_revise_submit(username=None,memo_number=None):
         return abort(404)
 
     delegate = User.find(username=current_user.username)
-    
-    current_app.logger.info(f"owner={owner} delegate={delegate}")
-    
+        
     if not Memo.can_create(owner=owner,delegate=delegate):
         return abort(403)
 
@@ -150,9 +141,7 @@ def create_revise_submit(username=None,memo_number=None):
             for idx,file in enumerate(memo.get_files()):
                 button_name = f"file_{idx}"
                 setattr(FileForm, button_name, SubmitField('Remove'))
-                current_app.logger.info(f"adding button_name {button_name} ")
         def getField(self, fieldName):
-            current_app.logger.info(f"Fieldname = {fieldName}")
             for f in self:
                 if f.name == fieldName:
                     return f
@@ -164,7 +153,6 @@ def create_revise_submit(username=None,memo_number=None):
     
     if request.method == 'GET':
         
-        current_app.logger.info(f"owner={owner} delegate={delegate} memo_number={memo_number}")
         form.title.data = memo.title
         form.keywords.data = memo.keywords
         form.distribution.data = memo.distribution
@@ -176,7 +164,6 @@ def create_revise_submit(username=None,memo_number=None):
         form.memo_number.data = memo.number
         form.memo_version.data = memo.version
 
-        current_app.logger.info(f"User= {form.username.data} Memo={form.memo_number.data} Version={form.memo_version.data}")
         return render_template('create_memo.html', title=f'New Memo {memo}',form=form, legend=f'New Memo {memo}', user=delegate, memo=memo)
 
 # Everthing from here down is POST
@@ -206,13 +193,11 @@ def create_revise_submit(username=None,memo_number=None):
         if hasattr(form,f'file_{idx}'):
             status = getattr(form,f'file_{idx}')
             if status.data == True:
-                current_app.logger.info(f"Remove {idx} {type(file)}")
                 file.remove_file(memo)
                 flash(f"Remove {file}",'success')
                 return redirect(request.url)  # redirect back to edit instead...
         
     if form.save.data == True:
-        current_app.logger.info('They Pressed Save') 
         flash(f'{memo} has been saved!', 'success')
         return redirect(url_for('memos.main'))
 
@@ -244,12 +229,18 @@ def inbox(username=None):
         user = current_user
     else:
         user = User.find(username=username)
+        if user == None:
+            return abort(404)
     
     delegate = current_user
     
     memo_list = Memo.get_inbox(user,page,pagesize)
-    current_app.logger.info(f"Memoslist for {user.username} memo_list={memo_list}")
-    return render_template('memo.html', memos=memo_list, title=f"Inbox {username}", legend=f'Inbox: {username}', user=user, delegate=delegate,next_page=next_page)
+
+        
+    inbox_list = [user] + [current_user] + current_user.delegates['users']
+    
+    return render_template('memo.html', memos=memo_list, title=f"Inbox {username}", legend=f'Inbox: {username}', 
+                           user=user, delegate=delegate,next_page=next_page, inbox_list=inbox_list)
 
 
 @memos.route("/drafts")
@@ -339,7 +330,6 @@ def obsolete(username,memo_number,memo_version):
     
     memo = Memo.find(username=username,memo_number=memo_number,memo_version=memo_version)
     
-    current_app.logger.info(f"Found memo={memo}")
     if memo:
         if memo.obsolete(delegate):            
             flash(f'Obsolete {memo} Success', 'success')
@@ -358,7 +348,6 @@ def cancel(username=None,memo_number=0,memo_version=0):
     
     memo = Memo.find(username=username,memo_number=memo_number,memo_version=memo_version)
     
-    current_app.logger.info(f"Found memo={memo}")
     if memo:
         if memo.cancel(user):            
             flash(f'Canceled {memo}', 'success')
@@ -417,11 +406,11 @@ def search():
     
     
     if form.validate_on_submit():
-        current_app.logger.info(f"Title = {form.title.data}")
-        current_app.logger.info(f"Keywords = {form.keywords.data}")
-        current_app.logger.info(f"Memo = {form.memo_ref.data}")
-        current_app.logger.info(f"Username = {form.username.data}")
-        current_app.logger.info(f"Inbox = {form.inbox.data}")
+#        current_app.logger.info(f"Title = {form.title.data}")
+#        current_app.logger.info(f"Keywords = {form.keywords.data}")
+#        current_app.logger.info(f"Memo = {form.memo_ref.data}")
+#        current_app.logger.info(f"Username = {form.username.data}")
+#        current_app.logger.info(f"Inbox = {form.inbox.data}")
 
 #TODO: ARH Fix this
         if form.title.data != '':

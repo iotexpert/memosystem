@@ -52,7 +52,7 @@ def logout():
 @login_required
 def account():
     user = User.find(username=current_user.username)
-    current_app.logger.info(f"User = {current_user.username} Delegate List= {user.get_who_delegated()}")
+    current_app.logger.info(f"User = {current_user.username} Delegate List= {user.delegates}")
     form = UpdateAccountForm()
     if form.validate_on_submit():
         if form.picture.data:
@@ -70,7 +70,7 @@ def account():
     elif request.method == 'GET':
         form.username.data = current_user.username
         form.email.data = current_user.email
-        form.delegates.data = current_user.delegates
+        form.delegates.data = current_user.delegates['usernames']
         form.pagesize.data = current_user.pagesize
 #      form.next_memo.data = current_user.next_memo
         form.subscriptions.data = current_user.subscriptions       
