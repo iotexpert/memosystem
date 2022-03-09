@@ -6,7 +6,6 @@ from flask_login import current_user, login_required
 
 from docmgr.models.User import User
 from docmgr.memos.forms import MemoForm, MemoSearch
-from docmgr.models.User import User, Delegate
 from docmgr.models.Memo import Memo
 from docmgr.models.MemoFile import MemoFile
 
@@ -23,8 +22,7 @@ def main(username=None,memo_number=None,memo_version=None):
     pagesize = User.get_pagesize(current_user)
     page = request.args.get('page', 1, type=int)
     detail = request.args.get('detail')
-    next_page = request.base_url
-    
+       
     if detail == None:
         detail = False
     else:
@@ -49,7 +47,6 @@ def main(username=None,memo_number=None,memo_version=None):
     if memo_version != None:
         memo_version = memo_version.upper()                 
                   
-#    current_app.logger.info(f"User = {current_user} username={username} memo_number={memo_number} memo_version={memo_version}")
    
     if current_user.is_anonymous:
         user = None
@@ -74,7 +71,14 @@ def main(username=None,memo_number=None,memo_version=None):
     if len(memo_list.items) == 0:
         flash('No memos match that criteria','failure')
 
-    return render_template('memo.html', memos=memo_list, title="memo",user=user,delegate=user, signer=None, detail=detail,next_page=next_page)
+
+    url_params = {}
+    if username:
+        url_params['username']=username
+    
+    next_page = "memos.main"
+    
+    return render_template('memo.html', memos=memo_list, title="memo",user=user,delegate=user,signer=None, detail=detail,next_page=next_page,url_params=url_params)
  
 
 @memos.route("/file/memo/<string:username>/<int:memo_number>/<string:memo_version>/<string:uuid>")
@@ -208,6 +212,7 @@ def create_revise_submit(username=None,memo_number=None):
         memo.save()
         flash(f'{memo} has been created!', 'success')
         return redirect(url_for('memos.main'))
+ 
     return render_template('create_memo.html', title=f'New Memo {memo}',form=form, legend=f'New Memo {memo}', user=delegate, memo=memo)
    
 
@@ -219,7 +224,7 @@ def inbox(username=None):
     pagesize = User.get_pagesize(current_user)
     page = request.args.get('page', 1, type=int)
     detail = request.args.get('detail')
-    next_page = request.base_url
+    next_page = 'memos.inbox'
     if detail == None:
         detail = False
     else:
@@ -239,8 +244,14 @@ def inbox(username=None):
         
     inbox_list = [user] + [current_user] + current_user.delegates['users']
     
+    url_params = {
+        'username':username, 
+            }
+    
+    next_page = "memos.inbox"
+    
     return render_template('memo.html', memos=memo_list, title=f"Inbox {username}", legend=f'Inbox: {username}', 
-                           user=user, delegate=delegate,next_page=next_page, inbox_list=inbox_list)
+                           user=user, delegate=delegate,next_page=next_page, url_params=url_params, inbox_list=inbox_list)
 
 
 @memos.route("/drafts")
@@ -250,7 +261,7 @@ def drafts(username=None):
     pagesize = User.get_pagesize(current_user)
     page = request.args.get('page', 1, type=int)
     detail = request.args.get('detail')
-    next_page = request.base_url
+    next_page = 'memos.drafts'
     if detail == None:
         detail = False
     else:
@@ -264,7 +275,14 @@ def drafts(username=None):
     delegate = current_user
 
     memo_list = Memo.get_drafts(user,page,pagesize)
-    return render_template('memo.html', next_page=next_page,memos=memo_list, title=f"Inbox {username}", user=user, delegate=delegate)
+
+    url_params = {}
+    if username != None:
+        url_params['username']=username
+        
+    next_page = "memos.drafts"
+
+    return render_template('memo.html', memos=memo_list, title=f"Inbox {username}", user=user, delegate=delegate,next_page=next_page, url_params=url_params)
 
 
 ###########################################################################
@@ -276,11 +294,13 @@ def drafts(username=None):
 def sign(username,memo_number,memo_version):
     
     signer = request.args.get('signer', type=str)
+    
+    current_app.logger.info(f"Signer = {signer}")
 
     if signer == None:
         signer = current_user
     else:
-        signer = User.find(username=username)
+        signer = User.find(username=signer)
 
     delegate = current_user
     
@@ -305,10 +325,9 @@ def unsign(username,memo_number,memo_version):
     if signer == None:
         signer = current_user
     else:
-        signer = User.find(username=username)
+        signer = User.find(username=signer)
 
     delegate = current_user
-
     
     memo = Memo.find(username=username,memo_number=memo_number,memo_version=memo_version)
     if memo:
@@ -319,6 +338,8 @@ def unsign(username,memo_number,memo_version):
             flash(f'Unsign {memo} Failed', 'error')
     else:
         flash(f'Unsign {username}-{memo_number}-{memo_version} Failed', 'error')
+    #TODO: ARH Really should go back to where you were
+    
     return redirect(url_for('memos.main'))
 
 
@@ -337,8 +358,9 @@ def obsolete(username,memo_number,memo_version):
             flash(f'Obsolete {memo} Failed', 'error')
     else:
         flash(f'Obsolete {username}-{memo_number}-{memo_version } Failed', 'error')
+    #TODO: ARH Really should go back to where you were
+     
     return redirect(url_for('memos.main'))
-
 
 
 @memos.route("/cancel/memo/<string:username>/<int:memo_number>/<string:memo_version>",methods=['GET'])
@@ -356,6 +378,8 @@ def cancel(username=None,memo_number=0,memo_version=0):
     else:
         flash(f'Cannot cancel memo {username}-{memo_number}-{memo_version}', 'error')
 
+    #TODO: ARH Really should go back to where you were
+    
     return redirect(url_for('memos.main'))
 
 
@@ -368,7 +392,7 @@ def reject(username,memo_number,memo_version):
     if signer == None:
         signer = current_user
     else:
-        signer = User.find(username=username)
+        signer = User.find(username=signer)
 
     delegate = current_user
     
@@ -380,6 +404,10 @@ def reject(username,memo_number,memo_version):
             flash(f'Rejected {memo.user.username}-{memo.number}-{memo.version}', 'success')
     else:
         flash(f'Cannot unsign memo {username}-{memo_number}-{memo_version}', 'failure')
+ 
+ 
+ #TODO: ARH Really should go back to where you were
+    
     return redirect(url_for('memos.main'))
 
 @memos.route("/search",methods=['GET', 'POST'])
@@ -388,7 +416,8 @@ def search():
     pagesize = User.get_pagesize(current_user)
     page = request.args.get('page', 1, type=int)
     detail = request.args.get('detail')
-    next_page = request.base_url
+    search = request.args.get('search')
+    next_page = 'memos.search'
     if detail == None:
         detail = False
     else:
@@ -400,37 +429,50 @@ def search():
         user = current_user
     
     form = MemoSearch()
-    if request.method == 'GET':
-        pass
-    
-    
+
+    url_params = {}
     
     if form.validate_on_submit():
-#        current_app.logger.info(f"Title = {form.title.data}")
-#        current_app.logger.info(f"Keywords = {form.keywords.data}")
-#        current_app.logger.info(f"Memo = {form.memo_ref.data}")
-#        current_app.logger.info(f"Username = {form.username.data}")
-#        current_app.logger.info(f"Inbox = {form.inbox.data}")
 
-#TODO: ARH Fix this
         if form.title.data != '':
-            memos = Memo.search(title=form.title.data)
-            return render_template('memo.html', memos=memos, title="memo",user=user,delegate=user,  detail=detail,next_page=next_page)
+            memos = Memo.search(title=form.title.data,page=page,pagesize=pagesize)
+            search = f"title:{form.title.data}"
+            url_params['search'] = search
+            return render_template('memo.html', memos=memos, title="memo",user=user,delegate=user,detail=detail,next_page=next_page,url_params =url_params)
 
-#TODO: ARH Fix this
         if form.keywords.data != '':
-            return redirect(url_for("memos.main",username=form.username.data))
+            memos = Memo.search(title=form.title.data,page=page,pagesize=pagesize)
+            search = f"keywords:{form.keywords.data}"
+            url_params['search'] = search
+            return redirect(url_for("memos.main",username=form.username.data,page=page,url_params=url_params))
     
         if form.memo_ref.data != '':
-            return redirect(url_for("memos.main",username=form.memo_ref.data))
+            return redirect(url_for("memos.main",username=form.memo_ref.data,page=page))
 
-        if form.username.data != '':
-            return redirect(url_for("memos.main",username=form.username.data))
+        if form.username.data != '': 
+            return redirect(url_for("memos.main",username=form.username.data,page=page))
 
         if form.inbox.data != '':
-            return redirect(url_for("memos.inbox",username=form.inbox.data))
+            return redirect(url_for("memos.inbox",username=form.inbox.data,page=page))
         
-        
-        current_app.logger.info("None of the above")
+    if request.method == 'POST':
+        return render_template('memo_search.html', title='Memo Search ',legend=f'Search',form=form)
+    
+
+# Everything below here is GET
+    url_params = {}
+
+    if search != None:
+        title = re.split('^title:',search,maxsplit=1)
+        keywords = re.split('^keywords:',search,maxsplit=1)
+        if len(title) == 2:
+            memos = Memo.search(title=title[1],page=page,pagesize=pagesize)
+            url_params['search']= f'title:{title[1]}'
+        if len(keywords) == 2:
+            memos = Memo.search(keywords=keywords[1],page=page,pagesize=pagesize)
+            url_params['search']= f'keywords:{title[1]}'
+
+        next_page = "memos.search"
+        return render_template('memo.html', memos=memos, title="memo",user=user,delegate=user,detail=detail,next_page=next_page,url_params=url_params)
 
     return render_template('memo_search.html', title='Memo Search ',legend=f'Search',form=form)

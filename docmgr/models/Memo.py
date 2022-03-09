@@ -449,8 +449,10 @@ class Memo(db.Model):
         
         current_app.logger.info(f"signer = {signer} delegate={delegate}")
         if not self.can_sign(signer,delegate):
+            current_app.logger.info("NOT!!@ allowed to sign")
             return False
         
+        current_app.logger.info("allowed to sign")
         MemoSignature.sign(self.id,signer,delegate)
         self.process_state()
         self.save()
@@ -568,7 +570,13 @@ class Memo(db.Model):
     
     @staticmethod 
     def search(title=None,keywords=None,page=1,pagesize=None):
-        memo_list = Memo.query.filter(Memo.title.like(title)).paginate(page = page,per_page=pagesize)
+        current_app.logger.info(f"Search title={title}")
+        if title != None:
+            memo_list = Memo.query.filter(Memo.title.like(f"%{title}%")).paginate(page = page,per_page=pagesize)
+        
+        if keywords != None:
+            memo_list = Memo.query.filter(Memo.keywords.like(f"%{keywords}%")).paginate(page = page,per_page=pagesize)
+            
         return memo_list
 
     @staticmethod   

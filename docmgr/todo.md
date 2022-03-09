@@ -2,9 +2,6 @@
 ----------------------
 Bugs
 ----------------------
-
-
-
 0   enh     search
 
 1   enh     code review verify of functions
@@ -12,7 +9,6 @@ Bugs
 
 2   enh     active directory
 
-2   enh     your inbox should show all of the memos insignoff that you are delegated to sign
 2   bug     Fix backreferences
 
 2   bug     in memo signoff the signers needs to be able to view the memo
@@ -34,7 +30,6 @@ Bugs
 4   enh     create memo - add the ability to add an email address to the distribution list (what does this do to security?)
 4   enh     create memo - when you revise a memo the references are copied automatically
 4   bug     Implement username rules (a-Z etc)
-
 
 ------------------------------
 State Machine description

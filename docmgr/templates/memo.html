@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block content %}
 {% if inbox_list  %}
-    Current Inbox: <a class="mr-2" href="{{ url_for('memos.inbox',username=inbox_list[0].username) }}">{{ inbox_list[0].username }}</a> Available: 
+    Current Inbox: <a class="mr-2" href="{{ url_for('memos.inbox',username=inbox_list[0].username) }}">{{ inbox_list[0].username }}</a> Available Inbox: 
     {% for inbox in inbox_list[1:] %}
       <a class="mr-2" href="{{ url_for('memos.inbox',username=inbox.username) }}">{{ inbox.username }}</a>
     {% endfor %}
@@ -12,11 +12,13 @@
   {% endfor %}
   {% for page_num in memos.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
     {% if page_num %}
-      {% if memos.page == page_num %}
-        <a class="btn btn-info mb-4" href="{{ next_page ~ '?page=' ~page_num  }}">{{ page_num }}</a>
+      
+    {% if memos.page == page_num %}
+        <a class="btn btn-info mb-4" href="{{ url_for(next_page, page=page_num,**url_params)}}">{{ page_num }}</a>
       {% else %}
-        <a class="btn btn-outline-info mb-4" href="{{ next_page ~ '?page=' ~page_num }}">{{ page_num }}</a>
-      {% endif %}
+        <a class="btn btn-outline-info mb-4" href="{{ url_for(next_page, page=page_num,**url_params)}}">{{ page_num }}</a>
+   {% endif %}
+
     {% else %}
       ...
     {% endif %}
