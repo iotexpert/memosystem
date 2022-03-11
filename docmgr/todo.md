@@ -7,6 +7,8 @@ Bugs
 1   enh     code review verify of functions
 1   enh     add comments
 
+2   enh     add history bulliten board
+
 2   enh     active directory
 
 2   bug     Fix backreferences

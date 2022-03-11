@@ -34,6 +34,11 @@ class Memo(db.Model):
     title = db.Column(db.String(128), nullable=False,default='')
     num_files = db.Column(db.Integer,default=0)
     memo_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
+    active_date = db.Column(db.DateTime)
+    submit_date = db.Column(db.DateTime)
+    obsolete_date = db.Column(db.DateTime)
+    
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'),nullable=False)
     _signers = db.Column(db.String(128),default='')
     _references = db.Column(db.String(128),default='')
