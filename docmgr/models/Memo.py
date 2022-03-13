@@ -1,7 +1,5 @@
 
 from datetime import datetime
-from ensurepip import version
-from weakref import ref
 from flask import current_app
 from docmgr import db
 from docmgr.models.User import User
@@ -9,6 +7,9 @@ from docmgr.models.MemoState import MemoState
 from docmgr.models.MemoFile import MemoFile
 from docmgr.models.MemoSignature import MemoSignature
 from docmgr.models.MemoReference import MemoReference
+from docmgr.models.MemoHistory import MemoHistory
+from docmgr.models.MemoActivity import MemoActivity
+
 from revletter import b10_to_rev,rev_to_b10
 
 import shutil
@@ -33,16 +34,18 @@ class Memo(db.Model):
     keywords = db.Column(db.String(128),default='') 
     title = db.Column(db.String(128), nullable=False,default='')
     num_files = db.Column(db.Integer,default=0)
-    memo_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    
-    active_date = db.Column(db.DateTime)
-    submit_date = db.Column(db.DateTime)
-    obsolete_date = db.Column(db.DateTime)
+
+    # the date/time of the last action on this memo
+    action_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+        
+    create_date = db.Column(db.DateTime)    # when the memo was created
+    submit_date = db.Column(db.DateTime)    # when the memo was most recently submitted  (from created)
+    active_date = db.Column(db.DateTime)    # when the memo was moved to active state (from submitted)
+    obsolete_date = db.Column(db.DateTime)  # when the memo was moved to obsolete state (from active)
     
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'),nullable=False)
     _signers = db.Column(db.String(128),default='')
-    _references = db.Column(db.String(128),default='')
-        
+    _references = db.Column(db.String(128),default='')   
     memo_state = db.Column(db.Enum(MemoState))
 
     def __init__(self, **kwargs):
@@ -50,9 +53,10 @@ class Memo(db.Model):
         # do custom initialization here
 
     def __repr__(self):
-        return f"{self.user.username}-{self.number}-{self.version}"
+        return f"{self.user.username}-{self.number}{self.version}"
 
-
+    def __str__(self):
+        return f"{self.user.username}-{self.number}{self.version}"
 
 ########################################
 # Permission Functions 
@@ -198,7 +202,7 @@ class Memo(db.Model):
         memo_list = MemoFile.query.filter_by(memo_id=self.id).all()
         return memo_list
 
-    # arh need to add the list of signers and files
+    # TODO: ARH need to add the list of signers and files
     def saveJson(self):
         js = {}
         js['title']=self.title
@@ -207,7 +211,6 @@ class Memo(db.Model):
         js['confidential']=self.confidential
         js['distribution']=self.distribution
         js['keywords']=self.keywords
-        js['memo_date']=f"{self.memo_date}"
         js['userid']=self.user_id
         js['memo_state']=f"{self.memo_state}"
         js['files']=[]
@@ -224,13 +227,14 @@ class Memo(db.Model):
         json.dump(js,f)
         f.close()
 
-
+   
+    
     # get the signers from the singing table and turn it back to a string
     @property 
     def signers(self):
     
         siglist = MemoSignature.get_signers(self)
-        current_app.logger.info(f"Siglist = {siglist}")
+#        current_app.logger.info(f"Siglist = {siglist}")
         for sig in siglist:
             sig.signer = User.find(userid=sig.signer_id)
             sig.delegate = User.find(userid=sig.delegate_id)
@@ -267,7 +271,7 @@ class Memo(db.Model):
         valid_refs = []
         invalid = []
         for memo_ref in re.split(r'\s|\,|\t|\;|\:',references):
-            current_app.logger.info(f"Reference = {memo_ref}")
+#            current_app.logger.info(f"Reference = {memo_ref}")
             if memo_ref == '':
                 continue
             parts = Memo.parse_reference(memo_ref)
@@ -278,19 +282,19 @@ class Memo(db.Model):
             username = parts[0]
             memo_number = parts[1]
             memo_version = parts[2]
-            current_app.logger.info(f"Validating {parts[0]}-{parts[1]}-{parts[2]}")
+ #           current_app.logger.info(f"Validating {parts[0]}-{parts[1]}-{parts[2]}")
             memo = Memo.find(username=username,memo_number=memo_number,memo_version=memo_version)
             current_app.logger.info(f"Memo = {memo}")
             if memo != None and (memo.memo_state == MemoState.Active or memo.memo_state == MemoState.Obsolete):
                 valid_memos.append(memo)
                 valid_refs.append(memo_ref)
-                current_app.logger.info(f"VALID append {memo_ref} valid={valid_refs} invalid {invalid}")
+#                current_app.logger.info(f"VALID append {memo_ref} valid={valid_refs} invalid {invalid}")
             else:
                 invalid.append(memo_ref)
-                current_app.logger.info(f"INVALID append {memo_ref} valid={valid_refs} invalid {invalid}")
+#                current_app.logger.info(f"INVALID append {memo_ref} valid={valid_refs} invalid {invalid}")
         
         rval = {'valid_refs':valid_refs, 'valid_memos' : valid_memos,'invalid':invalid}
-        current_app.logger.info(f"Rval - {rval}")
+#        current_app.logger.info(f"Rval - {rval}")
         return rval
             
     @property
@@ -306,11 +310,11 @@ class Memo(db.Model):
             else:
                 refstring=f"{user.username}-{ref[1]}-{ref[2]}"
             rval.append((refstring,memo))
-        return {'reflist':rval,'refs':self._references}
+        return {'reflist':rval,'ref_string':self._references}
     
     @references.setter
     def references(self,references):
-        current_app.logger.info(f"Adding References {references}")
+ #       current_app.logger.info(f"Adding References {references}")
         self._references = references
         
         refs = Memo.valid_references(references)
@@ -333,14 +337,11 @@ class Memo(db.Model):
             .order_by(Memo.version.desc()).first()
 
         current_app.logger.info(f"get_next_version {memo.id} {memo.number} {memo.version}")
-        # TODO: ARH this is DEFINATELY A Bug
         if memo:
             return b10_to_rev(rev_to_b10(memo.version)+1)
     
         return b10_to_rev(1) # also known as 'A'
 
-
-        
     def save(self):
         db.session.add(self)
         db.session.commit()
@@ -352,37 +353,44 @@ class Memo(db.Model):
 # these function would classiavally be called private
 ################################################################################       
 
-    def obsolete_previous(self): # TODO: perhaps this should be in the process_state function?  (probably)
+    def obsolete_previous(self,acting=None): # TODO: perhaps this should be in the process_state function?  (probably)
         prev_list = Memo.query.join(User).filter(Memo.number == self.number,Memo.version != self.version).all()
         for memo in prev_list:
             if memo.memo_state == MemoState.Active:
                 memo.memo_state = MemoState.Obsolete
                 memo.save()
     
-    def process_state(self):
-        current_app.logger.info(f"Process State MemoState={MemoSignature.status(self.id)}")
+    # This function is called when:
+    # 1- a valid draft is created
+    # 2- a signature happens
+    # 3- an unsign happens
+    def process_state(self,acting=None):
         if self.memo_state == MemoState.Draft:
             if MemoSignature.status(self.id) == False:
                 self.memo_state = MemoState.Signoff
-                self.save()
-                user = User.find(userid=self.user_id)
-                self.notify_signers(f"memo {user.username}-{self.number}-{self.version} has gone into signoff")
+                self.submit_date = datetime.utcnow()
+                MemoHistory.activity(memo=self,memo_activity=MemoActivity.Signoff,user=acting)
+                self.notify_signers(f"memo {self.user.username}-{self.number}-{self.version} has gone into signoff")
             else:
                 self.memo_state = MemoState.Active
-                self.save()
-                self.obsolete_previous()
-                user = User.find(userid=self.user_id)
-                self.notify_distribution(f"memo {user.username}-{self.number}-{self.version} has been published")
+                self.active_date = datetime.utcnow()
+                MemoHistory.activity(memo=self,memo_activity=MemoActivity.Activate,user=acting)
+                self.obsolete_previous(acting=acting)
+                self.notify_distribution(f"memo {self.user.username}-{self.number}-{self.version} has been published")
    
         if self.memo_state == MemoState.Signoff:
             if MemoSignature.status(self.id):
                 self.memo_state = MemoState.Active
-                self.save()
-                user = User.find(userid=self.user_id)
-                self.notify_distribution(f"memo {user.username}-{self.number}-{self.version} has been published")
-                self.obsolete_previous()
+                self.active_date = datetime.utcnow()
+                self.notify_distribution(f"memo {self.user.username}-{self.number}-{self.version} has been published")
+                MemoHistory.activity(memo=self,memo_activity=MemoActivity.Activate,user=acting)
+
+                self.obsolete_previous(acting=acting)
             else:
                 current_app.logger.info(f"Signatures Still Required")
+        
+        self.action_date = datetime.utcnow()
+        self.save()
 
 
     # TODO: ARH
@@ -403,14 +411,15 @@ class Memo(db.Model):
     def create_revise(owner=None,delegate=None,memo_number=None):
         
         assert owner != None and delegate != None
-
-# TODO: Enforce the security right here
+        if owner == None or delegate == None:
+            return None
+        
+        if owner.is_delegate(delegate) != True:
+            return None
 
         memo = Memo.query.join(User).filter(User.id==owner.id,Memo.number==memo_number).order_by(Memo.version.desc()).first()
-        
-        current_app.logger.info(f"Memo = {memo}")
  
-        # create a new memo
+        # create a new memo (i.e. not a new version of an existing memo)
         if memo_number == None or memo==None:
             memo_number = Memo.get_next_number(owner)
         
@@ -423,17 +432,22 @@ class Memo(db.Model):
                             num_files = 0,\
                             user_id = owner.id,\
                             memo_state = MemoState.Draft,\
+                            action_date = datetime.utcnow(),\
+                            create_date = datetime.utcnow(),\
                             signers = '' )
+            
             new_memo.save()
+            MemoHistory.activity(memo=new_memo,memo_activity=MemoActivity.Create,user=delegate)
+            
+            current_app.logger.info(f"Creating new memo {new_memo}")
             return new_memo
        
         
         if memo.memo_state == MemoState.Draft:
+            current_app.logger.info(f"Found a draft memo {memo}")
             return memo
  
-    # TODO: ARH the references copy doesnt work...
         # revise an existing memo
-        current_app.logger.info(f"Signers = {memo.signers['signers']} _signers={memo._signers}")
         new_memo = Memo(number = memo_number,\
                             version = memo.get_next_version(),\
                             confidential = memo.confidential,\
@@ -443,10 +457,14 @@ class Memo(db.Model):
                             num_files = 0,\
                             user_id = memo.user_id,\
                             memo_state = MemoState.Draft,\
+                            action_date = datetime.utcnow(),\
+                            create_date = datetime.utcnow(),\
                              )
         new_memo.save()
-        new_memo.signers = memo._signers
+        new_memo.references = memo.references['ref_string']  # cannot be done until there is an id assigned by the save
+        new_memo.signers = memo._signers                     # cannot be done until there is an id assigned by the save
         new_memo.save()
+        MemoHistory.activity(memo=new_memo,memo_activity=MemoActivity.Create,user=delegate)
         return new_memo
     
 # signer function
@@ -459,20 +477,19 @@ class Memo(db.Model):
         
         current_app.logger.info("allowed to sign")
         MemoSignature.sign(self.id,signer,delegate)
-        self.process_state()
-        self.save()
+        MemoHistory.activity(memo=self,user=delegate,memo_activity=MemoActivity.Sign)
+        self.process_state(acting=delegate)
         return True
 
 # signer function     
     def unsign(self,signer=None,delegate=None):
-        current_app.logger.info(f"signer = {signer} delegate={delegate}")
         
         if not self.can_unsign(signer,delegate):
             return False
         
         MemoSignature.unsign(self.id,signer,delegate)
-        self.process_state()
-        self.save()
+        MemoHistory.activity(memo=self,user=delegate,memo_activity=MemoActivity.Unsign)
+        self.process_state(acting=delegate)
         return True
        
 # Owner Function       
@@ -484,6 +501,9 @@ class Memo(db.Model):
             return False
         
         self.memo_state = MemoState.Obsolete
+        self.action_date = datetime.utcnow()
+        self.obsolete_date = datetime.utcnow()
+        MemoHistory.activity(memo=self,user=delegate,memo_activity=MemoActivity.Obsolete)
         self.save()
         return True
 
@@ -503,6 +523,7 @@ class Memo(db.Model):
         
         MemoReference.delete(self)
         MemoSignature.delete_signers(self)
+        MemoHistory.activity(memo=self,user=delegate,memo_activity=MemoActivity.Cancel)
         db.session.delete(self)
         db.session.commit()       
         current_app.logger.info(f"Canceled: {self} ")
@@ -518,6 +539,11 @@ class Memo(db.Model):
         
         
         self.memo_state = MemoState.Draft
+        self.action_date = datetime.utcnow()
+        self.submit_date = None
+        self.active_date = None
+        self.obsolete_date = None
+        MemoHistory.activity(memo=self,memo_activity=MemoActivity.Reject,user=delegate)
         MemoSignature.unsign_all(self)
         self.save()
         self.notify_signers(f"Memo {self.user.username}-{self.number}-{self.version} has been rejected for {signer.username} by {delegate.username}")
@@ -562,14 +588,14 @@ class Memo(db.Model):
                                                     .paginate(page = page,per_page=pagesize)
         elif memo_number:
             memo_list = Memo.query.join(User).filter(User.username==username,Memo.number==memo_number)\
-            .order_by(Memo.memo_date.desc()).paginate(page = page,per_page=pagesize)
+            .order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)
 
         elif username:
             memo_list = Memo.query.join(User).filter(User.username==username,Memo.memo_state == MemoState.Active)\
-            .order_by(Memo.memo_date.desc()).paginate(page = page,per_page=pagesize)
+            .order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)
         else:
             memo_list = Memo.query.join(User).filter(Memo.memo_state == MemoState.Active)\
-            .order_by(Memo.memo_date.desc()).paginate(page = page,per_page=pagesize)
+            .order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)
     
         return memo_list
     
@@ -577,10 +603,10 @@ class Memo(db.Model):
     def search(title=None,keywords=None,page=1,pagesize=None):
         current_app.logger.info(f"Search title={title}")
         if title != None:
-            memo_list = Memo.query.filter(Memo.title.like(f"%{title}%")).paginate(page = page,per_page=pagesize)
+            memo_list = Memo.query.filter(Memo.title.like(f"%{title}%")).order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)
         
         if keywords != None:
-            memo_list = Memo.query.filter(Memo.keywords.like(f"%{keywords}%")).paginate(page = page,per_page=pagesize)
+            memo_list = Memo.query.filter(Memo.keywords.like(f"%{keywords}%")).order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)
             
         return memo_list
 
@@ -599,22 +625,22 @@ class Memo(db.Model):
     @staticmethod
     def get_inbox(user=None,page=1,pagesize=None):
         
+        assert user!=None,"User must not be none"
         if user == None:
-            return None  # TODO: ARH... not really what you want to return
+            return None
         
         msigs = MemoSignature.get_signatures(user,signed=False)
         
-        memolist = Memo.query.join(User).filter(Memo.memo_state==MemoState.Signoff,Memo.id.in_(msigs)).paginate(page = page,per_page=pagesize)      
+        memolist = Memo.query.join(User).filter(Memo.memo_state==MemoState.Signoff,Memo.id.in_(msigs)).order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)      
         current_app.logger.info(f"Inbox for {user.username} = Items={len(memolist.items)} {memolist}")
         return memolist
     
     @staticmethod
     def get_drafts(user=None,page=1,pagesize=None):
     
+        assert user!=None,"User must not be none"
         if user == None:
-            return None  # TODO: ARH... not really what you want to return
+            return None
         
-        
-        memolist = Memo.query.join(User).filter(Memo.memo_state==MemoState.Draft,User.id==user.id).paginate(page = page,per_page=pagesize)      
-        current_app.logger.info(f"Drafts for {user.username} = Items={len(memolist.items)} {memolist}")
+        memolist = Memo.query.join(User).filter(Memo.memo_state==MemoState.Draft,User.id==user.id).order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)      
         return memolist

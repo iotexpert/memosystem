@@ -1,5 +1,6 @@
 from docmgr import db,create_app
 from docmgr.models.User import User
+from docmgr.models.MemoHistory import MemoHistory
 from flask import current_app
 
 app=create_app()

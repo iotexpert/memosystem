@@ -4,19 +4,18 @@
       <div class="article-metadata">
         <a class="mr-2" href="/memo/{{memo.user.username}}/{{ memo.number}}/{{memo.version}}">{{ memo.user.username }}-{{memo.number}}{{ memo.version }}</a> 
         <a class="mr-2" href="/memo/{{memo.user.username}}/{{ memo.number}}">{{ memo.user.username }}-{{memo.number}}</a>
-        <small class="text-muted">{{ memo.memo_date.strftime('%Y-%m-%d') }}</small>
         {% if memo.memo_state.compare_short_name("Draft") == 1 %}
+        <small class="text-muted">{{ memo.action_date.strftime('%Y-%m-%d') }}</small>
           <small class="text-primary">
         {% elif memo.memo_state.compare_short_name("Signoff") %}
+        <small class="text-muted">{{ memo.action_date.strftime('%Y-%m-%d') }}</small>
             <small class="text-primary">
         {% elif memo.memo_state.compare_short_name("Active") %}
+        <small class="text-muted">{{ memo.action_date.strftime('%Y-%m-%d') }}</small>
             <small class="text-success">
         {% elif memo.memo_state.compare_short_name("Obsolete") %}
+        <small class="text-muted">{{ memo.action_date.strftime('%Y-%m-%d') }}</small>
             <small class="text-danger">
-        {% elif memo.memo_state.compare_short_name("Canceled") %}
-        <small class="text-danger">
-        {% else %}
-        <small class="text-success"> 
         {% endif %}
         {{ memo.memo_state.short_name() }}</small>
        

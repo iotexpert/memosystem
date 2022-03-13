@@ -47,7 +47,8 @@ class MemoFile(db.Model):
         try:
             os.remove(os.path.join(path, self.uuid))
         except:
-            pass # TODO: ARH... really? seriously really?
+            pass # ARH... well this can only happen if the file is already gone... which is what we want
+        
         memo.num_files = memo.num_files - 1
         memo.save()
         

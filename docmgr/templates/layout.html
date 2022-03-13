@@ -28,6 +28,9 @@
             <div class="navbar-nav mr-auto">
               <a class="nav-item nav-link" href="{{ url_for('main.home') }}">Home</a>
               <a class="nav-item nav-link" href="{{ url_for('memos.search') }}">Search</a>
+              {% if current_user.admin == True %}
+              <a class="nav-item nav-link" href="{{ url_for('memos.history') }}">History</a>
+              {% endif %}
             </div>
             <!-- Navbar Right Side -->
             <div class="navbar-nav">

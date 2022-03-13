@@ -134,11 +134,9 @@ class MemoSignature(db.Model):
         This function creates a list of signatures needed to be signed by "signer"
         This function is used by the inbox to figure out what the person needs to sign
         """
+        assert signer != None,"Signer must have some value"
         rval = []
-        if signer == None:
-            return rval  #TODO: I wonder if I should actually throw an error... probably yes
-        
-    
+
         memosig = MemoSignature.query.filter_by(signer_id=signer.id,signed=signed).order_by(MemoSignature.signed).all()
 
         for sig in memosig:

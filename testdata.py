@@ -43,6 +43,8 @@ memos = [
 ]
 for memo in memos:
     db.session.add(memo)
+    db.session.commit()
+    
     memo.process_state()
 db.session.commit()
 

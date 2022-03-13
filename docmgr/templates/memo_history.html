@@ -1,0 +1,20 @@
+{% extends "layout.html" %}
+{% block content %}
+
+  {% for item in history.items %}
+  {{ item.date.strftime('%Y-%m-%d %H:%M') }} {{item.user.username}} {{item.memo_ref}} {{item.memo_activity}} <br>
+  {% endfor %}
+  {% for page_num in history.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+    {% if page_num %}
+      
+    {% if history.page == page_num %}
+        <a class="btn btn-info mb-4" href="{{ url_for(next_page, page=page_num,**url_params)}}">{{ page_num }}</a>
+      {% else %}
+        <a class="btn btn-outline-info mb-4" href="{{ url_for(next_page, page=page_num,**url_params)}}">{{ page_num }}</a>
+   {% endif %}
+
+    {% else %}
+      ...
+    {% endif %}
+    {% endfor %}
+{% endblock content %}

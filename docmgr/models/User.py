@@ -9,7 +9,7 @@ from sqlalchemy.orm import relationship
 
 from docmgr.models.MemoSubscription import MemoSubscription
 
-# TODO: ARH Why is this here
+# This is used by the flask UserMixin
 @login_manager.user_loader
 def load_user(user_id):
     #current_app.logger.info("calling the load user function")
@@ -26,6 +26,9 @@ class Delegate(db.Model, UserMixin):
     def is_delegate(owner,delegate):
     #current_app.logger.info(f"Owner={owner} delegate={delegate}")
         if owner.id == delegate.id:
+            return True
+        
+        if delegate.admin == True:
             return True
         
         d = Delegate.query.filter_by(owner_id=owner.id,delegate_id=delegate.id).first()
@@ -61,7 +64,6 @@ class Delegate(db.Model, UserMixin):
             Delegate.query.filter_by(owner_id=owner.id,delegate_id=delegate.id).delete()
     
 
-# TODO: ARH consider userid and _id
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(20), unique=True, nullable=False)
@@ -69,10 +71,12 @@ class User(db.Model, UserMixin):
     image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
     password = db.Column(db.String(60), nullable=False)
     admin = db.Column(db.Boolean,default=False)
+    aduser = db.Column(db.Boolean,default=False)
     pagesize = db.Column(db.Integer, nullable=False, default = 20)
     _subscriptions = db.Column(db.String(128))
         
     memos = db.relationship('Memo',backref=db.backref('user', lazy=True))
+    history = db.relationship('MemoHistory',backref=db.backref('user', lazy=True))
 
 
     def get_reset_token(self, expires_sec=1800):

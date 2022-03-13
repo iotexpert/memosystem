@@ -4,6 +4,8 @@ Bugs
 ----------------------
 0   enh     search
 
+0   bug     inbox sign next->inbox
+
 1   enh     code review verify of functions
 1   enh     add comments
 
@@ -62,3 +64,4 @@ method .... lowercase with underscores
 module ... lowercase.. potentially with underscores
 package
 
+attributes that are foreign keys of id will be table_id ... like user_id 

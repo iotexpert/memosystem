@@ -16,7 +16,7 @@ class MemoReference(db.Model):
         ref_list = MemoReference.query.filter_by(source_id=memo.id).all()
         for ref in ref_list:
             rval.append([ref.ref_user_id,ref.ref_memo_number,ref.ref_memo_version])
-        current_app.logger.info(f"References = {rval}")
+#        current_app.logger.info(f"References = {rval}")
         return rval
     
     @staticmethod
@@ -33,7 +33,7 @@ class MemoReference(db.Model):
         new_ref = MemoReference(source_id=memo_src_id,ref_user_id=ref_user_id,ref_memo_number=ref_memo_number,ref_memo_version=ref_memo_version)
         db.session.add(new_ref)
         db.session.commit()
-        current_app.logger.info(f"Adding Reference {new_ref}")
+#        current_app.logger.info(f"Adding Reference {new_ref}")
 
 
     @staticmethod

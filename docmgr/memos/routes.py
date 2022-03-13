@@ -3,6 +3,7 @@ import re
 from flask import (render_template, url_for, flash,current_app,
                    redirect, request, abort, Blueprint, send_from_directory)
 from flask_login import current_user, login_required
+from docmgr.models.MemoHistory import MemoHistory
 
 from docmgr.models.User import User
 from docmgr.memos.forms import MemoForm, MemoSearch
@@ -92,6 +93,7 @@ def getfile(username,memo_number,memo_version,uuid):
         user = current_user
 
     if memo.has_access(user) == False:
+        MemoHistory.activity(memo=memo,action="file denied",user=user)
         abort(403)
 
     memo_list = memo.get_files()
@@ -112,7 +114,6 @@ def process_file(new_memo,formfield):
         mfile.save()
         f.save(os.path.join(path, mfile.uuid))
         new_memo.num_files = new_memo.num_files + 1
-        new_memo.save()
 
 
 @memos.route("/cu/memo",methods=['GET', 'POST'])
@@ -122,7 +123,7 @@ def process_file(new_memo,formfield):
 def create_revise_submit(username=None,memo_number=None):
     
     if username == None:
-        username = current_user.username  
+        username = current_user.username
 
     # first check to see if the user has permission
     owner = User.find(username=username)
@@ -130,13 +131,13 @@ def create_revise_submit(username=None,memo_number=None):
     if owner == None:
         return abort(404)
 
-    delegate = User.find(username=current_user.username)
+    delegate = current_user  
         
     if not Memo.can_create(owner=owner,delegate=delegate):
         return abort(403)
 
-
-# Right here you need to lookup the memo
+    
+    current_app.logger.info(f"owner = {owner} delegate={delegate} memo_number={memo_number}")
     memo = Memo.create_revise(owner=owner,delegate=delegate,memo_number=memo_number)
 
     class FileForm(MemoForm):
@@ -162,13 +163,13 @@ def create_revise_submit(username=None,memo_number=None):
         form.distribution.data = memo.distribution
         form.signers.data = memo.signers['signers']
         form.confidential.data = memo.confidential
-        form.references.data = memo.references['refs']
+        form.references.data = memo.references['ref_string']
         
         form.username.data = username
         form.memo_number.data = memo.number
         form.memo_version.data = memo.version
 
-        return render_template('create_memo.html', title=f'New Memo {memo}',form=form, legend=f'New Memo {memo}', user=delegate, memo=memo)
+        return render_template('create_memo.html', title=f'New Memo {memo}',form=form, legend=f'New Memo {memo}', user=owner, memo=memo)
 
 # Everthing from here down is POST
 
@@ -207,9 +208,8 @@ def create_revise_submit(username=None,memo_number=None):
 
     if form.validate_on_submit():
         # creation is all done... all documents added... signatures etc.
-        memo.process_state()
+        memo.process_state(acting=current_user)
         # make a json backup
-        memo.save()
         flash(f'{memo} has been created!', 'success')
         return redirect(url_for('memos.main'))
  
@@ -444,7 +444,7 @@ def search():
             memos = Memo.search(title=form.title.data,page=page,pagesize=pagesize)
             search = f"keywords:{form.keywords.data}"
             url_params['search'] = search
-            return redirect(url_for("memos.main",username=form.username.data,page=page,url_params=url_params))
+            return render_template('memo.html', memos=memos, title="memo",user=user,delegate=user,detail=detail,next_page=next_page,url_params =url_params)
     
         if form.memo_ref.data != '':
             return redirect(url_for("memos.main",username=form.memo_ref.data,page=page))
@@ -456,7 +456,7 @@ def search():
             return redirect(url_for("memos.inbox",username=form.inbox.data,page=page))
         
     if request.method == 'POST':
-        return render_template('memo_search.html', title='Memo Search ',legend=f'Search',form=form)
+        return render_template('search.html', title='Memo Search ',legend=f'Search',form=form)
     
 
 # Everything below here is GET
@@ -470,9 +470,26 @@ def search():
             url_params['search']= f'title:{title[1]}'
         if len(keywords) == 2:
             memos = Memo.search(keywords=keywords[1],page=page,pagesize=pagesize)
-            url_params['search']= f'keywords:{title[1]}'
+            url_params['search']= f'keywords:{keywords[1]}'
 
         next_page = "memos.search"
         return render_template('memo.html', memos=memos, title="memo",user=user,delegate=user,detail=detail,next_page=next_page,url_params=url_params)
 
     return render_template('memo_search.html', title='Memo Search ',legend=f'Search',form=form)
+
+
+@memos.route("/history")
+@login_required
+def history():
+    pagesize = User.get_pagesize(current_user)
+    page = request.args.get('page', 1, type=int)
+
+    history_list = MemoHistory.get_history(page=page,pagesize=pagesize)
+        
+    
+    url_params = {
+            }
+    
+    next_page = "memos.history"
+    
+    return render_template('memo_history.html', history=history_list,next_page=next_page, url_params=url_params)
