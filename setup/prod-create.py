@@ -12,6 +12,3 @@ admin =  User(username=current_app.config['ADMIN_USER'], password=User.create_ha
 
 db.session.add(admin)
 db.session.commit()
-
-#MemoFile()
-#MemoSignature()

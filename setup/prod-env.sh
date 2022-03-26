@@ -16,3 +16,4 @@ export DOCMGR_EMAIL_PASS=''
 export DOCMGR_ADMIN_USER='admin'
 export DOCMGR_ADMIN_PASSWORD='admin'
 export DOCMGR_ADMIN_EMAIL='admin@admin.local'
+export PYTHONPATH=.

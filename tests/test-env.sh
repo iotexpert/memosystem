@@ -2,7 +2,7 @@
 export FLASK_APP=run.py
 export FLASK_DEBUG=True
 
-export SQLALCHEMY_DATABASE_URI='sqlite:///site.db'
+export SQLALCHEMY_DATABASE_URI='sqlite:///test.db'
 #export DOCMGR__DATABASE_URI='mysql+pymysql://docmgr:docmgr@linux.local/docmgr'
 #export SQLALCHEMY_TRACK_MODIFICATIONS=False
 

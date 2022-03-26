@@ -10,7 +10,7 @@ from docmgr.models.MemoReference import MemoReference
 from docmgr.models.MemoHistory import MemoHistory
 from docmgr.models.MemoActivity import MemoActivity
 
-from revletter import b10_to_rev,rev_to_b10
+from docmgr.revletter import b10_to_rev,rev_to_b10
 
 import shutil
 
