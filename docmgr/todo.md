@@ -2,9 +2,10 @@
 ----------------------
 Bugs
 ----------------------
-0   enh     search
+0   enh     search paging on title
 
 0   bug     inbox sign next->inbox
+0   bug     fix the route now that the form post doesnt need to be embedded anymore
 
 1   enh     code review verify of functions
 1   enh     add comments
@@ -65,3 +66,4 @@ module ... lowercase.. potentially with underscores
 package
 
 attributes that are foreign keys of id will be table_id ... like user_id 
+

@@ -3,3 +3,4 @@ env
 docmgr/static/memos
 site.db
 env.sh
+.coverage

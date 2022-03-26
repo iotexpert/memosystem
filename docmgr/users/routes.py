@@ -28,17 +28,22 @@ def register():
 
 @users.route("/login", methods=['GET', 'POST'])
 def login():
+    print("Login form")
     if current_user.is_authenticated:
         return redirect(url_for('main.home'))
     form = LoginForm()
+    print(f"Form = {form.email.data} pw={form.password.data}")
     if form.validate_on_submit():
+        print("valid data")
         user = User.query.filter_by(email=form.email.data).first()
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember.data)
             next_page = request.args.get('next')
+            print("Login succesfullk")
             return redirect(next_page) if next_page else redirect(url_for('main.home'))
         else:
             flash('Login Unsuccessful. Please check email and password', 'danger')
+    print("Invalid data")
     return render_template('login.html', title='Login', form=form)
 
 
