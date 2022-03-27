@@ -10,7 +10,7 @@ from docmgr.models.MemoReference import MemoReference
 from docmgr.models.MemoHistory import MemoHistory
 from docmgr.models.MemoActivity import MemoActivity
 
-from docmgr.revletter import b10_to_rev,rev_to_b10
+from docmgr.revletter import b10_to_rev, rev_to_b10
 
 import shutil
 
@@ -29,11 +29,11 @@ class Memo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     number = db.Column(db.Integer)
     version = db.Column(db.String)
-    confidential = db.Column(db.Boolean,default=False)
-    distribution = db.Column(db.String(128),default='') 
-    keywords = db.Column(db.String(128),default='') 
-    title = db.Column(db.String(128), nullable=False,default='')
-    num_files = db.Column(db.Integer,default=0)
+    confidential = db.Column(db.Boolean, default=False)
+    distribution = db.Column(db.String(128), default='')
+    keywords = db.Column(db.String(128), default='')
+    title = db.Column(db.String(128), nullable=False, default='')
+    num_files = db.Column(db.Integer, default=0)
 
     # the date/time of the last action on this memo
     action_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
@@ -63,17 +63,17 @@ class Memo(db.Model):
 ########################################
 
     @staticmethod
-    def can_create(owner=None,delegate=None):
-        if owner==None or delegate==None:
+    def can_create(owner=None, delegate=None):
+        if owner is None or delegate is None:
             return False
         
         current_app.logger.info(f"{owner} {delegate}")
         
         return owner.is_delegate(delegate=delegate)
 
-    def can_revise(self,delegate=None):
+    def can_revise(self, delegate=None):
 
-        if delegate == None:
+        if delegate is None:
             return False
         
         if not self.user.is_delegate(delegate):
@@ -82,9 +82,9 @@ class Memo(db.Model):
         if self.memo_state == MemoState.Active or self.memo_state == MemoState.Obsolete:
             return True
 
-    def can_sign(self,signer=None,delegate=None):
+    def can_sign(self, signer=None, delegate=None):
 
-        if signer==None or delegate==None:
+        if signer is None or delegate is None:
             return False
                 
         if self.memo_state != MemoState.Signoff:
@@ -97,8 +97,8 @@ class Memo(db.Model):
         current_app.logger.info(f"can_sign status = {status}")
         return status['is_signer'] and not status['status'] 
         
-    def can_unsign(self,signer=None,delegate=None):
-        if signer==None or delegate==None:
+    def can_unsign(self, signer=None, delegate=None):
+        if signer is None or delegate is None:
             return False
         
         if self.memo_state != MemoState.Signoff:
@@ -113,9 +113,9 @@ class Memo(db.Model):
         current_app.logger.info(f"can_sign status = {status}")
         return status['is_signer'] and status['status'] 
 
-    def can_obsolete(self,delegate=None):
+    def can_obsolete(self, delegate=None):
     
-        if delegate == None:
+        if delegate is None:
             return False
         
         if not self.user.is_delegate(delegate):
@@ -128,9 +128,9 @@ class Memo(db.Model):
 
 
 
-    def can_cancel(self,delegate=None):
+    def can_cancel(self, delegate=None):
 
-        if delegate == None:
+        if delegate is None:
             return False
 
         if self.memo_state != MemoState.Draft:
@@ -143,9 +143,9 @@ class Memo(db.Model):
 
 
 
-    def can_reject(self,signer=None,delegate=None):
+    def can_reject(self, signer=None, delegate=None):
         
-        if signer==None or delegate == None:
+        if signer is None or delegate is None:
             return False
 
         if self.memo_state != MemoState.Signoff:
@@ -161,13 +161,13 @@ class Memo(db.Model):
 
         
     # This function will return True of the "username" has access to self
-    def has_access(self,user=None):
+    def has_access(self, user=None):
         # if it is not confidential than anyone can access
         if self.confidential == False:
             return True
 
         # at this point we know it is confidential so ... they must provide a username
-        if user == None:
+        if user is None:
             return False
 
 
@@ -358,7 +358,9 @@ class Memo(db.Model):
         for memo in prev_list:
             if memo.memo_state == MemoState.Active:
                 memo.memo_state = MemoState.Obsolete
+                MemoHistory.activity(memo=memo,memo_activity=MemoActivity.Obsolete,user=acting)
                 memo.save()
+
     
     # This function is called when:
     # 1- a valid draft is created

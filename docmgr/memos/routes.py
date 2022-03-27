@@ -230,7 +230,7 @@ def inbox(username=None):
     else:
         detail = True
                        
-    if username==None:
+    if username == None:
         user = current_user
     else:
         user = User.find(username=username)
