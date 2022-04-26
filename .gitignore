@@ -5,3 +5,4 @@ site.db
 test.db
 env.sh
 .coverage
+.vscode

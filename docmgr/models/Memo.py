@@ -1,6 +1,11 @@
-
+import re
+import os
+import shutil
+import json
 from datetime import datetime
+
 from flask import current_app
+
 from docmgr import db
 from docmgr.models.User import User
 from docmgr.models.MemoState import MemoState
@@ -9,44 +14,32 @@ from docmgr.models.MemoSignature import MemoSignature
 from docmgr.models.MemoReference import MemoReference
 from docmgr.models.MemoHistory import MemoHistory
 from docmgr.models.MemoActivity import MemoActivity
-
 from docmgr.revletter import b10_to_rev, rev_to_b10
 
-import shutil
 
-import re
-import os
-import json
 
 class Memo(db.Model):
-    """[summary]
-
-    Args:
-        db ([type]): [description]
-    Returns:
-        [type]: [description]
+    """This class is the single interface to a "memo" and all of the "memos"
     """
     id = db.Column(db.Integer, primary_key=True)
-    number = db.Column(db.Integer)
-    version = db.Column(db.String)
-    confidential = db.Column(db.Boolean, default=False)
-    distribution = db.Column(db.String(128), default='')
-    keywords = db.Column(db.String(128), default='')
-    title = db.Column(db.String(128), nullable=False, default='')
-    num_files = db.Column(db.Integer, default=0)
+    number = db.Column(db.Integer)                                      # Memo Number
+    version = db.Column(db.String)                                      # A,B,..Z,AA,AB,...AZ,BA
+    confidential = db.Column(db.Boolean, default=False)                 # if true only author, signer, distribution can read
+    distribution = db.Column(db.String(128), default='')                # user names on the distribution
+    keywords = db.Column(db.String(128), default='')                    # any keyword
+    title = db.Column(db.String(128), nullable=False, default='')       # The title of the memo
+    num_files = db.Column(db.Integer, default=0)                        # The number of files attached to the memo
 
-    # the date/time of the last action on this memo
-    action_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-        
+    action_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)  # The last time anything happened
     create_date = db.Column(db.DateTime)    # when the memo was created
     submit_date = db.Column(db.DateTime)    # when the memo was most recently submitted  (from created)
     active_date = db.Column(db.DateTime)    # when the memo was moved to active state (from submitted)
     obsolete_date = db.Column(db.DateTime)  # when the memo was moved to obsolete state (from active)
     
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'),nullable=False)
-    _signers = db.Column(db.String(128),default='')
-    _references = db.Column(db.String(128),default='')   
-    memo_state = db.Column(db.Enum(MemoState))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'),nullable=False)        # The key of the user who owns the memo
+    _signers = db.Column(db.String(128),default='')                                 # the hidden list of signer usernames
+    _references = db.Column(db.String(128),default='')                              # The hidden list of references
+    memo_state = db.Column(db.Enum(MemoState))                                      # Draft, Signoff, Active, Obsolete
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -59,20 +52,34 @@ class Memo(db.Model):
         return f"{self.user.username}-{self.number}{self.version}"
 
 ########################################
-# Permission Functions 
+# Permission Functions
 ########################################
 
     @staticmethod
     def can_create(owner=None, delegate=None):
+        """will return true oif the delegate can create a memo for the owner
+
+        Args:
+            owner (User, optional): The owner of the memo. Defaults to None.
+            delegate (User, optional): The user trying to create the memo. Defaults to None.
+
+        Returns:
+            Boolean: True if the delegate can create a memo for the owner 
+        """
         if owner is None or delegate is None:
             return False
-        
-        current_app.logger.info(f"{owner} {delegate}")
-        
+       
         return owner.is_delegate(delegate=delegate)
 
     def can_revise(self, delegate=None):
+        """Is the delgate allowed to update "this" memo?
 
+        Args:
+            delegate (User, optional): The user trying to revise this memo
+
+        Returns:
+            Boolean: True if the delgate is allowed to revist the memo, else False
+        """
         if delegate is None:
             return False
         
@@ -83,68 +90,105 @@ class Memo(db.Model):
             return True
 
     def can_sign(self, signer=None, delegate=None):
+        """Can this memo be signed by delegate for the signers
 
+        Args:
+            signer (User, optional): Who are you trying to sign for
+            delegate (User, optional): Who is trying to sign
+
+        Returns:
+            Boolean: True if the delegate is allowed to sign this memo for the signer
+        """
         if signer is None or delegate is None:
             return False
-                
+
         if self.memo_state != MemoState.Signoff:
             return False
-        
+
         if not signer.is_delegate(delegate=delegate):
             return False
-       
+
+        # The list of signers and if they have signed are kept in the MemoSignature table
         status = MemoSignature.is_signer(self.id,signer)
-        current_app.logger.info(f"can_sign status = {status}")
-        return status['is_signer'] and not status['status'] 
-        
+        return status['is_signer'] and not status['status']
+
     def can_unsign(self, signer=None, delegate=None):
+        """Can this memo be unsigned by delegate for the signer
+
+        Args:
+            signer (User, optional): Who are you trying to unsign for
+            delegate (User, optional): Who is trying to unsign
+
+        Returns:
+            Boolean: True if the delegate is allowed to unsign this memo for the signer
+        """
         if signer is None or delegate is None:
             return False
-        
+
         if self.memo_state != MemoState.Signoff:
             return False
-        
+
         if not signer.is_delegate(delegate=delegate):
             return False
-        
-        current_app.logger.info(f"Signer={signer} delegate={delegate}")
-       
+
         status = MemoSignature.is_signer(self.id,signer)
-        current_app.logger.info(f"can_sign status = {status}")
-        return status['is_signer'] and status['status'] 
+        return status['is_signer'] and status['status']
 
     def can_obsolete(self, delegate=None):
-    
+        """ can this memo be obsoleted by the delegate?  Only active memos can be obsoleted
+
+        Args:
+            delegate (User, optional): the User trying to take the action
+
+        Returns:
+            Boolean: returns true if the delgate can obsolete this memo
+        """
         if delegate is None:
             return False
-        
+
         if not self.user.is_delegate(delegate):
             return False
-        
+
         if self.memo_state == MemoState.Active:
-            return True 
+            return True
 
         return False
 
 
 
     def can_cancel(self, delegate=None):
+        """ can this memo be cancled by the delegate.  Only drafts memos can be canceled
+
+        Args:
+            delegate (User, optional): the User trying to take the action
+
+        Returns:
+            Boolean: returns true if the delgate can cancel this memo
+        """
 
         if delegate is None:
             return False
 
         if self.memo_state != MemoState.Draft:
             return False
-            
+
         if not self.user.is_delegate(delegate=delegate):
             return False
-        
+
         return True
 
 
 
     def can_reject(self, signer=None, delegate=None):
-        
+        """ can this memo be rejected by the delegate.  Only memos in signoff can be rejected
+
+        Args:
+            signer (User, optional): the User for who the action is being taken
+            delegate (User, optional): the User trying to take the action
+
+        Returns:
+            Boolean: returns true if the delgate can reject this memo
+        """
         if signer is None or delegate is None:
             return False
 
@@ -153,15 +197,16 @@ class Memo(db.Model):
 
         if not signer.is_delegate(delegate):
             return False
-        
+
         status = MemoSignature.is_signer(memo_id=self.id,signer=signer)
 
         # if you are a signer you can reject.. even if you have already signed
         return status['is_signer']
 
         
-    # This function will return True of the "username" has access to self
     def has_access(self, user=None):
+        # This function will return True of the "username" has access to self
+
         # if it is not confidential than anyone can access
         if self.confidential == False:
             return True
@@ -170,7 +215,6 @@ class Memo(db.Model):
         if user is None:
             return False
 
-
         # you alway have access to your own memo's
         if self.user.username == user.username:
             return True
@@ -178,7 +222,7 @@ class Memo(db.Model):
         if user.admin:
             return True
 
-        # if the username is in the distribution list then provide access
+        # if the username is in the distribution list then provide access TODO: ARH do something better
         if user.username in re.split('\s|\,|\t|\;|\:',self.distribution):
             return True
 
@@ -186,10 +230,11 @@ class Memo(db.Model):
 
 
 ########################################
-# ??? Functions 
+# ??? Functions
 ########################################
 
     def get_fullpath(self):
+        
         path = os.path.join(current_app.root_path,"static","memos",f"{self.user_id}",f"{self.number}",f"{self.version}")
         return path
 
@@ -197,13 +242,13 @@ class Memo(db.Model):
         path = os.path.join("/static","memos",f"{self.user_id}",f"{self.number}",f"{self.version}")
         return path
 
-    # return a list of the files attached to this memo
     def get_files(self):
+        # return a list of the files attached to this memo
         memo_list = MemoFile.query.filter_by(memo_id=self.id).all()
         return memo_list
 
-    # TODO: ARH need to add the list of signers and files
     def saveJson(self):
+        # TODO: ARH need to add the list of signers and files
         js = {}
         js['title']=self.title
         js['number']=self.number
@@ -228,24 +273,18 @@ class Memo(db.Model):
         f.close()
 
    
-    
-    # get the signers from the singing table and turn it back to a string
-    @property 
+    @property
     def signers(self):
-    
+        # get the signers from the signing table and turn it back to a string and a list
         siglist = MemoSignature.get_signers(self)
-#        current_app.logger.info(f"Siglist = {siglist}")
         for sig in siglist:
             sig.signer = User.find(userid=sig.signer_id)
             sig.delegate = User.find(userid=sig.delegate_id)
         return {'signers':self._signers,'siglist':siglist}
-        
+
     @signers.setter
     def signers(self,signer_names):
-        
         self._signers = signer_names
-        
-        current_app.logger.info(f"Adding signers={signer_names}")
         MemoSignature.delete_signers(self)
 
         users = User.valid_usernames(signer_names)

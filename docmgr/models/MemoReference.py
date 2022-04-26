@@ -8,7 +8,7 @@ class MemoReference(db.Model):
     
     ref_user_id = db.Column(db.Integer, db.ForeignKey('user.id'),nullable=False)
     ref_memo_number = db.Column(db.Integer,nullable=False)
-    ref_memo_version = db.Column(db.Integer)
+    ref_memo_version = db.Column(db.Integer) # TODO: ARH Fix this
     
     @staticmethod
     def get_refs(memo):
