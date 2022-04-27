@@ -1,3 +1,4 @@
+import os
 from flask import render_template, url_for, flash, redirect, request, Blueprint, current_app
 from flask_login import login_user, current_user, logout_user, login_required
 from docmgr import db, bcrypt
@@ -5,8 +6,8 @@ from docmgr import db, bcrypt
 from docmgr.users.forms import (RegistrationForm, LoginForm, UpdateAccountForm,
                                    RequestResetForm, ResetPasswordForm)
 from docmgr.users.utils import save_picture, send_reset_email
-
 from docmgr.models.User import User
+from docmgr.extensions import ldap
 
 users = Blueprint('users', __name__)
 
@@ -32,18 +33,31 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for('main.home'))
     form = LoginForm()
-    print(f"Form = {form.email.data} pw={form.password.data}")
     if form.validate_on_submit():
-        print("valid data")
+        login_ok = False
+        ldap_user = ldap.get_object_details(form.email.data)
+        if ldap_user:
+            ldap_pw_ok = ldap.bind_user(form.email.data, form.password.data)
+            login_ok = ldap_pw_ok
+
         user = User.query.filter_by(email=form.email.data).first()
-        if user and user.check_password(form.password.data):
+
+        if user is None and ldap_pw_ok:
+            user = User(username=ldap_user[os.environ["LDAP_USER_NAME"]][0].decode('ASCII'), 
+                email=ldap_user[os.environ["LDAP_EMAIL"]][0].decode('ASCII'), password='xx')
+            db.session.add(user)
+            db.session.commit()
+
+        if ldap_user is None and user and user.check_password(form.password.data):
+            login_ok = True
+
+        if login_ok:
             login_user(user, remember=form.remember.data)
             next_page = request.args.get('next')
-            print("Login succesfullk")
             return redirect(next_page) if next_page else redirect(url_for('main.home'))
         else:
             flash('Login Unsuccessful. Please check email and password', 'danger')
-    print("Invalid data")
+
     return render_template('login.html', title='Login', form=form)
 
 

@@ -1,0 +1,32 @@
+import os
+
+os.environ['LDAP_USER'] =  'service_acct' # Sevice account to authenticate to ldap server
+os.environ['LDAP_PASSWORD'] = 'passwd' # password for service account
+os.environ["LDAP_SCHEMA"] = "ldap" # ldap or ldaps
+os.environ["LDAP_PORT"] = "389" # 389 or 636
+os.environ["LDAP_HOST"] = "ldap.com" # host name of LDAP server without schema or port
+os.environ["LDAP_BASE_DN"] = "OU=Company,DC=Company,DC=local" # Base OU to search for accounts in
+os.environ["LDAP_USERNAME"] = "CN={},OU=Users,OU=Company,DC=Company,DC=local".format(os.getenv('LDAP_USER')) # Full ldap locator of service account
+os.environ["LDAP_USER_OBJECT_FILTER"] = "(&(objectclass=Person)(mail=%s))" # ldap lookup condition
+os.environ["LDAP_USER_NAME"] = "sAMAccountName" # field to map to user id
+os.environ["LDAP_EMAIL"] = "mail"  # field to map to email
+os.environ["PYTHON_LDAP_TRACE_LEVEL"] = "0"
+
+os.environ['FLASK_APP'] = "run.py"
+os.environ['FLASK_DEBUG'] = 'True'
+os.environ['FLASK_ENV'] = 'development'
+
+os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+#os.environ['DOCMGR__DATABASE_URI'] = 'mysql+pymysql://user:password@test.local/docmgr'
+#os.environ['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+os.environ['DOCMGR_SECRET_KEY'] = '5791628bb0b13ce0c676dfde280ba245'
+
+os.environ['DOCMGR_EMAIL_SERVER'] = 'smtp.google.com'
+os.environ['DOCMGR_EMAIL_PORT'] = '587'
+os.environ['DOCMGR_EMAIL_USER'] = ''
+os.environ['DOCMGR_EMAIL_PASS'] = ''
+
+os.environ['DOCMGR_ADMIN_USER'] = 'admin'
+os.environ['DOCMGR_ADMIN_PASSWORD'] = 'admin'
+os.environ['DOCMGR_ADMIN_EMAIL'] = 'admin@admin.local'
