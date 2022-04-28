@@ -21,13 +21,6 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     Markdown(app)
     app.config.from_object(Config)
-    app.config["LDAP_SCHEMA"] = os.getenv('LDAP_SCHEMA')
-    app.config["LDAP_PORT"] = os.getenv('LDAP_PORT')
-    app.config["LDAP_HOST"] = os.getenv('LDAP_HOST')
-    app.config["LDAP_BASE_DN"] = os.getenv('LDAP_BASE_DN')
-    app.config["LDAP_USERNAME"] = os.getenv('LDAP_USERNAME')
-    app.config["LDAP_PASSWORD"] = os.getenv('LDAP_PASSWORD')
-    app.config["LDAP_USER_OBJECT_FILTER"] = os.getenv('LDAP_USER_OBJECT_FILTER')
 
     db.init_app(app)
     bcrypt.init_app(app)

@@ -18,4 +18,12 @@ class Config:
     ADMIN_EMAIL = os.environ.get('DOCMGR_ADMIN_EMAIL')
     
     MEMO_ROOT = os.environ.get('DOCMGR_MEMO_ROOT')
+    
+    LDAP_SCHEMA = os.getenv('LDAP_SCHEMA')
+    LDAP_PORT = os.getenv('LDAP_PORT')
+    LDAP_HOST = os.getenv('LDAP_HOST')
+    LDAP_BASE_DN = os.getenv('LDAP_BASE_DN')
+    LDAP_USERNAME = os.getenv('LDAP_USERNAME')
+    LDAP_PASSWORD = os.getenv('LDAP_PASSWORD')
+    LDAP_USER_OBJECT_FILTER = os.getenv('LDAP_USER_OBJECT_FILTER')
  

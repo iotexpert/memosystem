@@ -43,6 +43,7 @@ def login():
 
         user = User.query.filter_by(email=form.email.data).first()
 
+        # If we validated a user with ldap, but they don't exist in the database, add them.
         if user is None and ldap_pw_ok:
             user = User(username=ldap_user[os.environ["LDAP_USER_NAME"]][0].decode('ASCII'), 
                 email=ldap_user[os.environ["LDAP_EMAIL"]][0].decode('ASCII'), password='xx')
