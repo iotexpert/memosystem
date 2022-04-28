@@ -29,16 +29,17 @@ def register():
 
 @users.route("/login", methods=['GET', 'POST'])
 def login():
-    print("Login form")
     if current_user.is_authenticated:
         return redirect(url_for('main.home'))
     form = LoginForm()
     if form.validate_on_submit():
         login_ok = False
-        ldap_user = ldap.get_object_details(form.email.data)
-        if ldap_user:
-            ldap_pw_ok = ldap.bind_user(form.email.data, form.password.data)
-            login_ok = ldap_pw_ok
+        ldap_user = None
+        if ldap:
+            ldap_user = ldap.get_object_details(form.email.data)
+            if ldap_user:
+                ldap_pw_ok = ldap.bind_user(form.email.data, form.password.data)
+                login_ok = ldap_pw_ok
 
         user = User.query.filter_by(email=form.email.data).first()
 
@@ -48,8 +49,11 @@ def login():
             db.session.add(user)
             db.session.commit()
 
-        if ldap_user is None and user and user.check_password(form.password.data):
-            login_ok = True
+        if ldap_user is None and user:
+            try:
+                 login_ok = user.check_password(form.password.data)
+            except:  # blanked password from ldap creation has a 'bad salt'
+                pass
 
         if login_ok:
             login_user(user, remember=form.remember.data)

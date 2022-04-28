@@ -34,7 +34,8 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     mail.init_app(app)
     
-    ldap.init_app(app)
+    if ldap:
+        ldap.init_app(app)
 
     from docmgr.users.routes import users
     from docmgr.main.routes import main
