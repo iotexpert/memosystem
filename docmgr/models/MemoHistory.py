@@ -12,7 +12,7 @@ class MemoHistory(db.Model):
     memo_ref = db.Column(db.String(48))
     date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     memo_activity = db.Column(db.Enum(MemoActivity))      # For some reason the attribute names "activity" and "action" are illegal
-    ref_user_id = db.Column(db.Integer, db.ForeignKey('user.id'),nullable=False)
+    ref_user_id = db.Column(db.String(120), db.ForeignKey('user.username'),nullable=False)
 
 
     def __str__(self):
@@ -23,9 +23,9 @@ class MemoHistory(db.Model):
     @staticmethod
     def activity(memo=None,memo_activity=None,user=None):
         if user==None:
-            userid =  0
+            userid =  '0'
         else:
-            userid = user.id
+            userid = user.username
         current_app.logger.info(f"activity={memo_activity} memo={memo} memoid={memo.id} user={user}")
    
         if memo_activity != MemoActivity.Cancel:

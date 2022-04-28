@@ -6,8 +6,8 @@ from flask import current_app
 class MemoSignature(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     memo_id = db.Column(db.Integer, db.ForeignKey('memo.id'),nullable=False)
-    signer_id = db.Column(db.Integer, db.ForeignKey('user.id'),nullable=False)   # who is suppsoed to sign
-    delegate_id = db.Column(db.Integer, db.ForeignKey('user.id'),nullable=True)  # who actually performed the signature
+    signer_id = db.Column(db.String(120), db.ForeignKey('user.username'),nullable=False)   # who is suppsoed to sign
+    delegate_id = db.Column(db.String(120), db.ForeignKey('user.username'),nullable=True)  # who actually performed the signature
     signed = db.Column(db.Boolean,default=False)
     date_signed = db.Column(db.DateTime, nullable=True)
     
@@ -25,7 +25,7 @@ class MemoSignature(db.Model):
         
         current_app.logger.info(f"memo_id ={memo_id} signer={signer} delegate={delegate}")
 
-        memosig = MemoSignature.query.filter_by(memo_id=memo_id,signer_id=signer.id).first()
+        memosig = MemoSignature.query.filter_by(memo_id=memo_id,signer_id=signer.username).first()
         
         if memosig == None:
             return False
@@ -37,7 +37,7 @@ class MemoSignature(db.Model):
         memosig.signed = True
         memosig.date_signed = datetime.utcnow()
         if delegate != None:
-            memosig.delegate_id = delegate.id
+            memosig.delegate_id = delegate.username
         else:
             memosig.delegate_id = None
             
@@ -48,8 +48,7 @@ class MemoSignature(db.Model):
         return True
 
     @staticmethod
-    def unsign(memo_id=memo_id,signer=None,delegate=None):
-        #assert signer!=None and type(signer)==type(User)    
+    def unsign(memo_id=memo_id,signer=None,delegate=None): 
         
         current_app.logger.info(f"Type for user = {type(signer)}")      
      
@@ -90,7 +89,7 @@ class MemoSignature(db.Model):
         
         current_app.logger.info(f"Adding Signer {signer} to {memo.user.username}/{memo.number}/{memo.version}")
          
-        sig = MemoSignature(memo_id=memo.id,signed=False,signer_id=signer.id)
+        sig = MemoSignature(memo_id=memo.id,signed=False,signer_id=signer.username)
         db.session.add(sig)
         db.session.commit()
 
@@ -122,7 +121,7 @@ class MemoSignature(db.Model):
         if signer == None:
             return {'is_signer':False,'status':False,'signature':None}
     
-        msig = MemoSignature.query.filter_by(memo_id=memo_id,signer_id=signer.id).first()
+        msig = MemoSignature.query.filter_by(memo_id=memo_id,signer_id=signer.username).first()
         if msig != None:
             return {'is_signer':True,'status':msig.signed,'signature':msig}
         else:
@@ -137,7 +136,7 @@ class MemoSignature(db.Model):
         assert signer != None,"Signer must have some value"
         rval = []
 
-        memosig = MemoSignature.query.filter_by(signer_id=signer.id,signed=signed).order_by(MemoSignature.signed).all()
+        memosig = MemoSignature.query.filter_by(signer_id=signer.username,signed=signed).order_by(MemoSignature.signed).all()
 
         for sig in memosig:
             rval.append(sig.memo_id)

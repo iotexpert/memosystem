@@ -1,9 +1,14 @@
+try:
+    import settings_local
+except ImportError:
+    pass
 from docmgr import db,create_app
 import shutil
 from docmgr.models.User import User
 from docmgr.models.Memo import Memo
 from docmgr.models.MemoFile import MemoFile
 from docmgr.models.MemoSignature import MemoSignature
+
 
 app=create_app()
 app.app_context().push()

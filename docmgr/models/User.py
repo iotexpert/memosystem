@@ -1,146 +1,85 @@
-"""_summary_
-
-Raises:
-    RuntimeError: _description_
-
-Returns:
-    _type_: _description_
-    
-"""
-import enum
-import re
-import numpy
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask import current_app
-from flask_login import UserMixin
-
 from docmgr import db, login_manager
+from flask_login import UserMixin
 from docmgr import bcrypt
+import re
+import numpy
+from sqlalchemy.orm import relationship
+
 from docmgr.models.MemoSubscription import MemoSubscription
 
 # This is used by the flask UserMixin
 @login_manager.user_loader
 def load_user(user_id):
-    """This function is called by the flask UserMixin
+    return User.query.get(user_id)
 
-    Args:
-        user_id (int): The userid of the User object you are looking
-
-    Returns:
-        User: The User who's userid = user_id 
-    """
-    return User.query.get(int(user_id))
-
-class Role(enum.Enum):
-    """The Role enumeration is used to identify the legal roles in the system adminitrator, 
-    delegate, read etc for the authorizaitons table
-
-    Args:
-        enum (Int)
-    """
-    ADMIN    = 1
-    DELEGATE = 2
-
-
-class Authorization(db.Model):
-    """_summary_
-
-    Args:
-        db (_type_): _description_
-
-    Returns:
-        _type_: _description_
-    """
+        
+class Delegate(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)   # who is suppsoed to sign
-    role = db.Column(db.Enum(Role))      # For some reason the attribute names "activity" and "action" are illegal
-    for_userid = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # who actually performed the signature
-   
-    
+    owner_id = db.Column(db.String(120), db.ForeignKey('user.username'),nullable=False)   # who is suppsoed to sign
+    delegate_id = db.Column(db.String(120), db.ForeignKey('user.username'),nullable=False)  # who is alloed to perform the signature
+
+
     @staticmethod
-    def has_role(user, for_user, role):
-        """This function looks up the "user" to see if they have the "role" optionally
-        for the "delegate"
-
-        Args:
-            user (User): The user you are looking for
-            for_user (User): The user you are looking for
-            role (Role): The specific role
-
-        Returns:
-            Boolean: True if the user has the role, False if Not
-        """
-        if role is None:
+    def is_delegate(owner,delegate):
+    #current_app.logger.info(f"Owner={owner} delegate={delegate}")
+        if owner is None or delegate is None:
             return False
+        if owner.username == delegate.username:
+            return True
         
-        if for_user is None:
-            role = Authorization.query.filter_by(user_id=user.id, role=role).first()
+        if delegate.admin == True:
+            return True
+        
+        d = Delegate.query.filter_by(owner_id=owner.username,delegate_id=delegate.username).first()
+        if d:
+            return True
         else:
-            role = Authorization.query.filter_by(user_id=user.id, 
-                                                 for_userid=for_user.id, role=role).first()
-
-        
-        return True
-        
-    @staticmethod
-    def add(user, for_user, role):
-        """Add a new role for the "user" as applies to "for_user"
-        For example for user1 to delegate to user2  call
-        add(user2, user1, Role.DELEGATE)
-
-        Args:
-            user (User): The user you want to create a role for
-            for_user (User): The user you want the new rule to apply to
-            role (Role): The specific role
-        """
-        if for_user is None:
-            for_userid = None
-        else:
-            for_userid = for_user.id
-
-        new_auth = Authorization(user_id=user.id, for_userid=for_userid, role=role)
-        db.session.add(new_auth)
-        db.session.commit()
-
-    @staticmethod
-    def delete(user=None, for_user=None, role=None):
-        
-        if user is None and for_user is None:  # probably should assert
-            return
-        
-        if user is None and for_user is not None:
-            Authorization.query.filter_by(for_userid=for_user.id, role=role).delete()
-            return
-        
-        if user is not None and for_user is None:
-            Authorization.query.filter_by(user_id=user.id, role=role).delete()
-            return
-        
-        if user is not None and for_user is not None:
-            Authorization.query.filter_by(user_id=user.id, for_userid=for_user.id, role=role).delete()
-            return
- 
-    @staticmethod
-    def get_authorized_users(user, role):
-        auth_list = Authorization.query.filter_by(user_id=user.id, role=role).all()
+            return False
+    
+    @staticmethod    
+    def get_delegated_users(owner):
+        delegate_list = Delegate.query.filter_by(owner_id=owner.username).all()
+        #current_app.logger.info(f"Delegate_list = {delegate_list}")
         rval = []
-        for auth in auth_list:
-            user = User.find(userid=auth.for_userid)
+        for delegate_entry in delegate_list:
+            user = User.find(username=delegate_entry.delegate_id)
             rval.append(user)
         return rval
+    
+    @staticmethod    
+    def add(owner, delegate):
+        new_delegate = Delegate(owner_id=owner.username,delegate_id=delegate.username)
+        
+        db.session.add(new_delegate)
+        db.session.commit()
+        pass
+    
+    
+    @staticmethod
+    def delete(owner,delegate=None):
+        if delegate == None:
+            Delegate.query.filter_by(owner_id=owner.username).delete()
+        else:
+            Delegate.query.filter_by(owner_id=owner.username,delegate_id=delegate.username).delete()
+    
 
 class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(20), unique=True, nullable=False)
+    username = db.Column(db.String(120), primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
     password = db.Column(db.String(60), nullable=False)
+    admin = db.Column(db.Boolean,default=False)
+    readAll = db.Column(db.Boolean,default=False)
     pagesize = db.Column(db.Integer, nullable=False, default = 20)
     _subscriptions = db.Column(db.String(128))
         
     memos = db.relationship('Memo',backref=db.backref('user', lazy=True))
     history = db.relationship('MemoHistory',backref=db.backref('user', lazy=True))
 
+    def get_id(self):
+        return self.username
 
     def get_reset_token(self, expires_sec=1800):
         s = Serializer(current_app.config['SECRET_KEY'], expires_sec)
@@ -152,29 +91,27 @@ class User(db.Model, UserMixin):
 
     @property
     def delegates(self):
-        delegate_list = Authorization.get_authorized_users(self, Role.DELEGATE)
+        delegate_list = Delegate.get_delegated_users(owner=self)
         current_app.logger.info(f"Delegate List = {delegate_list}")
         rval = ''
         for delegate in delegate_list:
             rval = rval + delegate.username + ' '
-        return {"usernames":rval, "users":delegate_list}
+        return {"usernames":rval,"users":delegate_list}
         
     @delegates.setter
-    def delegates(self, delegates):
-        current_app.logger.info("In setter")
-        Authorization.delete(None, self, Role.DELEGATE)
+    def delegates(self,delegates):
+
+        Delegate.delete(owner=self)
         for delegate_name in re.split(r'\s|\,|\t|\;|\:',delegates):
             delegate = User.find(username=delegate_name)
-            if delegate is not None:
-                Authorization.add(delegate, self, Role.DELEGATE)
-       
-    # is the userid a valid delgate for "self"
-    def is_delegate(self, delegate=None):
-        current_app.logger.info(f"is delegate self={self.id} delegate={delegate.id}")
-        if delegate is not None and self.id == delegate.id:
-            return True
+            if delegate != None:
+                Delegate.add(self,delegate)
+    
         
-        return Authorization.has_role(delegate, self, Role.DELEGATE)
+    
+    # is the userid a valid delgate for "self"
+    def is_delegate(self,delegate=None):
+        return Delegate.is_delegate(self,delegate)
  
     @property
     def subscriptions(self):
@@ -184,7 +121,7 @@ class User(db.Model, UserMixin):
             return self._subscriptions 
         
     @subscriptions.setter
-    def subscriptions(self, sub_names):
+    def subscriptions(self,sub_names):
         self._subscriptions = sub_names
         users = User.valid_usernames(sub_names)
         MemoSubscription.delete(self)
@@ -225,7 +162,7 @@ class User(db.Model, UserMixin):
 
         u1 = None
         u2 = None
-        if userid is not None:
+        if userid != None:
             u1 = User.query.filter_by(id=userid).first()
         if username != None:
             u2 = User.query.filter_by(username=username).first()
@@ -269,20 +206,19 @@ class User(db.Model, UserMixin):
 
         return {'valid_usernames':valid_usernames,'invalid_usernames':invalid_usernames,'valid_users':valid_users}
 
-    def is_admin(self):
-        return Authorization.has_role(self, None, Role.ADMIN)
-
+    @staticmethod
+    def is_admin(username=None):
+        user = User.find(username=username)
+        if user and user.admin:
+            return True
+        else:
+            return False
+        
 
     @staticmethod
     def get_pagesize(user):
-        """
-
-        Args:
-            user (_type_): _description_
-
-        Returns:
-            _type_: _description_
-        """
-        if user is None or user.is_anonymous or user.pagesize is None:
+        
+        try:
+            return user.pagesize
+        except:
             return 10
-        return user.pagesize

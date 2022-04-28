@@ -6,9 +6,9 @@ class MemoReference(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     source_id = db.Column(db.Integer, db.ForeignKey('memo.id'),nullable=False)
     
-    ref_user_id = db.Column(db.Integer, db.ForeignKey('user.id'),nullable=False)
+    ref_user_id = db.Column(db.String(120), db.ForeignKey('user.username'),nullable=False)
     ref_memo_number = db.Column(db.Integer,nullable=False)
-    ref_memo_version = db.Column(db.Integer) # TODO: ARH Fix this
+    ref_memo_version = db.Column(db.String(10))
     
     @staticmethod
     def get_refs(memo):
@@ -16,7 +16,6 @@ class MemoReference(db.Model):
         ref_list = MemoReference.query.filter_by(source_id=memo.id).all()
         for ref in ref_list:
             rval.append([ref.ref_user_id,ref.ref_memo_number,ref.ref_memo_version])
-#        current_app.logger.info(f"References = {rval}")
         return rval
     
     @staticmethod

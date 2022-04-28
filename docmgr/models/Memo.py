@@ -36,7 +36,7 @@ class Memo(db.Model):
     active_date = db.Column(db.DateTime)    # when the memo was moved to active state (from submitted)
     obsolete_date = db.Column(db.DateTime)  # when the memo was moved to obsolete state (from active)
     
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'),nullable=False)        # The key of the user who owns the memo
+    user_id = db.Column(db.String(120), db.ForeignKey('user.username'),nullable=False)        # The key of the user who owns the memo
     _signers = db.Column(db.String(128),default='')                                 # the hidden list of signer usernames
     _references = db.Column(db.String(128),default='')                              # The hidden list of references
     memo_state = db.Column(db.Enum(MemoState))                                      # Draft, Signoff, Active, Obsolete
@@ -278,8 +278,8 @@ class Memo(db.Model):
         # get the signers from the signing table and turn it back to a string and a list
         siglist = MemoSignature.get_signers(self)
         for sig in siglist:
-            sig.signer = User.find(userid=sig.signer_id)
-            sig.delegate = User.find(userid=sig.delegate_id)
+            sig.signer = User.find(username=sig.signer_id)
+            sig.delegate = User.find(username=sig.delegate_id)
         return {'signers':self._signers,'siglist':siglist}
 
     @signers.setter
@@ -342,12 +342,12 @@ class Memo(db.Model):
         refs = MemoReference.get_refs(self)
         rval = []
         for ref in refs:
-            user = User.find(userid=ref[0])
-            memo = Memo.find(username=user.username,memo_number=ref[1],memo_version=ref[2])
+            userid=ref[0]
+            memo = Memo.find(username=userid,memo_number=ref[1],memo_version=ref[2])
             if ref[2] == None:
-                refstring=f"{user.username}-{ref[1]}"
+                refstring=f"{userid}-{ref[1]}"
             else:
-                refstring=f"{user.username}-{ref[1]}-{ref[2]}"
+                refstring=f"{userid}-{ref[1]}-{ref[2]}"
             rval.append((refstring,memo))
         return {'reflist':rval,'ref_string':self._references}
     
@@ -360,7 +360,7 @@ class Memo(db.Model):
         for i in range(len(refs['valid_refs'])):
             parsed_ref = Memo.parse_reference(refs['valid_refs'][i])
             user = User.find(username=parsed_ref[0])
-            MemoReference.add_ref(self.id,ref_user_id=user.id,ref_memo_number=parsed_ref[1],ref_memo_version=parsed_ref[2])
+            MemoReference.add_ref(self.id,ref_user_id=user.username,ref_memo_number=parsed_ref[1],ref_memo_version=parsed_ref[2])
                 
 
     @property
@@ -458,7 +458,7 @@ class Memo(db.Model):
         if owner.is_delegate(delegate) != True:
             return None
 
-        memo = Memo.query.join(User).filter(User.id==owner.id,Memo.number==memo_number).order_by(Memo.version.desc()).first()
+        memo = Memo.query.join(User).filter(User.username==owner.username,Memo.number==memo_number).order_by(Memo.version.desc()).first()
  
         # create a new memo (i.e. not a new version of an existing memo)
         if memo_number == None or memo==None:
@@ -471,7 +471,7 @@ class Memo(db.Model):
                             keywords = '',\
                             title = '',\
                             num_files = 0,\
-                            user_id = owner.id,\
+                            user_id = owner.username,\
                             memo_state = MemoState.Draft,\
                             action_date = datetime.utcnow(),\
                             create_date = datetime.utcnow(),\
@@ -609,10 +609,10 @@ class Memo(db.Model):
             return None
 
         if memo_version != None:
-            memo = Memo.query.join(User).filter(User.id==user.id,Memo.number==memo_number,Memo.version==memo_version).first()
+            memo = Memo.query.join(User).filter(User.username==user.username,Memo.number==memo_number,Memo.version==memo_version).first()
             current_app.logger.info(f"Memo Status = {memo}")
         else:
-            memo = Memo.query.join(User).filter(User.id==user.id,Memo.number==memo_number).order_by(Memo.version.desc()).first()
+            memo = Memo.query.join(User).filter(User.username==user.username,Memo.number==memo_number).order_by(Memo.version.desc()).first()
         
         
         current_app.logger.info(f"Found Memo id={memo}")
@@ -683,5 +683,5 @@ class Memo(db.Model):
         if user == None:
             return None
         
-        memolist = Memo.query.join(User).filter(Memo.memo_state==MemoState.Draft,User.id==user.id).order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)      
+        memolist = Memo.query.join(User).filter(Memo.memo_state==MemoState.Draft,User.username==user.username).order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)      
         return memolist

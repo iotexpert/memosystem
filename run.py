@@ -1,9 +1,9 @@
-from docmgr import create_app
-
 try:
     import settings_local
 except ImportError:
     pass
+from docmgr import create_app
+
 
 app = create_app()
 
