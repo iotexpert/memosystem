@@ -80,8 +80,8 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True, nullable=False)
     image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
     password = db.Column(db.String(60), nullable=False)
-    admin = db.Column(db.Boolean)
-    readAll = db.Column(db.Boolean)
+    admin = db.Column(db.Boolean,default=False)
+    readAll = db.Column(db.Boolean,default=False)
     pagesize = db.Column(db.Integer, nullable=False, default = 20)
     _subscriptions = db.Column(db.String(128))
         

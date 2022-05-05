@@ -47,7 +47,9 @@
                 <a class="nav-item nav-link" href="{{ url_for('users.logout') }}">Logout</a>
               {% else %}
                 <a class="nav-item nav-link" href="{{ url_for('users.login') }}">Login</a>
+                {% if not ldap %}
                 <a class="nav-item nav-link" href="{{ url_for('users.register') }}">Register</a>
+                {% endif %}
               {% endif %}
               <a class="nav-item nav-link" href="{{ url_for('main.help') }}">Help</a>
             </div>

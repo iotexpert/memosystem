@@ -1,5 +1,5 @@
 import os
-from flask import render_template, url_for, flash, redirect, request, Blueprint, current_app
+from flask import render_template, url_for, flash, redirect, request, Blueprint, current_app, abort
 from flask_login import login_user, current_user, logout_user, login_required
 from docmgr import db, bcrypt
 
@@ -14,6 +14,9 @@ users = Blueprint('users', __name__)
 
 @users.route("/register", methods=['GET', 'POST'])
 def register():
+    if ldap:
+        abort(403)
+        
     if current_user.is_authenticated:
         return redirect(url_for('main.home'))
     form = RegistrationForm()
@@ -68,41 +71,99 @@ def login():
 
 @users.route("/logout")
 def logout():
+    """
+    This function logs the user out
+    """
     logout_user()
     return redirect(url_for('main.home'))
 
 
 @users.route("/account", methods=['GET', 'POST'])
+@users.route("/account/<string:username>", methods=['GET', 'POST'])
 @login_required
-def account():
-    user = User.find(username=current_user.username)
+def account(username=None):
+    """_summary_
+
+    Args:
+        username (_type_, optional): _description_. Defaults to None.
+
+    Returns:
+        _type_: _description_
+    """
+    if username is None:
+        user = current_user
+    else:
+        user = User.find(username=username)
+
+    if user is None:
+        abort(404)        
+    
     current_app.logger.info(f"User = {current_user.username} Delegate List= {user.delegates}")
     form = UpdateAccountForm()
     if form.validate_on_submit():
         if form.picture.data:
             picture_file = save_picture(form.picture.data)
             current_user.image_file = picture_file
-        current_user.username = form.username.data
-        current_user.email = form.email.data
-        current_user.delegates = form.delegates.data
-#        current_user.next_memo = form.next_memo.data
-        current_user.pagesize = form.pagesize.data
-        current_user.subscriptions = form.subscriptions.data
+
+        if user is not current_user and not current_user.admin:
+            abort(403)
+
+        if not ldap and current_user.admin:
+            user.username = form.username.data
+        
+        if not ldap and current_user is not user:
+            user.admin = form.admin.data
+            user.readAll = form.readAll.data
+
+        if not ldap:
+            user.email = form.email.data
+
+        user.delegates = form.delegates.data
+        user.pagesize = form.pagesize.data
+        user.subscriptions = form.subscriptions.data
+        db.session.add(user)
         db.session.commit()
         flash('Your account has been updated!', 'success')
         return redirect(url_for('users.account'))
     elif request.method == 'GET':
-        form.username.data = current_user.username
-        form.email.data = current_user.email
+
+        form.username.render_kw['disabled'] = True
+        form.email.render_kw['disabled'] = False
+        form.delegates.render_kw['disabled'] = False
+        form.admin.render_kw['disabled'] = False
+        form.readAll.render_kw['disabled'] = False
+        form.subscriptions.render_kw['disabled'] = False
+        form.pagesize.render_kw['disabled'] = False
+
+        disable_submit_button = False
+
+        form.username.data = user.username
+        form.email.data = user.email
+        form.admin.data = user.admin
+        form.readAll.data = user.readAll
         form.delegates.data = current_user.delegates['usernames']
+        form.subscriptions.data = current_user.subscriptions
         form.pagesize.data = current_user.pagesize
-#      form.next_memo.data = current_user.next_memo
-        form.subscriptions.data = current_user.subscriptions       
-        current_app.logger.info(f"Type = {type(current_user)} Delegates = {current_user.delegates}")
+
+        if not (user == current_user or current_user.admin):
+            form.username.render_kw['disabled'] = True
+            form.email.render_kw['disabled'] = True
+            form.delegates.render_kw['disabled'] = True
+            form.admin.render_kw['disabled'] = True
+            form.readAll.render_kw['disabled'] = True
+            form.subscriptions.render_kw['disabled'] = True
+            form.pagesize.render_kw['disabled'] = True
+            disable_submit_button = True
+
+        if ldap: # all of these characteristics come from the LDAP groups
+            form.username.render_kw['disabled'] = True
+            form.email.render_kw['disabled'] = True
+            form.admin.render_kw['disabled'] = True
+            form.readAll.render_kw['disabled'] = True
         
-    image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
+        image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
     return render_template('account.html', title='Account',
-                           image_file=image_file, form=form)
+                           image_file=image_file, form=form,user=user,disable_submit_button=disable_submit_button)
 
 '''
 @users.route("/user/<string:username>")

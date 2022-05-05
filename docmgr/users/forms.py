@@ -40,18 +40,17 @@ class LoginForm(FlaskForm):
 
 class UpdateAccountForm(FlaskForm):
     username = StringField('Username',
-                           validators=[DataRequired(), Length(min=2, max=20)])
+                           validators=[DataRequired(), Length(min=2, max=20)],render_kw={})
     email = StringField('Email',
-                        validators=[DataRequired(), Email()])
-    delegates = StringField('Delegates', validators=[])
-    admin = BooleanField('Is Admin', default=False,
-                      false_values=('False', 'false', ''))
+                        validators=[DataRequired(), Email()],render_kw={})
+    delegates = StringField('Delegates', validators=[],render_kw={})
+    admin = BooleanField('Admin', default=False,
+                      false_values=('False', 'false', ''),render_kw={})
     readAll = BooleanField('Read All', default=False,
-                      false_values=('False', 'false', ''))
+                      false_values=('False', 'false', ''),render_kw={})
 
-    subscriptions = StringField('Subscriptions')
-    pagesize = StringField('Page Size')
-    next_memo = StringField('Next Memo')
+    subscriptions = StringField('Subscriptions',render_kw={})
+    pagesize = StringField('Page Size',render_kw={})
     
     picture = FileField('Update Profile Picture', validators=[FileAllowed(['jpg', 'png'])])
     submit = SubmitField('Update')

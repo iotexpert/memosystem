@@ -4,8 +4,8 @@
       <div class="media">
         <img class="rounded-circle account-img" src="{{ image_file }}">
         <div class="media-body">
-          <h2 class="account-heading">{{ current_user.username }}</h2>
-          <p class="text-secondary">{{ current_user.email }}</p>
+          <h2 class="account-heading">{{ user.username }}</h2>
+          <p class="text-secondary">{{ user.email }}</p>
         </div>
       </div>
         <form method="POST" action="" enctype="multipart/form-data">
@@ -109,20 +109,24 @@
                     {% endif %}
                 </div>
 
-                <div class="form-group">
-                    {{ form.picture.label() }}
-                    {{ form.picture(class="form-control-file") }}
-                    {% if form.picture.errors %}
-                        {% for error in form.picture.errors %}
-                            <span class="text-danger">{{ error }}</span></br>
-                        {% endfor %}
-                    {% endif %}
-                </div>
+                {% if disable_submit_button == False  %}
+                    <div class="form-group">
+                        {{ form.picture.label() }}
+                        {{ form.picture(class="form-control-file") }}
+                        {% if form.picture.errors %}
+                            {% for error in form.picture.errors %}
+                                <span class="text-danger">{{ error }}</span></br>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                {% endif %}
 
             </fieldset>
+            {% if disable_submit_button == False  %}
             <div class="form-group">
                 {{ form.submit(class="btn btn-outline-info") }}
             </div>
+            {% endif %}
         </form>
     </div>
 {% endblock content %}
