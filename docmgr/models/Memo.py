@@ -248,7 +248,6 @@ class Memo(db.Model):
         return memo_list
 
     def saveJson(self):
-        # TODO: ARH need to add the list of signers and files
         js = {}
         js['title']=self.title
         js['number']=self.number
@@ -258,6 +257,9 @@ class Memo(db.Model):
         js['keywords']=self.keywords
         js['userid']=self.user_id
         js['memo_state']=f"{self.memo_state}"
+        js['keywords']= self.keywords
+        js['signers']=self.signers['signers']
+        js['references']= self.references['ref_string']
         js['files']=[]
         for file in self.get_files():
             js['files'].append(file.filename)
@@ -267,7 +269,7 @@ class Memo(db.Model):
         os.makedirs(path,exist_ok=True)
         #current_app.logger.info(f"Making Succeeded {path}")
 
-        path = os.path.join(path,f"meta{self.user_id}-{self.number}-{self.version}.json")
+        path = os.path.join(path,f"meta-{self.user_id}-{self.number}-{self.version}.json")
         f = open(path,"w")
         json.dump(js,f)
         f.close()
@@ -392,7 +394,7 @@ class Memo(db.Model):
 # these function would classiavally be called private
 ################################################################################       
 
-    def obsolete_previous(self,acting=None): # TODO: perhaps this should be in the process_state function?  (probably)
+    def obsolete_previous(self,acting=None):
         prev_list = Memo.query.join(User).filter(Memo.number == self.number,Memo.version != self.version).all()
         for memo in prev_list:
             if memo.memo_state == MemoState.Active:
@@ -507,10 +509,10 @@ class Memo(db.Model):
         new_memo.save()
         MemoHistory.activity(memo=new_memo,memo_activity=MemoActivity.Create,user=delegate)
         return new_memo
-    
+
 # signer function
     def sign(self,signer=None,delegate=None):
-        
+
         current_app.logger.info(f"signer = {signer} delegate={delegate}")
         if not self.can_sign(signer,delegate):
             current_app.logger.info("NOT!!@ allowed to sign")
