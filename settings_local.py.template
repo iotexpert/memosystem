@@ -13,7 +13,7 @@ os.environ["LDAP_USER_NAME"] = "sAMAccountName" # field to map to user id
 os.environ["LDAP_EMAIL"] = "mail"  # field to map to email
 os.environ["PYTHON_LDAP_TRACE_LEVEL"] = "0"
 
-os.environ['FLASK_APP'] = "run.py"
+os.environ['FLASK_APP'] = "app.py"
 os.environ['FLASK_DEBUG'] = 'True'
 os.environ['FLASK_ENV'] = 'development'
 
