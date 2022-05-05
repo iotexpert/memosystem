@@ -39,12 +39,22 @@ class Delegate(db.Model, UserMixin):
             return False
     
     @staticmethod    
-    def get_delegated_users(owner):
+    def get_delegates(owner):
+        """Lookup delegates owner has defined."""
         delegate_list = Delegate.query.filter_by(owner_id=owner.username).all()
-        #current_app.logger.info(f"Delegate_list = {delegate_list}")
         rval = []
         for delegate_entry in delegate_list:
             user = User.find(username=delegate_entry.delegate_id)
+            rval.append(user)
+        return rval
+    
+    @staticmethod    
+    def get_delegated_users(delegate):
+        """Lookup owners that have added this delegate."""
+        delegate_list = Delegate.query.filter_by(delegate_id=delegate.username).all()
+        rval = []
+        for delegate_entry in delegate_list:
+            user = User.find(username=delegate_entry.owner_id)
             rval.append(user)
         return rval
     
@@ -70,8 +80,8 @@ class User(db.Model, UserMixin):
     email = db.Column(db.String(120), unique=True, nullable=False)
     image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
     password = db.Column(db.String(60), nullable=False)
-    admin = db.Column(db.Boolean,default=False)
-    readAll = db.Column(db.Boolean,default=False)
+    admin = db.Column(db.Boolean)
+    readAll = db.Column(db.Boolean)
     pagesize = db.Column(db.Integer, nullable=False, default = 20)
     _subscriptions = db.Column(db.String(128))
         
@@ -88,10 +98,20 @@ class User(db.Model, UserMixin):
     def check_password(self,check_pw):
         return bcrypt.check_password_hash(self.password, check_pw)
 
+    @property
+    def delegate_for(self):
+        """owners user is a delegate for"""
+        delegate_list = Delegate.get_delegated_users(delegate=self)
+        current_app.logger.info(f"Delegate List = {delegate_list}")
+        rval = ''
+        for delegate in delegate_list:
+            rval = rval + delegate.username + ' '
+        return {"usernames":rval,"users":delegate_list}
 
     @property
     def delegates(self):
-        delegate_list = Delegate.get_delegated_users(owner=self)
+        """delegates defined for this user"""
+        delegate_list = Delegate.get_delegates(owner=self)
         current_app.logger.info(f"Delegate List = {delegate_list}")
         rval = ''
         for delegate in delegate_list:
@@ -106,8 +126,6 @@ class User(db.Model, UserMixin):
             delegate = User.find(username=delegate_name)
             if delegate != None:
                 Delegate.add(self,delegate)
-    
-        
     
     # is the userid a valid delgate for "self"
     def is_delegate(self,delegate=None):
@@ -127,7 +145,7 @@ class User(db.Model, UserMixin):
         MemoSubscription.delete(self)
         for user in users['valid_users']:
             #current_app.logger.info(f"adding subscription {self} to {user}")
-            ms = MemoSubscription(subscriber_id=self.id,subscription_id=user.id)
+            ms = MemoSubscription(subscriber_id=self.username,subscription_id=user.username)
             db.session.add(ms)
             db.session.commit()
     
@@ -210,6 +228,14 @@ class User(db.Model, UserMixin):
     def is_admin(username=None):
         user = User.find(username=username)
         if user and user.admin:
+            return True
+        else:
+            return False
+        
+    @staticmethod
+    def is_readAll(username=None):
+        user = User.find(username=username)
+        if user and user.readAll:
             return True
         else:
             return False

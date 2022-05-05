@@ -43,8 +43,11 @@ class UpdateAccountForm(FlaskForm):
                            validators=[DataRequired(), Length(min=2, max=20)])
     email = StringField('Email',
                         validators=[DataRequired(), Email()])
-    delegates = StringField('Delegates',
-                        validators=[])
+    delegates = StringField('Delegates', validators=[])
+    admin = BooleanField('Is Admin', default=False,
+                      false_values=('False', 'false', ''))
+    readAll = BooleanField('Read All', default=False,
+                      false_values=('False', 'false', ''))
 
     subscriptions = StringField('Subscriptions')
     pagesize = StringField('Page Size')

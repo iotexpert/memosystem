@@ -242,7 +242,7 @@ def inbox(username=None):
     memo_list = Memo.get_inbox(user,page,pagesize)
 
         
-    inbox_list = [user] + [current_user] + current_user.delegates['users']
+    inbox_list = [user] + [current_user] + current_user.delegate_for['users']
     
     url_params = {
         'username':username, 

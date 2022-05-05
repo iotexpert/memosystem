@@ -66,21 +66,35 @@
                         {{ form.subscriptions(class="form-control form-control-lg") }}
                     {% endif %}
                 </div>
-<!--
+
                 <div class="form-group">
-                    {{ form.next_memo.label(class="form-control-label") }}
-                    {% if form.next_memo.errors %}
-                        {{ form.next_memo(class="form-control form-control-lg is-invalid") }}
+                    {{ form.admin.label(class="form-control-label") }}
+                    {% if form.admin.errors %}
+                        {{ form.admin(class="form-control form-control-lg is-invalid") }}
                         <div class="invalid-feedback">
-                            {% for error in form.next_memo.errors %}
+                            {% for error in form.admin.errors %}
                                 <span>{{ error }}</span>
                             {% endfor %}
                         </div>
                     {% else %}
-                        {{ form.next_memo(class="form-control form-control-lg") }}
+                        {{ form.admin(class="form-control form-control-lg") }}
                     {% endif %}
                 </div>
-            -->
+
+                <div class="form-group">
+                    {{ form.readAll.label(class="form-control-label") }}
+                    {% if form.readAll.errors %}
+                        {{ form.readAll(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.readAll.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        {{ form.admin(class="form-control form-control-lg") }}
+                    {% endif %}
+                </div>
+
                 <div class="form-group">
                     {{ form.pagesize.label(class="form-control-label") }}
                     {% if form.pagesize.errors %}
