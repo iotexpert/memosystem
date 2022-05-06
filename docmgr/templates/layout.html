@@ -28,7 +28,7 @@
             <div class="navbar-nav mr-auto">
               <a class="nav-item nav-link" href="{{ url_for('main.home') }}">Home</a>
               <a class="nav-item nav-link" href="{{ url_for('memos.search') }}">Search</a>
-              {% if current_user.is_anonymous == False and current_user.is_admin() == True %}
+              {% if current_user.admin  %}
               <a class="nav-item nav-link" href="{{ url_for('memos.history') }}">History</a>
               {% endif %}
             </div>

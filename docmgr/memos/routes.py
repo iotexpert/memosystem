@@ -27,8 +27,8 @@ def main(username=None,memo_number=None,memo_version=None):
     pagesize = User.get_pagesize(current_user)
     page = request.args.get('page', 1, type=int)
     detail = request.args.get('detail')
-       
-    if detail == None:
+
+    if detail is None:
         detail = False
     else:
         detail = True
@@ -71,7 +71,7 @@ def main(username=None,memo_number=None,memo_version=None):
     memo_list = Memo.get_memo_list(username=username,memo_number=memo_number,memo_version=memo_version,page=page,pagesize=pagesize)
 
     if len(memo_list.items) == 0:
-        flash('No memos match that criteria','failure')
+        flash('No memos match that criteria','error')
 
     url_params = {}
     if username:
@@ -201,7 +201,7 @@ def create_revise_submit(username=None,memo_number=None):
                 file.remove_file(memo)
                 flash(f"Remove {file}",'success')
                 return redirect(request.url)  # redirect back to edit instead...
-        
+
     if form.save.data == True:
         flash(f'{memo} has been saved!', 'success')
         return redirect(url_for('memos.main'))
@@ -212,9 +212,9 @@ def create_revise_submit(username=None,memo_number=None):
         # make a json backup
         flash(f'{memo} has been created!', 'success')
         return redirect(url_for('memos.main'))
- 
+
     return render_template('create_memo.html', title=f'New Memo {memo}',form=form, legend=f'New Memo {memo}', user=delegate, memo=memo)
-   
+
 
 # bring up the list of all of the memos that the current user can sign
 @memos.route("/inbox")
@@ -238,12 +238,10 @@ def inbox(username=None):
             return abort(404)
     
     delegate = current_user
-    
-    memo_list = Memo.get_inbox(user,page,pagesize)
 
-        
+    memo_list = Memo.get_inbox(user,page,pagesize)        
     inbox_list = [user] + [current_user] + current_user.delegate_for['users']
-    
+
     url_params = {
         'username':username, 
             }
@@ -319,7 +317,13 @@ def sign(username,memo_number,memo_version):
 @memos.route("/unsign/memo/<string:username>/<int:memo_number>/<string:memo_version>")
 @login_required
 def unsign(username,memo_number,memo_version):
-    
+    """ Unsign route"""
+    next_page = request.args.get('next_page', type=str)
+    page = request.args.get('page', 1, type=int)
+
+    if next_page is None:
+        next_page = "memos.main"
+        
     signer = request.args.get('signer', type=str)
 
     if signer == None:
@@ -338,9 +342,8 @@ def unsign(username,memo_number,memo_version):
             flash(f'Unsign {memo} Failed', 'error')
     else:
         flash(f'Unsign {username}-{memo_number}-{memo_version} Failed', 'error')
-    #TODO: ARH Really should go back to where you were
-    
-    return redirect(url_for('memos.main'))
+
+    return redirect(url_for(next_page,page=page,next_page=next_page))
 
 
 @memos.route("/obsolete/memo/<string:username>/<int:memo_number>/<string:memo_version>")
@@ -349,16 +352,16 @@ def obsolete(username,memo_number,memo_version):
     
     next_page = request.args.get('next_page', type=str)
     page = request.args.get('page', 1, type=int)
-    
+
     if next_page is None:
         next_page = "memos.main"
-    
+
     current_app.logger.info(f"Next Page = {next_page} page={page}")
-    
+
     delegate = current_user
-    
+
     memo = Memo.find(username=username,memo_number=memo_number,memo_version=memo_version)
-    
+
     if memo:
         if memo.obsolete(delegate):            
             flash(f'Obsolete {memo} Success', 'success')
@@ -373,30 +376,42 @@ def obsolete(username,memo_number,memo_version):
 @memos.route("/cancel/memo/<string:username>/<int:memo_number>/<string:memo_version>",methods=['GET'])
 @login_required
 def cancel(username=None,memo_number=0,memo_version=0):
+    
+    next_page = request.args.get('next_page', type=str)
+    page = request.args.get('page', 1, type=int)
+
+    if next_page is None:
+        next_page = "memos.main"
+  
     user = current_user
     
     memo = Memo.find(username=username,memo_number=memo_number,memo_version=memo_version)
     
     if memo:
-        if memo.cancel(user):            
-            flash(f'Canceled {memo}', 'success')
+        memostring = f"{memo}"
+        if memo.cancel(user):
+            flash(f'Canceled {memostring}', 'success')
         else:
             flash(f'Canceled {memo} Failed', 'error')
     else:
         flash(f'Cannot cancel memo {username}-{memo_number}-{memo_version}', 'error')
 
-    #TODO: ARH Really should go back to where you were
-    
-    return redirect(url_for('memos.main'))
-
+    return redirect(url_for(next_page,page=page,next_page=next_page))
 
 @memos.route("/reject/memo/<string:username>/<int:memo_number>/<string:memo_version>")
 @login_required
 def reject(username,memo_number,memo_version):
      
+    next_page = request.args.get('next_page', type=str)
+    page = request.args.get('page', 1, type=int)
+
+    if next_page is None:
+        next_page = "memos.main"
+  
+
     signer = request.args.get('signer', type=str)
 
-    if signer == None:
+    if signer is None:
         signer = current_user
     else:
         signer = User.find(username=signer)
@@ -411,11 +426,8 @@ def reject(username,memo_number,memo_version):
             flash(f'Rejected {memo.user.username}-{memo.number}-{memo.version}', 'success')
     else:
         flash(f'Cannot unsign memo {username}-{memo_number}-{memo_version}', 'failure')
- 
- 
- #TODO: ARH Really should go back to where you were
-    
-    return redirect(url_for('memos.main'))
+
+    return redirect(url_for(next_page,page=page,next_page=next_page))
 
 @memos.route("/search",methods=['GET', 'POST'])
 def search():
