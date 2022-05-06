@@ -221,6 +221,9 @@ class Memo(db.Model):
 
         if user.admin:
             return True
+        
+        if user.readAll:
+            return True
 
         # if the username is in the distribution list then provide access TODO: ARH do something better
         if user.username in re.split('\s|\,|\t|\;|\:',self.distribution):

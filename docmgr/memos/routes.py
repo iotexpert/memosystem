@@ -1,3 +1,6 @@
+"""
+Memo Routes
+"""
 import os
 import re
 from flask import (render_template, url_for, flash,current_app,
@@ -20,6 +23,7 @@ memos = Blueprint('memos', __name__)
 @memos.route("/memo/<username>/<memo_number>")
 @memos.route("/memo/<username>/<memo_number>/<memo_version>")
 def main(username=None,memo_number=None,memo_version=None):
+    """ This route is used to display the list of memos """
     pagesize = User.get_pagesize(current_user)
     page = request.args.get('page', 1, type=int)
     detail = request.args.get('detail')
@@ -44,34 +48,30 @@ def main(username=None,memo_number=None,memo_version=None):
         memo_version = memo_number[len(split[0]):]
         memo_number = split[0]
 
-
     if memo_version != None:
         memo_version = memo_version.upper()                 
-                  
-   
+
     if current_user.is_anonymous:
         user = None
     else:
         user = current_user
-        
-    if memo_version == None and memo_number == None and username != None and  '-' in username:
+
+    if memo_version is None and memo_number is None and username is not None and  '-' in username:
         sstring = username.split('-')
         detail = True
         if len(sstring) == 2:
              username = sstring[0]
              memo_number = int(sstring[1])
-             
+
         if len(sstring) == 3:
             username = sstring[0]
             memo_number = int(sstring[1])
             memo_version = sstring[2]
-    
+
     memo_list = Memo.get_memo_list(username=username,memo_number=memo_number,memo_version=memo_version,page=page,pagesize=pagesize)
-    
-    
+
     if len(memo_list.items) == 0:
         flash('No memos match that criteria','failure')
-
 
     url_params = {}
     if username:
@@ -79,7 +79,7 @@ def main(username=None,memo_number=None,memo_version=None):
     
     next_page = "memos.main"
     
-    return render_template('memo.html', memos=memo_list, title="memo",user=user,delegate=user,signer=None, detail=detail,next_page=next_page,url_params=url_params)
+    return render_template('memo.html', memos=memo_list, title="memo",user=user,delegate=user,signer=None, detail=detail,next_page=next_page,page=page,url_params=url_params)
  
 
 @memos.route("/file/memo/<string:username>/<int:memo_number>/<string:memo_version>/<string:uuid>")
@@ -347,6 +347,14 @@ def unsign(username,memo_number,memo_version):
 @login_required
 def obsolete(username,memo_number,memo_version):
     
+    next_page = request.args.get('next_page', type=str)
+    page = request.args.get('page', 1, type=int)
+    
+    if next_page is None:
+        next_page = "memos.main"
+    
+    current_app.logger.info(f"Next Page = {next_page} page={page}")
+    
     delegate = current_user
     
     memo = Memo.find(username=username,memo_number=memo_number,memo_version=memo_version)
@@ -358,9 +366,8 @@ def obsolete(username,memo_number,memo_version):
             flash(f'Obsolete {memo} Failed', 'error')
     else:
         flash(f'Obsolete {username}-{memo_number}-{memo_version } Failed', 'error')
-    #TODO: ARH Really should go back to where you were
-     
-    return redirect(url_for('memos.main'))
+
+    return redirect(url_for(next_page,page=page,next_page=next_page))
 
 
 @memos.route("/cancel/memo/<string:username>/<int:memo_number>/<string:memo_version>",methods=['GET'])

@@ -45,6 +45,8 @@ def login():
                 login_ok = ldap_pw_ok
 
         user = User.query.filter_by(email=form.email.data).first()
+        
+        current_app.logger.info(f"User = {user} form={form.email.data}")
 
         # If we validated a user with ldap, but they don't exist in the database, add them.
         if user is None and ldap_pw_ok:
@@ -100,6 +102,7 @@ def account(username=None):
     
     current_app.logger.info(f"User = {current_user.username} Delegate List= {user.delegates}")
     form = UpdateAccountForm()
+    disable_submit_button = None
     if form.validate_on_submit():
         if form.picture.data:
             picture_file = save_picture(form.picture.data)
@@ -108,8 +111,8 @@ def account(username=None):
         if user is not current_user and not current_user.admin:
             abort(403)
 
-        if not ldap and current_user.admin:
-            user.username = form.username.data
+#        if not ldap and current_user.admin:
+#            user.username = form.username.data
         
         if not ldap and current_user is not user:
             user.admin = form.admin.data
@@ -161,7 +164,7 @@ def account(username=None):
             form.admin.render_kw['disabled'] = True
             form.readAll.render_kw['disabled'] = True
         
-        image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
+    image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
     return render_template('account.html', title='Account',
                            image_file=image_file, form=form,user=user,disable_submit_button=disable_submit_button)
 

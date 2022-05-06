@@ -37,7 +37,7 @@
           {% endif %}        
 
           {% if user != None and memo.can_obsolete(delegate=user) %}
-            <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('memos.obsolete',username=memo.user.username,memo_number=memo.number,memo_version=memo.version) }}">Obsolete</a> 
+            <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('memos.obsolete',username=memo.user.username,memo_number=memo.number,memo_version=memo.version,next_page=next_page,page=page) }}">Obsolete</a> 
           {% endif %}
 
           {% if user != None and memo.can_cancel(delegate=user) %}
