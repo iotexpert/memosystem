@@ -13,7 +13,7 @@ from docmgr.models.User import User
 from docmgr.memos.forms import MemoForm, MemoSearch
 from docmgr.models.Memo import Memo
 from docmgr.models.MemoFile import MemoFile
-from models.MemoActivity import MemoActivity
+from docmgr.models.MemoActivity import MemoActivity
 
 memos = Blueprint('memos', __name__)
 
