@@ -16,8 +16,6 @@ from docmgr.models.MemoHistory import MemoHistory
 from docmgr.models.MemoActivity import MemoActivity
 from docmgr.revletter import b10_to_rev, rev_to_b10
 
-
-
 class Memo(db.Model):
     """This class is the single interface to a "memo" and all of the "memos"
     """
@@ -220,6 +218,9 @@ class Memo(db.Model):
             return True
 
         if user.admin:
+            return True
+        
+        if user.readAll:
             return True
 
         # if the username is in the distribution list then provide access TODO: ARH do something better
@@ -553,11 +554,12 @@ class Memo(db.Model):
 # Owner Function
     def cancel(self,delegate=None):
         current_app.logger.info(f"Cancel: {self} Delegate={delegate}")
+    
+        memostring = f"{self}"
         
         if not self.can_cancel(delegate=delegate):
             return False
         
-        current_app.logger.info(f"Canceling: {self} Delegate={delegate}")
         
         MemoFile.delete(self)
         # delete all of the files in that directory & the directory
@@ -567,9 +569,10 @@ class Memo(db.Model):
         MemoReference.delete(self)
         MemoSignature.delete_signers(self)
         MemoHistory.activity(memo=self,user=delegate,memo_activity=MemoActivity.Cancel)
+
         db.session.delete(self)
         db.session.commit()       
-        current_app.logger.info(f"Canceled: {self} ")
+        current_app.logger.info(f"Canceling")
         
         return True
 

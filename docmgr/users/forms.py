@@ -1,3 +1,4 @@
+from flask import current_app
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, PasswordField, SubmitField, BooleanField
@@ -39,8 +40,7 @@ class LoginForm(FlaskForm):
 
 
 class UpdateAccountForm(FlaskForm):
-    username = StringField('Username',
-                           validators=[DataRequired(), Length(min=2, max=20)],render_kw={})
+    username = StringField('Username',render_kw={})
     email = StringField('Email',
                         validators=[DataRequired(), Email()],render_kw={})
     delegates = StringField('Delegates', validators=[],render_kw={})
@@ -55,7 +55,9 @@ class UpdateAccountForm(FlaskForm):
     picture = FileField('Update Profile Picture', validators=[FileAllowed(['jpg', 'png'])])
     submit = SubmitField('Update')
 
+
     def validate_username(self, username):
+        
         if username.data != current_user.username:
             user = User.query.filter_by(username=username.data).first()
             if user:
@@ -74,6 +76,9 @@ class UpdateAccountForm(FlaskForm):
 
 
 class RequestResetForm(FlaskForm):
+    """
+    This function
+    """
     email = StringField('Email',
                         validators=[DataRequired(), Email()])
     submit = SubmitField('Request Password Reset')
