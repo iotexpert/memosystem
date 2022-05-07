@@ -1,7 +1,12 @@
+"""
+This file creates some test users
+"""
+
 try:
     import settings_local
 except ImportError:
     pass
+
 from docmgr import db,create_app
 from docmgr.models.User import User
 
@@ -9,8 +14,6 @@ from docmgr.models.User import User
 app = create_app()
 app.app_context().push()
 db.init_app(app)
-
-
 
 u1 =  User(username="u1", password=User.create_hash_pw("u1"),email="u1@u1.local")
 db.session.add(u1)

@@ -1,3 +1,7 @@
+"""
+The model file for a Memo
+
+"""
 import re
 import os
 import shutil
@@ -55,29 +59,19 @@ class Memo(db.Model):
 
     @staticmethod
     def can_create(owner=None, delegate=None):
-        """will return true oif the delegate can create a memo for the owner
+        """Will return true if the delegate can create a memo for the owner"""
 
-        Args:
-            owner (User, optional): The owner of the memo. Defaults to None.
-            delegate (User, optional): The user trying to create the memo. Defaults to None.
-
-        Returns:
-            Boolean: True if the delegate can create a memo for the owner 
-        """
-        if owner is None or delegate is None:
+        if owner is None:
             return False
+
+        if delegate is None:
+            delegate = owner
        
         return owner.is_delegate(delegate=delegate)
 
     def can_revise(self, delegate=None):
-        """Is the delgate allowed to update "this" memo?
-
-        Args:
-            delegate (User, optional): The user trying to revise this memo
-
-        Returns:
-            Boolean: True if the delgate is allowed to revist the memo, else False
-        """
+        """Is the delgate allowed to update "this" memo?"""
+        
         if delegate is None:
             return False
         
@@ -88,15 +82,8 @@ class Memo(db.Model):
             return True
 
     def can_sign(self, signer=None, delegate=None):
-        """Can this memo be signed by delegate for the signers
-
-        Args:
-            signer (User, optional): Who are you trying to sign for
-            delegate (User, optional): Who is trying to sign
-
-        Returns:
-            Boolean: True if the delegate is allowed to sign this memo for the signer
-        """
+        """Can this memo be signed by delegate for the signers"""
+        
         if signer is None or delegate is None:
             return False
 
@@ -111,15 +98,7 @@ class Memo(db.Model):
         return status['is_signer'] and not status['status']
 
     def can_unsign(self, signer=None, delegate=None):
-        """Can this memo be unsigned by delegate for the signer
-
-        Args:
-            signer (User, optional): Who are you trying to unsign for
-            delegate (User, optional): Who is trying to unsign
-
-        Returns:
-            Boolean: True if the delegate is allowed to unsign this memo for the signer
-        """
+        """Can this memo be unsigned by delegate for the signer """
         if signer is None or delegate is None:
             return False
 
@@ -133,14 +112,7 @@ class Memo(db.Model):
         return status['is_signer'] and status['status']
 
     def can_obsolete(self, delegate=None):
-        """ can this memo be obsoleted by the delegate?  Only active memos can be obsoleted
-
-        Args:
-            delegate (User, optional): the User trying to take the action
-
-        Returns:
-            Boolean: returns true if the delgate can obsolete this memo
-        """
+        """ Can this memo be obsoleted by the delegate?  Only active memos can be obsoleted """
         if delegate is None:
             return False
 
@@ -152,18 +124,8 @@ class Memo(db.Model):
 
         return False
 
-
-
     def can_cancel(self, delegate=None):
-        """ can this memo be cancled by the delegate.  Only drafts memos can be canceled
-
-        Args:
-            delegate (User, optional): the User trying to take the action
-
-        Returns:
-            Boolean: returns true if the delgate can cancel this memo
-        """
-
+        """ can this memo be cancled by the delegate.  Only drafts memos can be canceled"""
         if delegate is None:
             return False
 
@@ -175,18 +137,8 @@ class Memo(db.Model):
 
         return True
 
-
-
     def can_reject(self, signer=None, delegate=None):
-        """ can this memo be rejected by the delegate.  Only memos in signoff can be rejected
-
-        Args:
-            signer (User, optional): the User for who the action is being taken
-            delegate (User, optional): the User trying to take the action
-
-        Returns:
-            Boolean: returns true if the delgate can reject this memo
-        """
+        """ can this memo be rejected by the delegate.  Only memos in signoff can be rejected"""
         if signer is None or delegate is None:
             return False
 
@@ -201,9 +153,8 @@ class Memo(db.Model):
         # if you are a signer you can reject.. even if you have already signed
         return status['is_signer']
 
-        
     def has_access(self, user=None):
-        # This function will return True of the "username" has access to self
+        """This function will return True of the "username" has access to self"""
 
         # if it is not confidential than anyone can access
         if self.confidential == False:
@@ -235,20 +186,22 @@ class Memo(db.Model):
 ########################################
 
     def get_fullpath(self):
-        
+        """ This function gives the os path to a file """    
         path = os.path.join(current_app.root_path,"static","memos",f"{self.user_id}",f"{self.number}",f"{self.version}")
         return path
 
     def get_relpath(self):
+        """ Return the relative path of this memo """
         path = os.path.join("/static","memos",f"{self.user_id}",f"{self.number}",f"{self.version}")
         return path
 
     def get_files(self):
-        # return a list of the files attached to this memo
+        """ Return a list of the files attached to this memo"""
         memo_list = MemoFile.query.filter_by(memo_id=self.id).all()
         return memo_list
 
     def saveJson(self):
+        """ Create the JSON file which is a copy of all of the meta data """
         js = {}
         js['title']=self.title
         js['number']=self.number
@@ -264,7 +217,7 @@ class Memo(db.Model):
         js['files']=[]
         for file in self.get_files():
             js['files'].append(file.filename)
-    
+
         path = os.path.join(self.get_fullpath())
         #current_app.logger.info(f"Making Directory {path}")
         os.makedirs(path,exist_ok=True)
@@ -275,7 +228,6 @@ class Memo(db.Model):
         json.dump(js,f)
         f.close()
 
-   
     @property
     def signers(self):
         # get the signers from the signing table and turn it back to a string and a list
@@ -306,14 +258,13 @@ class Memo(db.Model):
             parts.append(None)
         return parts
             
-    @staticmethod 
+    @staticmethod
     def valid_references(references):
         current_app.logger.info(f'references ={references}')
         valid_memos = []
         valid_refs = []
         invalid = []
         for memo_ref in re.split(r'\s|\,|\t|\;|\:',references):
-#            current_app.logger.info(f"Reference = {memo_ref}")
             if memo_ref == '':
                 continue
             parts = Memo.parse_reference(memo_ref)
@@ -321,27 +272,24 @@ class Memo(db.Model):
                 invalid.append(memo_ref)
                 current_app.logger.info(f"INVALID length append {memo_ref} valid={valid_memos} invalid {invalid}")
                 continue
+
             username = parts[0]
             memo_number = parts[1]
             memo_version = parts[2]
- #           current_app.logger.info(f"Validating {parts[0]}-{parts[1]}-{parts[2]}")
             memo = Memo.find(username=username,memo_number=memo_number,memo_version=memo_version)
             current_app.logger.info(f"Memo = {memo}")
             if memo != None and (memo.memo_state == MemoState.Active or memo.memo_state == MemoState.Obsolete):
                 valid_memos.append(memo)
                 valid_refs.append(memo_ref)
-#                current_app.logger.info(f"VALID append {memo_ref} valid={valid_refs} invalid {invalid}")
             else:
                 invalid.append(memo_ref)
-#                current_app.logger.info(f"INVALID append {memo_ref} valid={valid_refs} invalid {invalid}")
         
         rval = {'valid_refs':valid_refs, 'valid_memos' : valid_memos,'invalid':invalid}
-#        current_app.logger.info(f"Rval - {rval}")
         return rval
             
     @property
     def references(self):
-    
+        # this function will return a list of refeference objects + a string of the references
         refs = MemoReference.get_refs(self)
         rval = []
         for ref in refs:
@@ -356,15 +304,13 @@ class Memo(db.Model):
     
     @references.setter
     def references(self,references):
- #       current_app.logger.info(f"Adding References {references}")
         self._references = references
-        
+
         refs = Memo.valid_references(references)
         for i in range(len(refs['valid_refs'])):
             parsed_ref = Memo.parse_reference(refs['valid_refs'][i])
             user = User.find(username=parsed_ref[0])
             MemoReference.add_ref(self.id,ref_user_id=user.username,ref_memo_number=parsed_ref[1],ref_memo_version=parsed_ref[2])
-                
 
     @property
     def backrefs(self):
@@ -381,7 +327,7 @@ class Memo(db.Model):
         current_app.logger.info(f"get_next_version {memo.id} {memo.number} {memo.version}")
         if memo:
             return b10_to_rev(rev_to_b10(memo.version)+1)
-    
+
         return b10_to_rev(1) # also known as 'A'
 
     def save(self):
@@ -403,7 +349,6 @@ class Memo(db.Model):
                 MemoHistory.activity(memo=memo,memo_activity=MemoActivity.Obsolete,user=acting)
                 memo.save()
 
-    
     # This function is called when:
     # 1- a valid draft is created
     # 2- a signature happens
@@ -449,11 +394,10 @@ class Memo(db.Model):
 # State machine functions called by the viewcontroller
 ################################################################################
 
-
 # Owner Function
     @staticmethod
     def create_revise(owner=None,delegate=None,memo_number=None):
-        
+        """ This function will return None or a new Memo if the owner/delgate and revise this memo """        
         assert owner != None and delegate != None
         if owner == None or delegate == None:
             return None
