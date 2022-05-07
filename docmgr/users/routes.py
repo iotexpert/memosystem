@@ -12,11 +12,10 @@ from docmgr.extensions import ldap
 
 users = Blueprint('users', __name__)
 
-
 @users.route("/register", methods=['GET', 'POST'])
 def register():
     if ldap:
-        abort(403)
+        redirect(url_for('users.login'))
         
     if current_user.is_authenticated:
         return redirect(url_for('main.home'))

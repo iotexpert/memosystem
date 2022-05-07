@@ -10,7 +10,7 @@ class MemoActivity(enum.Enum):
     Obsolete = 6           # Memo has been obsoleted
     Cancel = 7             # Memo has been canceled and deleted from the system
     Reject = 8             # Memo has been rejected and put back into draft
-
+    IllegalFile = 9        # User tried to access a file that was not authorized
 
     @staticmethod
     def convert(value):
@@ -30,6 +30,8 @@ class MemoActivity(enum.Enum):
             return "Cancel"
         if value == MemoActivity.Reject:
             return "Reject"
+        if value == MemoActivity.IllegalFile:
+            return "IllegalFile"
         return "Unknown"
 """
     def __str__(self):
