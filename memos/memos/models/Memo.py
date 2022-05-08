@@ -10,15 +10,15 @@ from datetime import datetime
 
 from flask import current_app
 
-from docmgr import db
-from docmgr.models.User import User
-from docmgr.models.MemoState import MemoState
-from docmgr.models.MemoFile import MemoFile
-from docmgr.models.MemoSignature import MemoSignature
-from docmgr.models.MemoReference import MemoReference
-from docmgr.models.MemoHistory import MemoHistory
-from docmgr.models.MemoActivity import MemoActivity
-from docmgr.revletter import b10_to_rev, rev_to_b10
+from memos import db
+from memos.models.User import User
+from memos.models.MemoState import MemoState
+from memos.models.MemoFile import MemoFile
+from memos.models.MemoSignature import MemoSignature
+from memos.models.MemoReference import MemoReference
+from memos.models.MemoHistory import MemoHistory
+from memos.models.MemoActivity import MemoActivity
+from memos.revletter import b10_to_rev, rev_to_b10
 
 class Memo(db.Model):
     """This class is the single interface to a "memo" and all of the "memos"

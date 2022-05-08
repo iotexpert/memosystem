@@ -2,13 +2,13 @@
 import os
 from flask import render_template, url_for, flash, redirect, request, Blueprint, current_app, abort
 from flask_login import login_user, current_user, logout_user, login_required
-from docmgr import db, bcrypt
+from memos import db, bcrypt
 
-from docmgr.users.forms import (RegistrationForm, LoginForm, UpdateAccountForm,
+from memos.users.forms import (RegistrationForm, LoginForm, UpdateAccountForm,
                                    RequestResetForm, ResetPasswordForm)
-from docmgr.users.utils import save_picture, send_reset_email
-from docmgr.models.User import User
-from docmgr.extensions import ldap
+from memos.users.utils import save_picture, send_reset_email
+from memos.models.User import User
+from memos.extensions import ldap
 
 users = Blueprint('users', __name__)
 

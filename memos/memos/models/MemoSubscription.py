@@ -1,4 +1,4 @@
-from docmgr import db
+from memos import db
 from flask import current_app
 
 class MemoSubscription(db.Model):

@@ -4,12 +4,12 @@ import secrets
 from PIL import Image
 from flask import url_for, current_app
 from flask_mail import Message
-from docmgr import mail
+from memos import mail
 
-from docmgr.models.User import User
-from docmgr.models.Memo import Memo
-from docmgr.models.MemoFile import MemoFile
-from docmgr.models.MemoSignature import MemoSignature
+from memos.models.User import User
+from memos.models.Memo import Memo
+from memos.models.MemoFile import MemoFile
+from memos.models.MemoSignature import MemoSignature
 
 def save_picture(form_picture):
     random_hex = secrets.token_hex(8)

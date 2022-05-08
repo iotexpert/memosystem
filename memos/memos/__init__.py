@@ -6,8 +6,8 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from flaskext.markdown import Markdown
 
-from docmgr.extensions import ldap
-from docmgr.config import Config
+from memos.extensions import ldap
+from memos.config import Config
 
 db = SQLAlchemy()
 bcrypt = Bcrypt()
@@ -30,10 +30,10 @@ def create_app(config_class=Config):
     if ldap:
         ldap.init_app(app)
 
-    from docmgr.users.routes import users
-    from docmgr.main.routes import main
-    from docmgr.memos.routes import memos
-    from docmgr.errors.handlers import errors
+    from memos.users.routes import users
+    from memos.main.routes import main
+    from memos.memos.routes import memos
+    from memos.errors.handlers import errors
 
     app.register_blueprint(users)
     app.register_blueprint(memos)

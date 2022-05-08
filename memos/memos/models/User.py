@@ -1,13 +1,13 @@
 from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask import current_app
-from docmgr import db, login_manager
+from memos import db, login_manager
 from flask_login import UserMixin
-from docmgr import bcrypt
+from memos import bcrypt
 import re
 import numpy
 from sqlalchemy.orm import relationship
 
-from docmgr.models.MemoSubscription import MemoSubscription
+from memos.models.MemoSubscription import MemoSubscription
 
 # This is used by the flask UserMixin
 @login_manager.user_loader

@@ -1,6 +1,6 @@
 from datetime import datetime
-from docmgr import db
-from docmgr.models.User import User
+from memos import db
+from memos.models.User import User
 from flask import current_app
 
 class MemoSignature(db.Model):

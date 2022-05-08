@@ -5,19 +5,19 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO=False
 
-    SECRET_KEY = os.environ.get('DOCMGR_SECRET_KEY')
+    SECRET_KEY = os.environ.get('MEMOS_SECRET_KEY')
     
-    MAIL_SERVER = os.environ.get('DOCMGR_EMAIL_SERVER')
-    MAIL_PORT = os.environ.get('DOCMGR_EMAIL_PORT')
+    MAIL_SERVER = os.environ.get('MEMOS_EMAIL_SERVER')
+    MAIL_PORT = os.environ.get('MEMOS_EMAIL_PORT')
     MAIL_USE_TLS = True
-    MAIL_USERNAME = os.environ.get('DOCMGR_EMAIL_USER')
-    MAIL_PASSWORD = os.environ.get('DOCMGR_EMAIL_PASS')
+    MAIL_USERNAME = os.environ.get('MEMOS_EMAIL_USER')
+    MAIL_PASSWORD = os.environ.get('MEMOS_EMAIL_PASS')
  
-    ADMIN_USER = os.environ.get('DOCMGR_ADMIN_USER')
-    ADMIN_PASSWORD = os.environ.get('DOCMGR_ADMIN_PASSWORD')
-    ADMIN_EMAIL = os.environ.get('DOCMGR_ADMIN_EMAIL')
+    ADMIN_USER = os.environ.get('MEMOS_ADMIN_USER')
+    ADMIN_PASSWORD = os.environ.get('MEMOS_ADMIN_PASSWORD')
+    ADMIN_EMAIL = os.environ.get('MEMOS_ADMIN_EMAIL')
     
-    MEMO_ROOT = os.environ.get('DOCMGR_MEMO_ROOT')
+    MEMO_ROOT = os.environ.get('MEMOS_MEMO_ROOT')
     
     LDAP_SCHEMA = os.getenv('LDAP_SCHEMA')
     LDAP_PORT = os.getenv('LDAP_PORT')

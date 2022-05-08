@@ -1,8 +1,8 @@
 from datetime import datetime
 
-from docmgr import db
-from docmgr.models.User import User
-from docmgr.models.MemoActivity import MemoActivity
+from memos import db
+from memos.models.User import User
+from memos.models.MemoActivity import MemoActivity
 from flask import current_app
 
 class MemoHistory(db.Model):

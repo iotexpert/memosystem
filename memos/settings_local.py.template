@@ -18,16 +18,16 @@ os.environ['FLASK_DEBUG'] = 'True'
 os.environ['FLASK_ENV'] = 'development'
 
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-#os.environ['DOCMGR__DATABASE_URI'] = 'mysql+pymysql://user:password@test.local/docmgr'
+#os.environ['MEMOS__DATABASE_URI'] = 'mysql+pymysql://user:password@test.local/MEMOS'
 #os.environ['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-os.environ['DOCMGR_SECRET_KEY'] = '5791628bb0b13ce0c676dfde280ba245'
+os.environ['MEMOS_SECRET_KEY'] = '5791628bb0b13ce0c676dfde280ba245'
 
-os.environ['DOCMGR_EMAIL_SERVER'] = 'smtp.google.com'
-os.environ['DOCMGR_EMAIL_PORT'] = '587'
-os.environ['DOCMGR_EMAIL_USER'] = ''
-os.environ['DOCMGR_EMAIL_PASS'] = ''
+os.environ['MEMOS_EMAIL_SERVER'] = 'smtp.google.com'
+os.environ['MEMOS_EMAIL_PORT'] = '587'
+os.environ['MEMOS_EMAIL_USER'] = ''
+os.environ['MEMOS_EMAIL_PASS'] = ''
 
-os.environ['DOCMGR_ADMIN_USER'] = 'admin'
-os.environ['DOCMGR_ADMIN_PASSWORD'] = 'admin'
-os.environ['DOCMGR_ADMIN_EMAIL'] = 'admin@admin.local'
+os.environ['MEMOS_ADMIN_USER'] = 'admin'
+os.environ['MEMOS_ADMIN_PASSWORD'] = 'admin'
+os.environ['MEMOS_ADMIN_EMAIL'] = 'admin@admin.local'

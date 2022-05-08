@@ -7,8 +7,8 @@ try:
 except ImportError:
     pass
 
-from docmgr import db,create_app
-from docmgr.models.User import User
+from memos import db,create_app
+from memos.models.User import User
 
 
 app = create_app()
