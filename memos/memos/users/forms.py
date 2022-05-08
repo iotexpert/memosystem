@@ -4,10 +4,10 @@ from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, PasswordField, SubmitField, BooleanField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from flask_login import current_user
-from docmgr.models.User import User
-from docmgr.models.Memo import Memo
-from docmgr.models.MemoFile import MemoFile
-from docmgr.models.MemoSignature import MemoSignature
+from memos.models.User import User
+from memos.models.Memo import Memo
+from memos.models.MemoFile import MemoFile
+from memos.models.MemoSignature import MemoSignature
 
 
 class RegistrationForm(FlaskForm):

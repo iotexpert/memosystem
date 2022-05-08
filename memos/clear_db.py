@@ -2,12 +2,12 @@ try:
     import settings_local
 except ImportError:
     pass
-from docmgr import db,create_app
+from memos import db,create_app
 import shutil
-from docmgr.models.User import User
-from docmgr.models.Memo import Memo
-from docmgr.models.MemoFile import MemoFile
-from docmgr.models.MemoSignature import MemoSignature
+from memos.models.User import User
+from memos.models.Memo import Memo
+from memos.models.MemoFile import MemoFile
+from memos.models.MemoSignature import MemoSignature
 
 
 app=create_app()
@@ -15,7 +15,7 @@ app.app_context().push()
 db.init_app(app)
 
 try:
-    shutil.rmtree("docmgr/static/memos/*")
+    shutil.rmtree("memos/static/memos/*")
 except:
     print("Already removed files")
     

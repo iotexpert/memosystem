@@ -8,12 +8,12 @@ from flask import (render_template, url_for, flash,current_app,
 from flask_login import current_user, login_required
 from wtforms import SubmitField
 
-from docmgr.models.MemoHistory import MemoHistory
-from docmgr.models.User import User
-from docmgr.memos.forms import MemoForm, MemoSearch
-from docmgr.models.Memo import Memo
-from docmgr.models.MemoFile import MemoFile
-from docmgr.models.MemoActivity import MemoActivity
+from memos.models.MemoHistory import MemoHistory
+from memos.models.User import User
+from memos.memos.forms import MemoForm, MemoSearch
+from memos.models.Memo import Memo
+from memos.models.MemoFile import MemoFile
+from memos.models.MemoActivity import MemoActivity
 
 memos = Blueprint('memos', __name__)
 

@@ -1,6 +1,6 @@
 
 from sqlalchemy import Column
-from docmgr import db
+from memos import db
 import uuid
 import os
 from flask import current_app

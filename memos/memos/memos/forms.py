@@ -1,11 +1,11 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, FileField,BooleanField,HiddenField
 from wtforms.validators import DataRequired,ValidationError
-from docmgr.models.User import User
-from docmgr.models.User import User
-from docmgr.models.Memo import Memo
-from docmgr.models.MemoFile import MemoFile
-from docmgr.models.MemoSignature import MemoSignature
+from memos.models.User import User
+from memos.models.User import User
+from memos.models.Memo import Memo
+from memos.models.MemoFile import MemoFile
+from memos.models.MemoSignature import MemoSignature
 from flask import current_app
 class MemoForm(FlaskForm):
     title = StringField('Title', validators=[DataRequired()])
