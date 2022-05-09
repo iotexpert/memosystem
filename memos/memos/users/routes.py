@@ -37,6 +37,7 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         login_ok = False
+        ldap_pw_ok = False
         ldap_user = None
         if ldap:
             ldap_user = ldap.get_object_details(form.email.data)

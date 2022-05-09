@@ -468,7 +468,7 @@ def search():
             return render_template('memo.html', memos=memos, title="memo",user=user,delegate=user,detail=detail,next_page=next_page,url_params =url_params)
 
         if form.keywords.data != '':
-            memos = Memo.search(title=form.title.data,page=page,pagesize=pagesize)
+            memos = Memo.search(keywords=form.keywords.data,page=page,pagesize=pagesize)
             search = f"keywords:{form.keywords.data}"
             url_params['search'] = search
             return render_template('memo.html', memos=memos, title="memo",user=user,delegate=user,detail=detail,next_page=next_page,url_params =url_params)
@@ -483,7 +483,7 @@ def search():
             return redirect(url_for("memos.inbox",username=form.inbox.data,page=page))
         
     if request.method == 'POST':
-        return render_template('search.html', title='Memo Search ',legend=f'Search',form=form)
+        return render_template('memo_search.html', title='Memo Search ',legend=f'Search',form=form)
     
 
 # Everything below here is GET
