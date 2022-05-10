@@ -1,6 +1,8 @@
+*~
+#*#
 __pycache__
 env
-docmgr/static/memos
+memos/memos/static
 site.db
 test.db
 env.sh
@@ -8,3 +10,5 @@ env.sh
 .vscode
 settings_local.py
 *.pyc
+memo_files
+

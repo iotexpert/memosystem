@@ -1,3 +1,4 @@
+
 # Use the Python3.8.3 image
 FROM python:3.8-bullseye
 ENV APP=/app
@@ -10,28 +11,13 @@ WORKDIR $APP
 # Copy the current directory contents into the container at /app 
 ADD . $APP
 
-
-
-RUN python3 -m venv env
-ENV PATH="$APP/env/bin:$PATH"
-
+#RUN python3 -m venv "$APP"/env
+RUN python3 -m venv /app/env
+ENV PATH "${APP}/env/bin:${PATH}"
 
 # Install the dependencies
 RUN pip install -r requirements.txt
+CMD ["flask", "run","--host=0.0.0.0"]
 
 # run the command to start uWSGI
 #CMD ["uwsgi", "app.ini"]
-
-
-
-
-# Install dependencies:
-#COPY requirements.txt .
-#RUN pip install -r requirements.txt
-
-# Run the application:
-#COPY myapp.py .
-
-#RUN python3 create_db.py
-
-CMD ["flask", "run","--host=0.0.0.0"]

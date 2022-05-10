@@ -37,3 +37,10 @@ The document manager system is built on SQL Alchecmy which allows it to retarget
 ### Configure Authentication
 
 ### Turn on the webserver
+
+
+# docker
+cd memos
+docker build -t memosystem .
+docker run -d -p 5000:5000 -v /Users/arh/proj/memosystem/memo_files:/app/memos/static --name memosystem memosystem
+docker exec memosystem python configure.py
