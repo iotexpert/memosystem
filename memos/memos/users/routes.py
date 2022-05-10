@@ -38,9 +38,12 @@ def login():
     if form.validate_on_submit():
         login_ok = False
         ldap_pw_ok = False
-        ldap_user = None
         if ldap:
-            ldap_user = ldap.get_object_details(form.email.data)
+            try:
+                ldap_user = ldap.get_object_details(form.email.data)
+            except:
+                ldap_user = None
+
             if ldap_user:
                 ldap_pw_ok = ldap.bind_user(form.email.data, form.password.data)
                 login_ok = ldap_pw_ok
@@ -54,6 +57,22 @@ def login():
             user = User(username=ldap_user[os.environ["LDAP_USER_NAME"]][0].decode('ASCII'), 
                 email=ldap_user[os.environ["LDAP_EMAIL"]][0].decode('ASCII'), password='xx')
             db.session.add(user)
+            db.session.commit()
+
+        # If we validated a user with ldap, Update their permissions from LDAP groups.
+        if ldap_user:
+            user.admin = False
+            user.readAll = False
+            admin_groups = os.environ["LDAP_ADMIN_GRP"].split(";")
+            readAll_groups = os.environ["LDAP_READ_GRP"].split(";")
+            if isinstance(ldap_user['memberOf'], list):
+                for grp in ldap_user['memberOf']:
+                    grp = str(grp, 'utf-8')
+                    for aGrp in admin_groups:
+                        if grp.startswith(aGrp) : user.admin = True
+                    for rGrp in readAll_groups:
+                        if grp.startswith(rGrp) : user.readAll = True
+                    
             db.session.commit()
 
         if ldap_user is None and user:
