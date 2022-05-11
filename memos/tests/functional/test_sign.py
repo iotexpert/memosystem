@@ -1,4 +1,4 @@
-def test_home_page_get(client,init_database):
+def test_home_page_get(client, session):
 
     """
     Given:
@@ -11,7 +11,7 @@ def test_home_page_get(client,init_database):
     
     
 
-def test_valid_login_logout(client,init_database):
+def test_valid_login_logout(client, session):
     """
     GIVEN a Flask application configured for testing
     WHEN the '/login' page is posted to (POST)
