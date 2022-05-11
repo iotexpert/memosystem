@@ -1,4 +1,5 @@
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+import datetime
+import jwt
 from flask import current_app
 from memos import db, login_manager
 from flask_login import UserMixin
@@ -91,8 +92,16 @@ class User(db.Model, UserMixin):
         return self.username
 
     def get_reset_token(self, expires_sec=1800):
-        s = Serializer(current_app.config['SECRET_KEY'], expires_sec)
-        return s.dumps({'user_id': self.username}).decode('utf-8')
+        reset_token = jwt.encode(
+            {
+                "confirm": self.username,
+                "exp": datetime.datetime.now(tz=datetime.timezone.utc)
+                       + datetime.timedelta(seconds=expires_sec)
+            },
+            current_app.config['SECRET_KEY'],
+            algorithm="HS256"
+        )
+        return reset_token
 
     def check_password(self,check_pw):
         return bcrypt.check_password_hash(self.password, check_pw)
@@ -154,13 +163,18 @@ class User(db.Model, UserMixin):
         return bcrypt.generate_password_hash(plaintext).decode('utf-8')
 
     @staticmethod
-    def verify_reset_token(token):
-        s = Serializer(current_app.config['SECRET_KEY'])
+    def verify_reset_token(token):        
         try:
-            user_id = s.loads(token)['user_id']
+            data = jwt.decode(
+                token,
+                current_app.config['SECRET_KEY'],
+                leeway=datetime.timedelta(seconds=10),
+                algorithms=["HS256"]
+            )
         except:
             return None
-        return User.query.get(user_id)
+
+        return User.query.get(data.get('confirm'))
 
     def __repr__(self):
         return f"User('{self.username}', '{self.email}', '{self.image_file}')"
