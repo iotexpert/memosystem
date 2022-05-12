@@ -92,8 +92,6 @@ def test_user_is_delegate(db, session):
 
 def test_user_subscriptions(db, session):
     adminUser = User.find(username='adminUser')
-    readAllUser = User.find(username='readAllUser')
-    avgUser = User.find(username='avgUser')
     
     adminUser.subscriptions = "readAllUser avgUser"
     assert "readAllUser" in adminUser.subscriptions

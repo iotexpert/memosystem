@@ -57,6 +57,23 @@ def db(app, request):
     _db.session.add(User(username='readAllUser', password= User.create_hash_pw('u'),email='readAllUser@t.local',readAll=True))
     _db.session.commit()
 
+    memos = [
+        Memo(number=1, version='A',title="avgUser memo1-1",user_id="avgUser",memo_state=MemoState.Obsolete,keywords="asdf asdf asdf qwer ",num_files=0),
+        Memo(number=1, version='B',title="avgUser memo1-2",user_id="avgUser",memo_state=MemoState.Obsolete,keywords="asdf asdf asdf qwer ",num_files=0),
+        Memo(number=1, version='C',title="avgUser memo1-3",user_id="avgUser",memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0),
+        Memo(number=2, version='A',title="avgUser memo2-1",user_id="avgUser",memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0),
+        Memo(number=3, version='A',title="avgUser memo3-1",user_id="avgUser",memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0),
+        Memo(number=1, version='A',title="readAllUser-1-1",user_id='readAllUser',memo_state=MemoState.Obsolete,keywords="asdf asdf asdf qwer ",num_files=0),
+        Memo(number=1, version='B',title="readAllUser-1-2",user_id='readAllUser',memo_state=MemoState.Obsolete,keywords="asdf asdf asdf qwer ",num_files=0),
+        Memo(number=1, version='C',title="readAllUser-1-3",user_id='readAllUser',memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0),
+        Memo(number=2, version='A',title="readAllUser-2-1",user_id='readAllUser',memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0),
+        Memo(number=3, version='A',title="readAllUser-3-1",user_id='readAllUser',memo_state=MemoState.Draft,keywords="asdf asdf asdf qwer ",num_files=0),
+        Memo(number=4, version='A',title="readAllUser-4-1",user_id='readAllUser',memo_state=MemoState.Signoff,keywords="asdf asdf asdf qwer ",num_files=0),
+    ]
+    for memo in memos:
+        _db.session.add(memo)     
+    _db.session.commit()
+    
     request.addfinalizer(teardown)
     return _db
 
@@ -82,23 +99,3 @@ def session(db, request):
 
 
 
-# def create_history():
-#     memos = [
-#         Memo(number=1, version='A',title="u1 memo1-1",user_id=2,memo_state=MemoState.Obsolete,keywords="asdf asdf asdf qwer ",num_files=0),
-#         Memo(number=1, version='B',title="u1 memo1-2",user_id=2,memo_state=MemoState.Obsolete,keywords="asdf asdf asdf qwer ",num_files=0),
-#         Memo(number=1, version='C',title="u1 memo1-3",user_id=2,memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0),
-#         Memo(number=2, version='A',title="u1 memo2-1",user_id=2,memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0),
-#         Memo(number=3, version='A',title="u1 memo3-1",user_id=2,memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0),
-#         Memo(number=1, version='A',title="u2-1-1",user_id=3,memo_state=MemoState.Obsolete,keywords="asdf asdf asdf qwer ",num_files=0),
-#         Memo(number=1, version='B',title="u2-1-2",user_id=3,memo_state=MemoState.Obsolete,keywords="asdf asdf asdf qwer ",num_files=0),
-#         Memo(number=1, version='C',title="u2-1-3",user_id=3,memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0),
-#         Memo(number=2, version='A',title="u2-2-1",user_id=3,memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0),
-#         Memo(number=3, version='A',title="u2-3-1",user_id=3,memo_state=MemoState.Draft,keywords="asdf asdf asdf qwer ",num_files=0),
-#         Memo(number=4, version='A',title="u2-4-1",user_id=3,memo_state=MemoState.Draft,keywords="asdf asdf asdf qwer ",num_files=0),
-#     ]
-#     for memo in memos:
-#         db.session.add(memo)
-#         db.session.commit()
-        
-#         memo.process_state()
-#     db.session.commit()

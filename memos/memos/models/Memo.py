@@ -550,22 +550,14 @@ class Memo(db.Model):
         if memo_id != None:
             return Memo.query.filter_by(id=memo_id).first()
 
-        current_app.logger.info(f"FIND: Looking for {username}/{memo_number}/{memo_version}")
-        
-        user = User.find(username=username)
-        current_app.logger.info(f"Found user {user}")
-        if user == None:
-            return None
+        current_app.logger.debug(f"FIND: Looking for {username}/{memo_number}/{memo_version}")
 
+        memoQry = Memo.query.filter_by(user_id=username,number=memo_number)
         if memo_version != None:
-            memo = Memo.query.join(User).filter(User.username==user.username,Memo.number==memo_number,Memo.version==memo_version).first()
-            current_app.logger.info(f"Memo Status = {memo}")
-        else:
-            memo = Memo.query.join(User).filter(User.username==user.username,Memo.number==memo_number).order_by(Memo.version.desc()).first()
+            memoQry.filter_by(version=memo_version)
+        memo = memoQry.first()        
         
-        
-        current_app.logger.info(f"Found Memo id={memo}")
-                                
+        current_app.logger.debug(f"Found Memo id={memo}")                                
         return memo
 
     @staticmethod
