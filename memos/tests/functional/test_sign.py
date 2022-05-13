@@ -17,11 +17,13 @@ def test_valid_login_logout(client, session):
     WHEN the '/login' page is posted to (POST)
     THEN check the response is valid
     """
-    pass
-    response = client.post('/login',
-                                data=dict(email='admin@admin.local', password='admin'),
+    with client:
+        response = client.get('/login')
+        response = client.post('/login',
+                                data=dict(email='adminUser@gmail.com', password='u'),
                                 follow_redirects=True)
     assert response.status_code == 200
+
     print(response.data)
     assert b'Account: admin' in response.data
 #    assert b'Flask User Management' in response.data

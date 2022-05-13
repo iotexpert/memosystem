@@ -227,5 +227,8 @@ class User(db.Model, UserMixin):
             return False        
 
     @staticmethod
-    def get_pagesize(user):        
-        return user.pagesize
+    def get_pagesize(user):    
+        if hasattr(user, 'pagesize'):    
+            return user.pagesize
+        else:
+            return 20
