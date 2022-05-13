@@ -1,7 +1,8 @@
 import os
 
 # LDAP settings
-del os.environ["LDAP_HOST"]  # LDAP is too site specific for general automated tests
+if "LDAP_HOST" in os.environ:
+    del os.environ["LDAP_HOST"]  # LDAP is too site specific for general automated tests
 
 os.environ['FLASK_ENV'] = 'development'
 
