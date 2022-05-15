@@ -1,5 +1,11 @@
 # Memo System
 
+1. Architecture
+2. Close the memosystem
+3. Configuration
+4. Initialization
+5. Using Docker
+
 # Architecture
 ![Architecture](https://github.com/iotexpert/memosystem/blob/main/arch.png?raw=true)
 # Configuration
@@ -37,10 +43,10 @@ mkdir memo_files/sqlite
 The system is built using [SQL Alchemy](https://www.sqlalchemy.org) to support all database interaction.  This library gives you a selection of database.  I have tested [SQLite](https://www.sqlite.org/) and [MySQL](https://mysql.com) but the others will probably work as well - YMMV.  For a production use I recommend MySQL.
 ### MySQL
 In order to configure the MySQL instance you will need to modify the "docker-compose.yml" to setup the users, passwords and files.  Then you will need to modify the settings.py to setup the same.
-#### Configure docker-compose.yml
+#### Configure docker-compose.yml for MySQL
 The database section of the provided tempalte for docker-compose.yml looks like this:
 ```yml
-db:  # This container host the mysql instance.
+  mysql:  # This container host the mysql instance.
     image: mysql
     container_name: mysql
     command: --default-authentication-plugin=mysql_native_password
@@ -57,7 +63,6 @@ db:  # This container host the mysql instance.
     volumes:
     # you need to fix the hardcoded source path
       - /Users/arh/proj/memosystem/memo_files/mysql:/var/lib/mysql
-      - /Users/arh/proj/memosystem/memo_files/sqlite:/app/memos/sqlite
 ```
 In your docker-compose.yml configuration file you need to setup:
 1. MYSQL_ROOT_PASSWORD: "test123"
@@ -85,27 +90,37 @@ Here is an example with user=memosystem password=memopw server=mysql database=me
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://memosystem:memopw@mysql/memos'
 ```
 ### SQLite
-If you want to use sqlite you modify the
+If you want to use sqlite you modify the settings_local.py and the docker-compose.yml.  Start with the settings_local.py.  You want to turn on the sqlite url.  It is just a PATH to the site.db (the database file).  The name of the database file doesnt really matter - though I have been calling it site.db.  The "///sqlite/" part tells the sqlite to store the file in /app/memos/sqlite. 
 ```
-#os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sqlite/site.db'
 ```
-
+In order to not loose your data you should mount a directory from the host onto /apps/memos/sqlite.  To do this modify docker-compose.yml.  In the "memosystem" section add the line with the bind mount (the last line of this block).  This will mount the directory from your memosystem/memo_files/sqlite so that the database file is preserverd.
+```
+  memosystem:     # This container hosts the uwsgi & flask
+    build: ./memos
+    container_name: memosystem
+    restart: always
+    ports:
+      # if you are going to run flask without the uwsgi etc... then you need this port
+#      - 5000:5000
+      - 80:80
+      - 443:443
+    volumes:
+    # Unfortunately the volume must be an absolute path to the
+    # memos.  This directory will hold the raw files + the meta jsons
+    # of the memos... and should be backed up
+      - /Users/arh/proj/memosystem/memo_files/static:/app/memos/static
+      - /Users/arh/proj/memosystem/memo_files/sqlite:/app/memos/sqlite
+```
 ## Authentication
 ## Mailer
 ## HTTPS / HTTP
-
-
 # Initialization
-In order to intialize the system there is a python program called "configure.py"  that can perform two functions
+In order to intialize the system there is a python program called "configure.py" that can perform two functions
 1. Initialize the tables in the database based on the database configuration
-2. Copy the static files from the memos/memos/template_static_files into the "memos/memos/static" directory
+2. Copy the static files from the "memos/memos/template_static_files" into the "memos/memos/static" directory
 
-# Docker
-You can use Docker containers to host the Flask memo application and a MySQL database.  In order to make this work you will need to configure the following files:
-
-# Configure bare metal + sqlite
-# Configure bare metal + MySql
-# Configure Docker
+# Using Docker
 
 cd memos
 docker build -t memosystem .
