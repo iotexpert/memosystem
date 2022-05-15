@@ -11,4 +11,7 @@ env.sh
 settings_local.py
 *.pyc
 memo_files
+Dockerfile
+docker-compose.yml
+
 

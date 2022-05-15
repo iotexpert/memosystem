@@ -12,7 +12,9 @@ from flask import current_app
 def create_db():
     app = create_app()
     app.app_context().push()
+    print(app)
     db.init_app(app)
+    print(db)
     db.create_all()
 
     if "LDAP_HOST" not in os.environ:
@@ -32,7 +34,7 @@ def copy_static():
     
 
 if __name__ == "__main__":
-    create_db()
+#    create_db()
     copy_static()
     
     

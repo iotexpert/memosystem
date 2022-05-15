@@ -25,7 +25,7 @@ class Memo(db.Model):
     """
     id = db.Column(db.Integer, primary_key=True)
     number = db.Column(db.Integer)                                      # Memo Number
-    version = db.Column(db.String)                                      # A,B,..Z,AA,AB,...AZ,BA
+    version = db.Column(db.String(2))                                   # A,B,..Z,AA,AB,...AZ,BA
     confidential = db.Column(db.Boolean, default=False)                 # if true only author, signer, distribution can read
     distribution = db.Column(db.String(128), default='')                # user names on the distribution
     keywords = db.Column(db.String(128), default='')                    # any keyword

@@ -1,46 +1,52 @@
-# Document Manager
+# Memo System
 
-## Installation
-1. Configure the shell environment
-2. Install the python environment
-3. Configure a database
-4. Setup the directory for the data
-5. Initialize the database
-6. Configure the authentication
-7. Turn on the webserver
+# Architecture
+![Architecture](https://github.com/iotexpert/memosystem/blob/main/arch.jpg?raw=true)
+# Configuration
+In order to use the system you will need to take the following steps:
+1. Choose a Database (SQLite or MySQL)
+2. Set the passwords for the database
+3. Choose AD/LDAP or Local Authentication
+5. Set the passwords for the admin account (if using local authentication)
+6. Setting the mailer configuration
+7. Choose the location of memo files
+8. Choose HTTPS or HTTP (intelligence test)
+9. Choose Docker or Bare Metal
 
-### Configure the shell environment
-All of the configuration variable for the system (passwords etc.) must be initialized before starting the webserver.  In the Git Repository there is a file called "en.sh.template" which contains all of the needed variables.  I reccomend that you make a copy of this file e.g. "cp en.sh.tempalte env.sh".  Then edit the variables to suit your installation.  Before running the web server you can ". env.sh" to load the variables into the shell.
-
-### Install the python environment
-1. Make a virtual environment "python3 -v venv env"
-2. Activate it "source env/bin/activate"
-3. Install the requirements "pip install -r requirements.txt"
-
-### Configure a database
-The document manager system is built on SQL Alchecmy which allows it to retarget to different database.  I have tried by SQLLite and MySQL
-
-#### Configure SQLLite
-
-#### Configure MySQL
-1. Create a new mysql database called "docmgr" 
-2. Create a user for "docmgr"
-3. Create a password for the "docmgr" user
-
+All of the system configuration is done by copying the appropriate template and then making modifcations that are specific to your configuration
+|File|Template|Description|
+|---|---|---|
+|docker-compose.yml|docker.compose.template||
+|memos/Dockerfile|memos/Dockerfile.template||
+|memos/settings.py|memos/settings.py.template||
+## Database
+balasdfklj
+## Authentication
+## Mailer
+## HTTPS / HTTP
+## Docker
 
 
-### Setup the directory for the data
+# Initialization
+In order to intialize the system there is a python program called "configure.py"  that can perform two functions
+1. Initialize the tables in the database based on the database configuration
+2. Copy the static files from the memos/memos/template_static_files into the "memos/memos/static" directory
 
+# Docker
+You can use Docker containers to host the Flask memo application and a MySQL database.  In order to make this work you will need to configure the following files:
 
-### Intialize the database
+# Configure bare metal + sqlite
+# Configure bare metal + MySql
+# Configure Docker
 
-### Configure Authentication
-
-### Turn on the webserver
-
-
-# docker
 cd memos
 docker build -t memosystem .
 docker run -d -p 5000:5000 -v /Users/arh/proj/memosystem/memo_files:/app/memos/static --name memosystem memosystem
 docker exec memosystem python configure.py
+
+metal flask + sqlite
+metal flask + metal mysql
+metal flask + docker mysql
+docker flask + sqlite
+docker flask + nginx + sqlite
+docker flask + nginx + mysql
