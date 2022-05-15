@@ -1,40 +1,115 @@
-from docmgr.models.User import User
+from memos.models.User import Delegate, User, load_user
+import time
 
 """
-    username = db.Column(db.String(20), primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
-    password = db.Column(db.String(60), nullable=False)
-    admin = db.Column(db.Boolean,default=False)
-    readAll = db.Column(db.Boolean,default=False)
-    pagesize = db.Column(db.Integer, nullable=False, default = 20)
-    _subscriptions = db.Column(db.String(128))
+Verify functions in User.py
 
-https://www.martinfowler.com/bliki/GivenWhenThen.html
-Feature: User trades stocks
-  Scenario: User requests a sell before close of trading
-    Given I have 100 shares of MSFT stock
-       And I have 150 shares of APPL stock
-       And the time is before close of trading
-
-    When I ask to sell 20 shares of MSFT stock
+Assumes users exist: adminUser, readAllUser, avgUser
+"""     
      
-     Then I should have 80 shares of MSFT stock
-      And I should have 150 shares of APPL stock
-      And a sell order for 20 shares of MSFT stock should have been executed
-      
-      Given: The initial conditions of the test
-      When: What is occuring that needs to be tested
-      Then: What is the expected response
-"""
-     
-def dont_test_new_user():
-    """Given 
-    """
-    user = User(username='test12',email="test1@test.local",password="123",admin=False,readAll=False,pagesize=10)
-    print(f'{user}')
-#    db.session.add(user)
-#    db.session.commit()
+def test_delegate_delete_one(db, session):
+    adminUser = User.find(username='adminUser')
+    readAllUser = User.find(username='readAllUser')
+    avgUser = User.find(username='avgUser')
+    
+    Delegate.add(adminUser, readAllUser)
+    delegate = adminUser.delegates
+    assert "avgUser" in delegate["usernames"]
+    assert "readAllUser" in delegate["usernames"]
+    assert len(delegate["users"]) == 2
 
-    assert user.admin == False
-    assert user.pagesize == 10
+    Delegate.delete(adminUser, readAllUser)
+
+    delegate = adminUser.delegates
+    assert "avgUser" in delegate["usernames"]
+    assert "readAllUser" not in delegate["usernames"]
+    assert len(delegate["users"]) == 1
+     
+def test_delegate_delete_all(db, session):
+    adminUser = User.find(username='adminUser')
+    readAllUser = User.find(username='readAllUser')
+    avgUser = User.find(username='avgUser')
+    
+    Delegate.add(adminUser, readAllUser)
+    delegate = adminUser.delegates
+    assert "avgUser" in delegate["usernames"]
+    assert "readAllUser" in delegate["usernames"]
+    assert len(delegate["users"]) == 2
+
+    Delegate.delete(adminUser)
+
+    delegate = adminUser.delegates
+    assert "avgUser" not in delegate["usernames"]
+    assert "readAllUser" not in delegate["usernames"]
+    assert len(delegate["users"]) == 0
+
+def test_load_user(db, session):
+    user = load_user('adminUser')
+    assert user.get_id() == 'adminUser'
+     
+def test_user_get_id(db, session):
+    user = User.find(username='adminUser')
+    assert user.get_id() == 'adminUser'
+     
+def test_user_get_reset_token(db, session):
+    user = User.find(username='adminUser')
+    token1 = user.get_reset_token()
+    time.sleep(1)
+    token2 = user.get_reset_token()
+    assert token1 != token2
+    assert User.verify_reset_token(token2).username =='adminUser'
+    assert User.verify_reset_token("xx") == None
+     
+def test_user_check_password(db, session):
+    user = User.find(username='adminUser')
+    assert user.check_password('x') == False
+    assert user.check_password('u') == True
+     
+def test_user_delegate_for(db, session):
+    user = User.find(username='avgUser')
+    delegate = user.delegate_for
+    assert delegate["usernames"].strip() == "adminUser"
+    assert len(delegate["users"]) == 1
+    assert delegate["users"][0].username == "adminUser"
+     
+def test_user_delegates(db, session):
+    user = User.find(username='adminUser')
+    delegate = user.delegates
+    assert delegate["usernames"].strip() == "avgUser"
+    assert len(delegate["users"]) == 1
+    assert delegate["users"][0].username == "avgUser"
+     
+def test_user_is_delegate(db, session):
+    adminUser = User.find(username='adminUser')
+    readAllUser = User.find(username='readAllUser')
+    avgUser = User.find(username='avgUser')
+    
+    assert adminUser.is_delegate() == False # delegate is None
+    assert readAllUser.is_delegate(readAllUser) == True # Always delegate for self 
+    assert readAllUser.is_delegate(adminUser) == True # Admin is always a valid delegate
+    assert adminUser.is_delegate(readAllUser) == False # readAllUser is not a delegate or adminUser
+    assert adminUser.is_delegate(avgUser) == True # avgUser is a delegate of adminUser
+
+def test_user_subscriptions(db, session):
+    adminUser = User.find(username='adminUser')
+    
+    adminUser.subscriptions = "readAllUser avgUser"
+    assert "readAllUser" in adminUser.subscriptions
+    assert "avgUser" in adminUser.subscriptions
+
+def test_user_valid_usernames(db, session):
+    v = User.valid_usernames("adminUser readAllUser,avgUser unknownUser")
+    assert "adminUser" in v["valid_usernames"]
+    assert "readAllUser" in v["valid_usernames"]
+    assert "avgUser" in v["valid_usernames"]
+    assert "unknownUser" not in v["valid_usernames"]
+    assert "unknownUser" in v["invalid_usernames"]
+    assert len(v["valid_users"]) == 3
+
+def test_user_is_admin(db, session):
+    assert User.is_admin('adminUser')
+    assert not User.is_admin('readAllUser')
+
+def test_user_is_readAll(db, session):
+    assert User.is_readAll('readAllUser')
+    assert not User.is_readAll('avgUser')

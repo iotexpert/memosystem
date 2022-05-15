@@ -1,4 +1,5 @@
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+import datetime
+import jwt
 from flask import current_app
 from memos import db, login_manager
 from flask_login import UserMixin
@@ -82,8 +83,7 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(60), nullable=False)
     admin = db.Column(db.Boolean,default=False)
     readAll = db.Column(db.Boolean,default=False)
-    pagesize = db.Column(db.Integer, nullable=False, default = 20)
-    _subscriptions = db.Column(db.String(128))
+    pagesize = db.Column(db.Integer, nullable=False, default = 10)
         
     memos = db.relationship('Memo',backref=db.backref('user', lazy=True))
     history = db.relationship('MemoHistory',backref=db.backref('user', lazy=True))
@@ -92,8 +92,16 @@ class User(db.Model, UserMixin):
         return self.username
 
     def get_reset_token(self, expires_sec=1800):
-        s = Serializer(current_app.config['SECRET_KEY'], expires_sec)
-        return s.dumps({'user_id': self.id}).decode('utf-8')
+        reset_token = jwt.encode(
+            {
+                "confirm": self.username,
+                "exp": datetime.datetime.now(tz=datetime.timezone.utc)
+                       + datetime.timedelta(seconds=expires_sec)
+            },
+            current_app.config['SECRET_KEY'],
+            algorithm="HS256"
+        )
+        return reset_token
 
     def check_password(self,check_pw):
         return bcrypt.check_password_hash(self.password, check_pw)
@@ -134,9 +142,10 @@ class User(db.Model, UserMixin):
     @property
     def subscriptions(self):
         sublist = MemoSubscription.get(self)
+        l = []
         for sub in sublist:
-            #current_app.logger.info(f"{sub.subscriber_id} {sub.subscription_id}")
-            return self._subscriptions 
+            l.append( sub.subscription_id)
+        return ' '.join(l)
         
     @subscriptions.setter
     def subscriptions(self,sub_names):
@@ -154,53 +163,30 @@ class User(db.Model, UserMixin):
         return bcrypt.generate_password_hash(plaintext).decode('utf-8')
 
     @staticmethod
-    def verify_reset_token(token):
-        s = Serializer(current_app.config['SECRET_KEY'])
+    def verify_reset_token(token):        
         try:
-            user_id = s.loads(token)['user_id']
+            data = jwt.decode(
+                token,
+                current_app.config['SECRET_KEY'],
+                leeway=datetime.timedelta(seconds=10),
+                algorithms=["HS256"]
+            )
         except:
             return None
-        return User.query.get(user_id)
+
+        return User.query.get(data.get('confirm'))
 
     def __repr__(self):
         return f"User('{self.username}', '{self.email}', '{self.image_file}')"
 
     @staticmethod
-    def find(userid=None,username=None):
-        """Find either the userid or the username ... if you sepcify both it will fail if you arent talking about the same user
-
-        Args:
-            userid ([int], optional): [The userid you are looking for ]. Defaults to None.
-            username ([string], optional): [The username you are looking for]. Defaults to None.
+    def find(username):
+        """Lookup user by username
 
         Returns:
             [User]: The User you are looking for... or None
         """
-        #current_app.logger.info(f"User.find username={username} userid={userid}")
-
-        u1 = None
-        u2 = None
-        if userid != None:
-            u1 = User.query.filter_by(id=userid).first()
-        if username != None:
-            u2 = User.query.filter_by(username=username).first()
-
-        #current_app.logger.info(f"Userfind U1={u1} U2={u2}")
-        
-        if u1 == None and u2 == None:
-            return None
-        
-        if u1 != None and u2 == None:
-            return u1
-        
-        if u1 == None and u2 != None:
-            return u2
-
-        if u1 == u2:
-            #current_app.logger.info(f"return user find u1=u2 {u1}")
-            return u1       
-
-        raise RuntimeError('Failed impossible condition inside of User.find()')
+        return User.query.filter_by(username=username).first()
 
     # this function takes a string of "users" where they are seperated by , or space and checks if they are valid
     @staticmethod
@@ -209,7 +195,7 @@ class User(db.Model, UserMixin):
         valid_usernames = []
         users = re.split(r'\s|\,',userlist)
         if '' in users: users.remove('')
-        #current_app.logger.info(f"User = {users}")
+
         for username in users:
             user = User.find(username=username)
             if username != "" and  user == None:
@@ -225,7 +211,7 @@ class User(db.Model, UserMixin):
         return {'valid_usernames':valid_usernames,'invalid_usernames':invalid_usernames,'valid_users':valid_users}
 
     @staticmethod
-    def is_admin(username=None):
+    def is_admin(username):
         user = User.find(username=username)
         if user and user.admin:
             return True
@@ -233,18 +219,16 @@ class User(db.Model, UserMixin):
             return False
         
     @staticmethod
-    def is_readAll(username=None):
+    def is_readAll(username):
         user = User.find(username=username)
         if user and user.readAll:
             return True
         else:
-            return False
-        
+            return False        
 
     @staticmethod
-    def get_pagesize(user):
-        
-        try:
+    def get_pagesize(user):    
+        if hasattr(user, 'pagesize'):    
             return user.pagesize
-        except:
-            return 10
+        else:
+            return 20

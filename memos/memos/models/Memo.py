@@ -81,7 +81,9 @@ class Memo(db.Model):
         if self.memo_state == MemoState.Active or self.memo_state == MemoState.Obsolete:
             return True
 
-    def can_sign(self, signer=None, delegate=None):
+        return False
+
+    def can_sign(self, signer, delegate):
         """Can this memo be signed by delegate for the signers"""
         
         if signer is None or delegate is None:
@@ -97,7 +99,7 @@ class Memo(db.Model):
         status = MemoSignature.is_signer(self.id,signer)
         return status['is_signer'] and not status['status']
 
-    def can_unsign(self, signer=None, delegate=None):
+    def can_unsign(self, signer, delegate):
         """Can this memo be unsigned by delegate for the signer """
         if signer is None or delegate is None:
             return False
@@ -111,7 +113,7 @@ class Memo(db.Model):
         status = MemoSignature.is_signer(self.id,signer)
         return status['is_signer'] and status['status']
 
-    def can_obsolete(self, delegate=None):
+    def can_obsolete(self, delegate):
         """ Can this memo be obsoleted by the delegate?  Only active memos can be obsoleted """
         if delegate is None:
             return False
@@ -124,7 +126,7 @@ class Memo(db.Model):
 
         return False
 
-    def can_cancel(self, delegate=None):
+    def can_cancel(self, delegate):
         """ can this memo be cancled by the delegate.  Only drafts memos can be canceled"""
         if delegate is None:
             return False
@@ -137,7 +139,7 @@ class Memo(db.Model):
 
         return True
 
-    def can_reject(self, signer=None, delegate=None):
+    def can_reject(self, signer, delegate):
         """ can this memo be rejected by the delegate.  Only memos in signoff can be rejected"""
         if signer is None or delegate is None:
             return False
@@ -550,22 +552,14 @@ class Memo(db.Model):
         if memo_id != None:
             return Memo.query.filter_by(id=memo_id).first()
 
-        current_app.logger.info(f"FIND: Looking for {username}/{memo_number}/{memo_version}")
-        
-        user = User.find(username=username)
-        current_app.logger.info(f"Found user {user}")
-        if user == None:
-            return None
+        current_app.logger.debug(f"FIND: Looking for {username}/{memo_number}/{memo_version}")
 
+        memoQry = Memo.query.filter_by(user_id=username,number=memo_number)
         if memo_version != None:
-            memo = Memo.query.join(User).filter(User.username==user.username,Memo.number==memo_number,Memo.version==memo_version).first()
-            current_app.logger.info(f"Memo Status = {memo}")
-        else:
-            memo = Memo.query.join(User).filter(User.username==user.username,Memo.number==memo_number).order_by(Memo.version.desc()).first()
+            memoQry = memoQry.filter_by(version=memo_version)
+        memo = memoQry.first()        
         
-        
-        current_app.logger.info(f"Found Memo id={memo}")
-                                
+        current_app.logger.debug(f"Found Memo id={memo}")                                
         return memo
 
     @staticmethod
