@@ -13,5 +13,6 @@ settings_local.py
 memo_files
 Dockerfile
 docker-compose.yml
+settings.py
 
 
