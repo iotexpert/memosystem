@@ -1,7 +1,7 @@
 # Memo System
 
 # Architecture
-![Architecture](https://github.com/iotexpert/memosystem/blob/main/arch.jpg?raw=true)
+![Architecture](https://github.com/iotexpert/memosystem/blob/main/arch.png?raw=true)
 # Configuration
 In order to use the system you will need to take the following steps:
 1. Choose a Database (SQLite or MySQL)
