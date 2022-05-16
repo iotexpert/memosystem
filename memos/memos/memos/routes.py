@@ -56,18 +56,6 @@ def main(username=None,memo_number=None,memo_version=None):
     else:
         user = current_user
 
-    if memo_version is None and memo_number is None and username is not None and  '-' in username:
-        sstring = username.split('-')
-        detail = True
-        if len(sstring) == 2:
-            username = sstring[0]
-            memo_number = int(sstring[1])
-
-        if len(sstring) == 3:
-            username = sstring[0]
-            memo_number = int(sstring[1])
-            memo_version = sstring[2]
-
     memo_list = Memo.get_memo_list(username=username,memo_number=memo_number,
                                    memo_version=memo_version,page=page,pagesize=pagesize)
 
