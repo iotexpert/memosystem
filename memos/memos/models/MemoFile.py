@@ -41,7 +41,7 @@ class MemoFile(db.Model):
     def delete(memo):
         MemoFile.query.filter_by(memo_id=memo.id).delete()
     
-    def remove_file(self,memo=None):
+    def remove_file(self,memo):
         
         path = memo.get_fullpath()
         try:
