@@ -1,13 +1,9 @@
-from flask import current_app
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed
 from wtforms import StringField, PasswordField, SubmitField, BooleanField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from flask_login import current_user
 from memos.models.User import User
-from memos.models.Memo import Memo
-from memos.models.MemoFile import MemoFile
-from memos.models.MemoSignature import MemoSignature
 
 
 class RegistrationForm(FlaskForm):
@@ -33,7 +29,7 @@ class RegistrationForm(FlaskForm):
 
 class LoginForm(FlaskForm):
     email = StringField('Email',
-                        validators=[DataRequired(), Email()])
+                        validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     remember = BooleanField('Remember Me')
     submit = SubmitField('Login')
