@@ -66,7 +66,7 @@ def login():
             user.readAll = False
             admin_groups = os.environ["LDAP_ADMIN_GRP"].split(";")
             readAll_groups = os.environ["LDAP_READ_GRP"].split(";")
-            if isinstance(ldap_user['memberOf'], list):
+            if 'memberOf' in ldap_user and isinstance(ldap_user['memberOf'], list):
                 for grp in ldap_user['memberOf']:
                     grp = str(grp, 'utf-8')
                     for aGrp in admin_groups:
