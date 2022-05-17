@@ -32,7 +32,7 @@ cp memos/settings_local.py.template memos/settings.py
 ```
 This will give you a local copy of the configuration files which Docker, MySQL, SQLite, Flask etc will use.
 ## Local Files
-When the system is running it will need to store the memos and memo meta data into the file system.  The docker compose will need to "mount" the local file system into the docker containers.  In my installation I created a directory at the top level called "memo_files".  In this directory I make three subdirectories, one for the files (static) one for the mysql and one for the sqlite.
+When the system is running it will need to store the memos and memo meta data onto a permanant file system on the host.  The docker compose will need to "mount" the local file system into the docker containers.  In my installation I created a directory at the top level called "memo_files".  In this directory I make three subdirectories, one for the files (static) one for the mysql and one for the sqlite.
 ```
 mkdir memo_files
 mkdir memo_files/static
@@ -40,11 +40,11 @@ mkdir memo_files/mysql
 mkdir memo_files/sqlite
 ```
 ## Configure the Database
-The system is built using [SQL Alchemy](https://www.sqlalchemy.org) to support all database interaction.  This library gives you a selection of database.  I have tested [SQLite](https://www.sqlite.org/) and [MySQL](https://mysql.com) but the others will probably work as well - YMMV.  For a production use I recommend MySQL.
+The system is built using [SQL Alchemy](https://www.sqlalchemy.org) to support all database interaction.  This library gives you a selection of targetable databases.  I have tested [SQLite](https://www.sqlite.org/) and [MySQL](https://mysql.com) but the others will probably work as well - YMMV.  For a production use I recommend MySQL.
 ### MySQL
-In order to configure the MySQL instance you will need to modify the "docker-compose.yml" to setup the users, passwords and files.  Then you will need to modify the settings.py to setup the same.
+You may choose to target a MySQL server that you already have in your enterprise.  To do this you can skip the docker configuration.  In order to configure the MySQL Docker instance you will need to modify the "docker-compose.yml" (which you copied from the template) to setup the users, passwords and files.  Then you will need to modify the settings.py to setup the same.
 #### Configure docker-compose.yml for MySQL
-The database section of the provided tempalte for docker-compose.yml looks like this:
+The database section of the provided template for docker-compose.yml looks like this:
 ```yml
   mysql:  # This container host the mysql instance.
     image: mysql
@@ -70,12 +70,11 @@ In your docker-compose.yml configuration file you need to setup:
 3. MYSQL_USER: "memosystem"
 4. MYSQL_PASSWORD: "memopw"
 
-I reccomend that you choose a good password, though it may not "really" matter given the MySQL is hidden in a docker container.  Then you need to specify the path to your mysql files.
+I reccomend that you choose a good password, though it may not "really" matter given the MySQL is hidden in a docker container.  Then you need to specify the path to your mysql files.  If you do not configure the /var/lib/mysql you will loose your database when the image is rebuilt.  The formation is "- host_path:container_path"  In the example below it is my home directory, which is alse the location of this Git repository.  Unfortunately you CANNOT use a relative path for some stupid Docker reason
+
 ```
 - /Users/arh/proj/memosystem/memo_files/mysql:/var/lib/mysql
 ```
-Unfortunately you CANNOT use a relative path for some stupid Docker reason
-
 #### Configure the MySQL Database in settings.py
 In the settings.py file you need to configure the SQLAlchemy to talk to MySQL.  
 ```
@@ -83,14 +82,14 @@ In the settings.py file you need to configure the SQLAlchemy to talk to MySQL.
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://user:password@mysql/memos'
 ```
 To do this you
-1. remove the comment # (and make sure that the sqllite line is commented)
+1. remove the comment # from the MySQL URL (and make sure that the sqlite line is commented)
 2. Change the URL for the user (user), password (password), server aka the docker container name (mysql) and database (memos)
 Here is an example with user=memosystem password=memopw server=mysql database=memos  
 ```
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://memosystem:memopw@mysql/memos'
 ```
 ### SQLite
-If you want to use sqlite you modify the settings_local.py and the docker-compose.yml.  Start with the settings_local.py.  You want to turn on the sqlite url.  It is just a PATH to the site.db (the database file).  The name of the database file doesnt really matter - though I have been calling it site.db.  The "///sqlite/" part tells the sqlite to store the file in /app/memos/sqlite. 
+If you want to use sqlite you modify the settings_local.py and the docker-compose.yml.  Start with the settings_local.py.  You want to turn on the sqlite url.  It is just a PATH to the site.db (the database file).  The name of the database file doesnt really matter - though I have been calling it site.db.  The "///sqlite/" part tells the sqlite to store the file in /app/memos/sqlite (in the container). 
 ```
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///sqlite/site.db'
 ```
@@ -115,13 +114,27 @@ In order to not loose your data you should mount a directory from the host onto 
 ## Authentication
 ## Mailer
 ## HTTPS / HTTP
+# Start Docker
+Once you have completed the configuration tasks you can start the Docker system by running
+```
+docker compose build
+docker up -d
+```
+The first command will create the Docker images for the MySQL and the Memosystem.  The second command will start them up.  If you want to just run the "memosystem" you can run
+```
+docker compose build memosystem
+docker up -d memosystem
+```
 # Initialization
-In order to intialize the system there is a python program called "configure.py" that can perform two functions
+Now that you have running containers for the database and the memosytem software, you will need to initialize the system.  In order to intialize the system there is a python program called "configure.py" that performs two functions
 1. Initialize the tables in the database based on the database configuration
 2. Copy the static files from the "memos/memos/template_static_files" into the "memos/memos/static" directory
+You should run the configure.py inside of a running Docker container.  To do this run:
+```
+docker compose exec memosystem python configure.py
+```
 
 # Using Docker
-
 cd memos
 docker build -t memosystem .
 docker run -d -p 5000:5000 -v /Users/arh/proj/memosystem/memo_files:/app/memos/static --name memosystem memosystem

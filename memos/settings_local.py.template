@@ -29,7 +29,3 @@ os.environ['MEMOS_EMAIL_SERVER'] = 'smtp.google.com'
 os.environ['MEMOS_EMAIL_PORT'] = '587'
 os.environ['MEMOS_EMAIL_USER'] = ''
 os.environ['MEMOS_EMAIL_PASS'] = ''
-
-os.environ['MEMOS_ADMIN_USER'] = 'admin'
-os.environ['MEMOS_ADMIN_PASSWORD'] = 'admin'
-os.environ['MEMOS_ADMIN_EMAIL'] = 'testAdmin@gmail.com'
