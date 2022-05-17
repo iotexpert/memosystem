@@ -10,7 +10,7 @@ WORKDIR $APP
 ADD . $APP
 
 RUN python3 -m venv $APP/env
-ENV PATH "${APP}/env/bin:${PATH}"
+ENV PATH "${APP}/env/bin:${APP}:${PATH}"
 
 # Install the dependencies
 RUN pip install -r requirements.txt
