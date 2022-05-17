@@ -28,7 +28,7 @@ def create_app(config_class=Config):
     mail.init_app(app)
     
     if ldap:
-        ldap.init_app(app)
+        ldap.init_app(app) #pragma nocover  -- testing ldap is very environment centric.
 
     from memos.users.routes import users
     from memos.main.routes import main

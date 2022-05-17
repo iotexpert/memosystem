@@ -192,11 +192,6 @@ class Memo(db.Model):
         path = os.path.join(current_app.root_path,"static","memos",f"{self.user_id}",f"{self.number}",f"{self.version}")
         return path
 
-    def get_relpath(self):
-        """ Return the relative path of this memo """
-        path = os.path.join("/static","memos",f"{self.user_id}",f"{self.number}",f"{self.version}")
-        return path
-
     def get_files(self):
         """ Return a list of the files attached to this memo"""
         memo_list = MemoFile.query.filter_by(memo_id=self.id).all()
@@ -323,14 +318,7 @@ class Memo(db.Model):
 ######################################################################
 
     def get_next_version(self):
-        memo = Memo.query.join(User).filter(Memo.number == self.number)\
-            .order_by(Memo.version.desc()).first()
-
-        current_app.logger.info(f"get_next_version {memo.id} {memo.number} {memo.version}")
-        if memo:
-            return b10_to_rev(rev_to_b10(memo.version)+1)
-
-        return b10_to_rev(1) # also known as 'A'
+        return b10_to_rev(rev_to_b10(self.version)+1)
 
     def save(self):
         db.session.add(self)
@@ -398,14 +386,10 @@ class Memo(db.Model):
 
 # Owner Function
     @staticmethod
-    def create_revise(owner=None,delegate=None,memo_number=None):
-        """ This function will return None or a new Memo if the owner/delgate and revise this memo """        
-        assert owner != None and delegate != None
-        if owner == None or delegate == None:
-            return None
-        
+    def create_revise(owner,delegate,memo_number=None):
+        """ This function will return None or a new Memo if the owner/delgate and revise this memo """ 
         if owner.is_delegate(delegate) != True:
-            return None
+            return None # pragma nocover
 
         memo = Memo.query.join(User).filter(User.username==owner.username,Memo.number==memo_number).order_by(Memo.version.desc()).first()
  
@@ -498,7 +482,7 @@ class Memo(db.Model):
         return True
 
 # Owner Function
-    def cancel(self,delegate=None):
+    def cancel(self,delegate):
         current_app.logger.info(f"Cancel: {self} Delegate={delegate}")
     
         memostring = f"{self}"
@@ -523,7 +507,7 @@ class Memo(db.Model):
         return True
 
 # signer function
-    def reject(self,signer=None,delegate=None):
+    def reject(self,signer,delegate):
 
         current_app.logger.info(f"signer = {signer} delegate={delegate}")
         if not self.can_reject(signer,delegate):
@@ -548,9 +532,6 @@ class Memo(db.Model):
 
     @staticmethod
     def find(memo_id=None,username=None,memo_number=None,memo_version=None):
-        
-        if memo_id != None:
-            return Memo.query.filter_by(id=memo_id).first()
 
         current_app.logger.debug(f"FIND: Looking for {username}/{memo_number}/{memo_version}")
 
@@ -609,10 +590,8 @@ class Memo(db.Model):
 
     @staticmethod
     def get_inbox(user=None,page=1,pagesize=None):
-        
-        assert user!=None,"User must not be none"
         if user == None:
-            return None
+            return None #pragma nocover
         
         msigs = MemoSignature.get_signatures(user,signed=False)
         
@@ -621,11 +600,9 @@ class Memo(db.Model):
         return memolist
     
     @staticmethod
-    def get_drafts(user=None,page=1,pagesize=None):
-    
-        assert user!=None,"User must not be none"
+    def get_drafts(user,page=1,pagesize=None):
         if user == None:
-            return None
+            return None #pragma nocover
         
         memolist = Memo.query.join(User).filter(Memo.memo_state==MemoState.Draft,User.username==user.username).order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)      
         return memolist

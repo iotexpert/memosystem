@@ -15,9 +15,7 @@ class MemoHistory(db.Model):
     ref_user_id = db.Column(db.String(120), db.ForeignKey('user.username'),nullable=False)
 
 
-    def __str__(self):
-        if self.activity == MemoActivity.Create:
-            current_app.logger.info("MemoActivity Create")
+    def __str__(self): # pragma nocover
         return f"{self.date} {self.user.username} {self.memo_ref} {self.memo_activity}"
 
     @staticmethod

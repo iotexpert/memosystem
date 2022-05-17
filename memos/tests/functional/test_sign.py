@@ -12,28 +12,28 @@ def test_cancel(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='avgUser@gmail.com', password='u'),
+                                data=dict(email='adminUser@gmail.com', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
-        assert b'Account: avgUser' in response.data
+        assert b'Account: adminUser' in response.data
         
         response = client.get('/cu/memo')
         assert response.status_code == 200
-        assert b'New Memo avgUser-4A' in response.data
+        assert b'New Memo adminUser-1A' in response.data
         
         response = client.get('/drafts')
         assert response.status_code == 200
-        assert b'avgUser-4A' in response.data
-        assert b'/cancel/memo/avgUser/4/A' in response.data
+        assert b'adminUser-1A' in response.data
+        assert b'/cancel/memo/adminUser/1/A' in response.data
         
-        response = client.get('/cancel/memo/avgUser/4/A', follow_redirects=True)
+        response = client.get('/cancel/memo/adminUser/1/A', follow_redirects=True)
         assert response.status_code == 200
-        assert b'Canceled avgUser-4A' in response.data
+        assert b'Canceled adminUser-1A' in response.data
         
         response = client.get('/drafts')
         assert response.status_code == 200
-        assert b'avgUser-4A' not in response.data
-        assert b'/cancel/memmo/avgUser/4/A' not in response.data
+        assert b'adminUser-1A' not in response.data
+        assert b'/cancel/memmo/adminUser/1/A' not in response.data
 
 def test_cancel2(client, session):
     """
@@ -74,6 +74,72 @@ def test_cancel2(client, session):
         assert response.status_code == 200
         assert b'avgUser-4A' not in response.data
         assert b'/cancel/memmo/avgUser/4/A' not in response.data
+
+def test_invalid_dist(client, session):
+    """
+    Flow:
+        login
+        Submit a new memo with invalid distribution list
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='avgUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: avgUser' in response.data
+
+        response = client.post('/cu/memo/avgUser/4',
+                                data=dict(
+                                    username='avgUser',
+                                    memo_number=4,
+                                    memo_version='A',
+                                    title='Test of memo for avgUser #4 rev A', 
+                                    distribution='adminUser badUser',    
+                                    keywords='',
+                                    signers='',
+                                    references='readAllUser-1 badUser-1 badUser-2-s-s',
+                                    submit='Submit'
+                                    ),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Invalid users [&#39;badUser&#39;]' in response.data
+        assert b'Invalid memo references = [&#39;badUser-1&#39;, &#39;badUser-2-s-s&#39;]' in response.data
+
+def test_revise(client, session):
+    """
+    Flow:
+        login
+        Submit a revision to an existing memo
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='avgUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: avgUser' in response.data
+
+        response = client.get('/cu/memo/avgUser/3',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'New Memo avgUser-3B' in response.data
+        
+        response = client.post('/cu/memo/avgUser/3',
+                                data=dict(
+                                    username='avgUser',
+                                    memo_number=3,
+                                    memo_version='B',
+                                    title='avgUser memo 3-2', 
+                                    distribution='adminUser',    
+                                    keywords='',
+                                    signers='',
+                                    references='',
+                                    confidential=True,
+                                    submit='submit'
+                                    ),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'avgUser-3B' in response.data
+        assert b'/memo/avgUser/3/B?detail' in response.data
     
 def test_publish_2_files(client, session):
     """
@@ -111,7 +177,7 @@ def test_publish_2_files(client, session):
                                     distribution='adminUser',    
                                     keywords='',
                                     signers='',
-                                    references='',
+                                    references='avgUser-1',
                                     confidential=True,
                                     memodoc1=(io.BytesIO(b"file content one"), 'file_one.txt'),
                                     memodoc2=(io.BytesIO(b"file content two"), 'file_two.txt'),
@@ -484,6 +550,11 @@ def test_check_sign_unsign(client, session):
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Unsign readAllUser-5-B Failed' in response.data
+        
+        response = client.get('/sign/memo/readAllUser/5/A',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Sign readAllUser-5A Success' in response.data
 
         response = client.get('/history',
                                 follow_redirects=True)
@@ -495,7 +566,43 @@ def test_check_sign_unsign(client, session):
         assert b'MemoActivity.Sign' in response.data
         assert b'MemoActivity.Signoff' in response.data
 
+def test_check_revise_and_activate(client, session):
+    """
+    Flow:
+        login as admin
+        Create memo as a revision with a signature required
+        Sign as self, expect success, memo published
 
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: readAllUser' in response.data
+        
+        response = client.post('/cu/memo/readAllUser/4',
+                                data=dict(
+                                    username='readAllUser',
+                                    memo_number=4,
+                                    memo_version='B',
+                                    title='readAllUser memo 4-2', 
+                                    distribution='adminUser',    
+                                    keywords='',
+                                    signers='readAllUser',
+                                    references='',
+                                    confidential=False,
+                                    submit='submit'
+                                    ),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'readAllUser-4B has been created!' in response.data
+
+        response = client.get('/sign/memo/readAllUser/4/B',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Sign readAllUser-4B Success' in response.data
+        assert b'href="/memo/readAllUser/4/B">readAllUser-4B' in response.data
 
 def test_obsolete_nologin(client, session):
     """

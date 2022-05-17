@@ -21,9 +21,10 @@ class MemoReference(db.Model):
     @staticmethod
     def get_back_refs(memo):
         rval=[]
-        ref_list = MemoReference.query.filter_by(ref_user_id=memo.userid,ref_memo_number=memo.number,ref_memo_version=memo.version).all()
-        for ref in ref_list:
-            rval.append(ref.source_id)
+        ref_list = MemoReference.query.filter_by(ref_user_id=memo.user_id,ref_memo_number=memo.number).all()
+        for ref in ref_list.all():
+            if not ref.ref_memo_version or ref.ref_memo_version == memo.version:
+                rval.append(ref.source_id)
         return rval
     
     

@@ -226,8 +226,6 @@ def test_valid_login_avgUser(client, session):
     assert b'avgUser memo 2-1' in response.data
     assert b'avgUser memo 1-3' in response.data
 
-
-
 def test__for_avgUser(client, session):
     """
     GIVEN a Flask application configured for testing
@@ -241,7 +239,6 @@ def test__for_avgUser(client, session):
         
     assert response.status_code == 200
 
-    print(response.data)
     assert b'Account: avgUser' in response.data
     assert b'Document Manager' in response.data
     assert b'Home' in response.data
@@ -254,5 +251,15 @@ def test__for_avgUser(client, session):
     assert b'avgUser memo 3-1' in response.data
     assert b'avgUser memo 2-1' in response.data
     assert b'avgUser memo 1-3' in response.data
+
+def test_help(client, session):
+    """
+    Test help link
+    """
+    with client:
+        response = client.get('/help', follow_redirects=True)
+        assert response.status_code == 200
+
+        assert b'What is a Memo?' in response.data
 
 
