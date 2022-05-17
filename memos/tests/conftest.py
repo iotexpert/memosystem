@@ -13,6 +13,7 @@ from memos import db as _db
 from flask import current_app
 from memos.models.Memo import Memo
 from memos.models.MemoFile import MemoFile
+from memos.models.MemoReference import MemoReference
 from memos.models.MemoSignature import MemoSignature
 from memos.models.MemoState import MemoState
 from memos.models.User import User
@@ -85,6 +86,12 @@ def db(app, request):
         signed = True, date_signed = datetime.now() ) )     
 
     _db.session.add(MemoFile(memo_id = memoSign.id, filename = "testFile.txt" ) )
+    _db.session.add(MemoReference(source_id = memoSign.id, ref_user_id = "avgUser", ref_memo_number = 1, ref_memo_version = "B" ) )
+    _db.session.add(MemoReference(source_id = memoSign.id, ref_user_id = "avgUser", ref_memo_number = 2) )
+    
+    memoSign = Memo.find(username='readAllUser',memo_number=3, memo_version='A')
+    _db.session.add(MemoReference(source_id = memoSign.id, ref_user_id = "readAllUser", ref_memo_number = 1) )
+    _db.session.add(MemoReference(source_id = memoSign.id, ref_user_id = "readAllUser", ref_memo_number = 1, ref_memo_version = "B") )
 
     _db.session.commit()
     

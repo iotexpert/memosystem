@@ -31,11 +31,6 @@ class MemoFile(db.Model):
 
     def __repr__(self):
         return f"File('Document Filename = {self.filename}')"
-
-    @staticmethod
-    def files(memo_id):
-        files = MemoFile.query.filter_by(memo_id=memo_id).order_by(MemoFile.id)
-        return files
    
     @staticmethod
     def delete(memo):
@@ -46,7 +41,7 @@ class MemoFile(db.Model):
         path = memo.get_fullpath()
         try:
             os.remove(os.path.join(path, self.uuid))
-        except:
+        except: # pragma nocover
             pass # ARH... well this can only happen if the file is already gone... which is what we want
         
         memo.num_files = memo.num_files - 1
