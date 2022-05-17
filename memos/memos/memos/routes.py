@@ -146,7 +146,7 @@ def create_revise_submit(username=None,memo_number=None):
             for f in self:
                 if f.name == field_name:
                     return f
-            return None
+            return None # pragma nocover - This case should never occur
 
 
     FileForm.create(memo)
@@ -168,40 +168,40 @@ def create_revise_submit(username=None,memo_number=None):
 
 # Everthing from here down is POST
 
-    if form.cancel.data is True:
-        return redirect(url_for('memos.cancel',username=form.username.data,
-                                memo_number=form.memo_number.data,memo_version=form.memo_version.data))
-
-    memo.title = form.title.data
-    memo.distribution = form.distribution.data
-    memo.keywords = form.keywords.data
-    memo.signers = form.signers.data
-    memo.references = form.references.data
-    memo.confidential = form.confidential.data
-
-    process_file(memo,form.memodoc1)
-    process_file(memo,form.memodoc2)
-    process_file(memo,form.memodoc3)
-    process_file(memo,form.memodoc4)
-    process_file(memo,form.memodoc5)
-
-    # make a json backup
-    memo.save()
-
-    # Look and see if they pressed a remove button on one of the files.
-    for idx,file in enumerate(memo.get_files()):
-        if hasattr(form,f'file_{idx}'):
-            status = getattr(form,f'file_{idx}')
-            if status.data is True:
-                file.remove_file(memo)
-                flash(f"Remove {file}",'success')
-                return redirect(request.url)  # redirect back to edit instead...
-
-    if form.save.data is True:
-        flash(f'{memo} has been saved!', 'success')
-        return redirect(url_for('memos.main'))
-
     if form.validate_on_submit():
+        if form.cancel.data is True:
+            return redirect(url_for('memos.cancel',username=form.username.data,
+                                    memo_number=form.memo_number.data,memo_version=form.memo_version.data))
+
+        memo.title = form.title.data
+        memo.distribution = form.distribution.data
+        memo.keywords = form.keywords.data
+        memo.signers = form.signers.data
+        memo.references = form.references.data
+        memo.confidential = form.confidential.data
+
+        process_file(memo,form.memodoc1)
+        process_file(memo,form.memodoc2)
+        process_file(memo,form.memodoc3)
+        process_file(memo,form.memodoc4)
+        process_file(memo,form.memodoc5)
+
+        # make a json backup
+        memo.save()
+
+        # Look and see if they pressed a remove button on one of the files.
+        for idx,file in enumerate(memo.get_files()):
+            if hasattr(form,f'file_{idx}'):
+                status = getattr(form,f'file_{idx}')
+                if status.data is True:
+                    file.remove_file(memo)
+                    flash(f"Remove {file}",'success')
+                    return redirect(request.url)  # redirect back to edit instead...
+
+        if form.save.data is True:
+            flash(f'{memo} has been saved!', 'success')
+            return redirect(url_for('memos.main'))
+
         # creation is all done... all documents added... signatures etc.
         memo.process_state(acting=current_user)
         # make a json backup
@@ -220,12 +220,7 @@ def inbox(username=None):
     """ this function will return all of the memos in the users inbox"""
     pagesize = User.get_pagesize(current_user)
     page = request.args.get('page', 1, type=int)
-    detail = request.args.get('detail')
     next_page = 'memos.inbox'
-    if detail is None:
-        detail = False
-    else:
-        detail = True
 
     if username is None:
         user = current_user
@@ -235,6 +230,8 @@ def inbox(username=None):
             return abort(404)
 
     delegate = current_user
+    if not user.is_delegate(current_user):    
+        return abort(403)
 
     memo_list = Memo.get_inbox(user,page,pagesize)
     inbox_list = [user] + [current_user] + current_user.delegate_for['users']
@@ -257,19 +254,18 @@ def drafts(username=None):
     user (or specified user)"""
     pagesize = User.get_pagesize(current_user)
     page = request.args.get('page', 1, type=int)
-    detail = request.args.get('detail')
     next_page = 'memos.drafts'
-    if detail is None:
-        detail = False
-    else:
-        detail = True
 
     if username is None:
         user = current_user
     else:
         user = User.find(username=username)
+        if user is None:
+            return abort(404)
 
     delegate = current_user
+    if not user.is_delegate(current_user):    
+        return abort(403)
 
     memo_list = Memo.get_drafts(user,page,pagesize)
 
@@ -298,6 +294,8 @@ def sign(username,memo_number,memo_version):
         signer = current_user
     else:
         signer = User.find(username=signer)
+        if signer is None:
+            return abort(404)
 
     delegate = current_user
 
@@ -328,6 +326,8 @@ def unsign(username,memo_number,memo_version):
         signer = current_user
     else:
         signer = User.find(username=signer)
+        if signer is None:
+            return abort(404)
 
     delegate = current_user
 
@@ -390,7 +390,7 @@ def cancel(username=None,memo_number=0,memo_version=0):
         if memo.cancel(user):
             flash(f'Canceled {memostring}', 'success')
         else:
-            flash(f'Canceled {memo} Failed', 'error')
+            flash(f'Cancel {memo} Failed', 'error')
     else:
         flash(f'Cannot cancel memo {username}-{memo_number}-{memo_version}', 'error')
 
@@ -413,6 +413,8 @@ def reject(username,memo_number,memo_version):
         signer = current_user
     else:
         signer = User.find(username=signer)
+        if signer is None:
+            return abort(404)
 
     delegate = current_user
 
@@ -421,9 +423,9 @@ def reject(username,memo_number,memo_version):
         if memo.reject(signer,delegate):
             flash(f'Rejected {memo.user.username}-{memo.number}-{memo.version}', 'success')
         else:
-            flash(f'Rejected {memo.user.username}-{memo.number}-{memo.version}', 'success')
+            flash(f'Reject {memo.user.username}-{memo.number}-{memo.version} Failed', 'error')
     else:
-        flash(f'Cannot unsign memo {username}-{memo_number}-{memo_version}', 'failure')
+        flash(f'Cannot unsign memo {username}-{memo_number}-{memo_version}', 'error')
 
     return redirect(url_for(next_page,page=page,next_page=next_page))
 
@@ -451,28 +453,27 @@ def search():
 
     if form.validate_on_submit():
 
-        if form.title.data != '':
+        if form.title.data and form.title.data != '':
             memos_found = Memo.search(title=form.title.data,page=page,pagesize=pagesize)
             search_param = f"title:{form.title.data}"
             url_params['search'] = search_param
             return render_template('memo.html', memos=memos_found, title="memo",user=user,delegate=user,detail=detail,next_page=next_page,url_params =url_params)
 
-        if form.keywords.data != '':
+        if form.keywords.data and form.keywords.data != '':
             memos_found = Memo.search(keywords=form.keywords.data,page=page,pagesize=pagesize)
             search_param = f"keywords:{form.keywords.data}"
             url_params['search'] = search_param
             return render_template('memo.html', memos=memos_found, title="memo",user=user,delegate=user,detail=detail,next_page=next_page,url_params =url_params)
 
-        if form.memo_ref.data != '':
+        if form.memo_ref.data and form.memo_ref.data != '':
             return redirect(url_for("memos.main",username=form.memo_ref.data,page=page))
 
-        if form.username.data != '':
+        if form.username.data and form.username.data != '':
             return redirect(url_for("memos.main",username=form.username.data,page=page))
 
-        if form.inbox.data != '':
+        if form.inbox.data and form.inbox.data != '':
             return redirect(url_for("memos.inbox",username=form.inbox.data,page=page))
 
-    if request.method == 'POST':
         return render_template('memo_search.html', title='Memo Search ',legend='Search',form=form)
 
 

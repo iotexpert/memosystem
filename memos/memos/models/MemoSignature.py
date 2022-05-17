@@ -52,7 +52,7 @@ class MemoSignature(db.Model):
         
         current_app.logger.info(f"Type for user = {type(signer)}")      
      
-        memosig = MemoSignature.query.filter_by(memo_id=memo_id,signer_id=signer.id).first()
+        memosig = MemoSignature.query.filter_by(memo_id=memo_id,signer_id=signer.username).first()
         
         if memosig == None:
             return False
