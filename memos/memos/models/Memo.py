@@ -510,7 +510,7 @@ class Memo(db.Model):
         MemoFile.delete(self)
         # delete all of the files in that directory & the directory
         
-        shutil.rmtree(self.get_fullpath())
+        shutil.rmtree(self.get_fullpath(), ignore_errors=True)
         
         MemoReference.delete(self)
         MemoSignature.delete_signers(self)
@@ -585,6 +585,7 @@ class Memo(db.Model):
     
     @staticmethod 
     def search(title=None,keywords=None,page=1,pagesize=None):
+        memo_list = None
         current_app.logger.info(f"Search title={title}")
         if title != None:
             memo_list = Memo.query.filter(Memo.title.like(f"%{title}%")).order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)

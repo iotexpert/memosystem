@@ -10,13 +10,12 @@ import test_settings_local
 from memos import create_app
 from memos import db as _db
 
-from memos.models.User import User
-from memos.models.MemoHistory import MemoHistory
 from flask import current_app
-from memos.models.User import User
 from memos.models.Memo import Memo
-from memos.models.MemoState import MemoState
+from memos.models.MemoFile import MemoFile
 from memos.models.MemoSignature import MemoSignature
+from memos.models.MemoState import MemoState
+from memos.models.User import User
 
 
 
@@ -57,22 +56,23 @@ def db(app, request):
     _db.create_all()
 
     _db.session.add(User(username='avgUser', password= User.create_hash_pw('u'),email='avgUser@gmail.com'))
+    _db.session.add(User(username='avgUser2', password= User.create_hash_pw('u'),email='avgUser2@gmail.com'))
     _db.session.add(User(username='adminUser', password= User.create_hash_pw('u'),email='adminUser@gmail.com',admin=True,delegates='avgUser'))
     _db.session.add(User(username='readAllUser', password= User.create_hash_pw('u'),email='readAllUser@gmail.com',readAll=True))
     _db.session.commit()
 
     memos = [
-        Memo(number=1, version='A',title="avgUser memo 1-1",user_id="avgUser",memo_state=MemoState.Obsolete,keywords="asdf asdf asdf qwer ",num_files=0),
-        Memo(number=1, version='B',title="avgUser memo 1-2",user_id="avgUser",memo_state=MemoState.Obsolete,keywords="asdf asdf asdf qwer ",num_files=0),
-        Memo(number=1, version='C',title="avgUser memo 1-3",user_id="avgUser",memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0,confidential=True),
-        Memo(number=2, version='A',title="avgUser memo 2-1",user_id="avgUser",memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0),
-        Memo(number=3, version='A',title="avgUser memo 3-1",user_id="avgUser",memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0),
-        Memo(number=1, version='A',title="readAllUser memo 1-1",user_id='readAllUser',memo_state=MemoState.Obsolete,keywords="asdf asdf asdf qwer ",num_files=0),
-        Memo(number=1, version='B',title="readAllUser memo 1-2",user_id='readAllUser',memo_state=MemoState.Obsolete,keywords="asdf asdf asdf qwer ",num_files=0),
-        Memo(number=1, version='C',title="readAllUser memo 1-3",user_id='readAllUser',memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0,confidential=True,distribution="avgUser"),
-        Memo(number=2, version='A',title="readAllUser memo 2-1",user_id='readAllUser',memo_state=MemoState.Active,keywords="asdf asdf asdf qwer ",num_files=0,confidential=True),
-        Memo(number=3, version='A',title="readAllUser memo 3-1",user_id='readAllUser',memo_state=MemoState.Draft,keywords="asdf asdf asdf qwer ",num_files=0),
-        Memo(number=4, version='A',title="readAllUser memo 4-1",user_id='readAllUser',memo_state=MemoState.Signoff,keywords="asdf asdf asdf qwer ",num_files=0),
+        Memo(number=1, version='A',title="avgUser memo 1-1",user_id="avgUser",memo_state=MemoState.Obsolete,keywords="Average Joe ",num_files=0),
+        Memo(number=1, version='B',title="avgUser memo 1-2",user_id="avgUser",memo_state=MemoState.Obsolete,keywords="Average Joe ",num_files=0),
+        Memo(number=1, version='C',title="avgUser memo 1-3",user_id="avgUser",memo_state=MemoState.Active,keywords="Average Joe ",num_files=0,confidential=True),
+        Memo(number=2, version='A',title="avgUser memo 2-1",user_id="avgUser",memo_state=MemoState.Active,keywords="Average Joe ",num_files=0),
+        Memo(number=3, version='A',title="avgUser memo 3-1",user_id="avgUser",memo_state=MemoState.Active,keywords="Average Joe ",num_files=0),
+        Memo(number=1, version='A',title="readAllUser memo 1-1",user_id='readAllUser',memo_state=MemoState.Obsolete,keywords="Outstanding Joe ",num_files=0),
+        Memo(number=1, version='B',title="readAllUser memo 1-2",user_id='readAllUser',memo_state=MemoState.Obsolete,keywords="Outstanding Joe ",num_files=0),
+        Memo(number=1, version='C',title="readAllUser memo 1-3",user_id='readAllUser',memo_state=MemoState.Active,keywords="Outstanding Joe ",num_files=0,confidential=True,distribution="avgUser"),
+        Memo(number=2, version='A',title="readAllUser memo 2-1",user_id='readAllUser',memo_state=MemoState.Active,keywords="Outstanding Joe ",num_files=0,confidential=True),
+        Memo(number=3, version='A',title="readAllUser memo 3-1",user_id='readAllUser',memo_state=MemoState.Draft,keywords="Outstanding Joe ",num_files=0),
+        Memo(number=4, version='A',title="readAllUser memo 4-1",user_id='readAllUser',memo_state=MemoState.Signoff,keywords="Outstanding Joe ",num_files=1),
     ]
     for memo in memos:
         _db.session.add(memo)     
@@ -83,6 +83,9 @@ def db(app, request):
     _db.session.add(MemoSignature(memo_id = memoSign.id, signer_id = "adminUser" ) )     
     _db.session.add(MemoSignature(memo_id = memoSign.id, signer_id = "avgUser", delegate_id = "avgUser",
         signed = True, date_signed = datetime.now() ) )     
+
+    _db.session.add(MemoFile(memo_id = memoSign.id, filename = "testFile.txt" ) )
+
     _db.session.commit()
     
     request.addfinalizer(teardown)

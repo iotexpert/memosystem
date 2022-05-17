@@ -8,7 +8,7 @@ def test_cancel(client, session):
         Use 'New' to create new memo
         Goto 'Drafts' to view memo created
         'Cancel' memo verify cancel message displayed
-        Got to 'Drafts' verify memo no longer there
+        Go to 'Drafts' verify memo no longer there
     """
     with client:
         response = client.post('/login',
@@ -27,6 +27,46 @@ def test_cancel(client, session):
         assert b'/cancel/memo/avgUser/4/A' in response.data
         
         response = client.get('/cancel/memo/avgUser/4/A', follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Canceled avgUser-4A' in response.data
+        
+        response = client.get('/drafts')
+        assert response.status_code == 200
+        assert b'avgUser-4A' not in response.data
+        assert b'/cancel/memmo/avgUser/4/A' not in response.data
+
+def test_cancel2(client, session):
+    """
+    Flow:
+        login
+        Use 'New' to create new memo
+        'Cancel' memo verify cancel message displayed
+        Go to 'Drafts' verify memo no longer there
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='avgUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: avgUser' in response.data
+        
+        response = client.get('/cu/memo')
+        assert response.status_code == 200
+        assert b'New Memo avgUser-4A' in response.data
+
+        response = client.post('/cu/memo/avgUser/4',
+                                data=dict(
+                                    username='avgUser',
+                                    memo_number=4,
+                                    memo_version='A',
+                                    title='Test of memo for avgUser #4 rev A', 
+                                    distribution='adminUser',    
+                                    keywords='',
+                                    signers='',
+                                    references='',
+                                    cancel='Cancel'
+                                    ),
+                                follow_redirects=True)
         assert response.status_code == 200
         assert b'Canceled avgUser-4A' in response.data
         
@@ -65,8 +105,8 @@ def test_publish_2_files(client, session):
         response = client.post('/cu/memo/readAllUser/5',
                                 data=dict(
                                     username='readAllUser',
-                                    number=5,
-                                    version='A',
+                                    memo_number=5,
+                                    memo_version='A',
                                     title='Test of memo for readAllUser #5 rev A', 
                                     distribution='adminUser',    
                                     keywords='',
@@ -103,8 +143,8 @@ def test_publish_2_files(client, session):
         response = client.post('/cu/memo/readAllUser/5',
                                 data=dict(
                                     username='readAllUser',
-                                    number=5,
-                                    version='A',
+                                    memo_number=5,
+                                    memo_version='A',
                                     title='Test of memo for readAllUser #5 rev A', 
                                     distribution='adminUser',    
                                     keywords='',
@@ -178,4 +218,647 @@ def test_create_for_nondelegated_user(client, session):
         
         response = client.get('/cu/memo/avgUser')
         assert response.status_code == 403
+
+def test_create_with_post(client, session):
+    """
+    Flow:
+        login
+        Create memo via a post
+        Goto 'Drafts' to view memo created
+        'Cancel' memo verify cancel message displayed
+        Go to 'Drafts' verify memo no longer there
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='avgUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: avgUser' in response.data
         
+
+        response = client.post('/cu/memo/avgUser/4',
+                                data=dict(
+                                    username='avgUser',
+                                    memo_number=4,
+                                    memo_version='A',
+                                    title='', 
+                                    distribution='adminUser',    
+                                    keywords='',
+                                    signers='badSigner',
+                                    references=''
+                                    ),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'New Memo avgUser-4A' in response.data
+        assert b'This field is required.' in response.data
+        assert b'Invalid users [&#39;badSigner&#39;]' in response.data
+
+def test_check_inbox_nologin(client, session):
+    """
+    Flow:
+        View Inbox
+    """
+    with client:
+        response = client.get('/inbox',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Please log in to access this page.' in response.data
+
+def test_check_inbox_self(client, session):
+    """
+    Flow:
+        login
+        View Inbox
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='adminUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: adminUser' in response.data        
+
+        response = client.get('/inbox',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'readAllUser memo 4-1' in response.data
+        assert b'testFile.txt' not in response.data
+
+def test_check_inbox_other(client, session):
+    """
+    Flow:
+        login
+        View Inbox
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='avgUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: avgUser' in response.data        
+
+        response = client.get('/inbox/adminUser',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'readAllUser memo 4-1' in response.data
+
+def test_check_inbox_badUser(client, session):
+    """
+    Flow:
+        login
+        View Inbox
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='avgUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: avgUser' in response.data        
+
+        response = client.get('/inbox/badUser',
+                                follow_redirects=True)
+        assert response.status_code == 404
+        assert b'readAllUser memo 4-1' not in response.data
+
+def test_check_inbox_notDelegate(client, session):
+    """
+    Flow:
+        login
+        View Inbox
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: readAllUser' in response.data        
+
+        response = client.get('/inbox/adminUser',
+                                follow_redirects=True)
+        assert response.status_code == 403
+        assert b'readAllUser memo 4-1' not in response.data
+
+def test_check_drafts_other(client, session):
+    """
+    Flow:
+        login
+        View Drafts
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='adminUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: adminUser' in response.data        
+
+        response = client.get('/drafts/readAllUser',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'readAllUser memo 3-1' in response.data
+
+def test_check_drafts_badUser(client, session):
+    """
+    Flow:
+        login
+        View Drafts
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='avgUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: avgUser' in response.data        
+
+        response = client.get('/drafts/badUser',
+                                follow_redirects=True)
+        assert response.status_code == 404
+        assert b'readAllUser memo 4-1' not in response.data
+
+def test_check_drafts_notDelegate(client, session):
+    """
+    Flow:
+        login
+        View Drafts
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: readAllUser' in response.data        
+
+        response = client.get('/drafts/adminUser',
+                                follow_redirects=True)
+        assert response.status_code == 403
+        assert b'readAllUser memo 4-1' not in response.data
+
+def test_check_sign_unsign(client, session):
+    """
+    Flow:
+        login as admin
+        Create memo as readAll with readAll and admin signatures required
+        Attempt sign as avg, expect error
+        Attempt sign as bad, expect error
+        Sign as self(admin), expect success
+        Attempt sign as self(admin), expect error
+        Attempt sign invalid memo, expect error
+
+        Attempt unsign as avg, expect error
+        Attempt unsign as bad, expect error
+        Attempt unsign as readAll, expect error
+        Unsign as self(admin), expect success
+        Attempt unsign invalid memo, expect error
+
+        Sign as self(admin), expect success
+        Sign as readAll, expect success, memo published
+
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='adminUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: adminUser' in response.data
+        
+        response = client.post('/cu/memo/readAllUser/5',
+                                data=dict(
+                                    username='readAllUser',
+                                    memo_number=5,
+                                    memo_version='A',
+                                    title='Test of memo for readAllUser #5 rev A', 
+                                    distribution='adminUser',    
+                                    keywords='',
+                                    signers='readAllUser adminUser',
+                                    references='',
+                                    confidential=False,
+                                    submit='submit'
+                                    ),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'readAllUser-5A has been created!' in response.data
+
+        response = client.get('/sign/memo/readAllUser/5/A?signer=avgUser',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Sign readAllUser-5A Failed' in response.data
+
+        response = client.get('/sign/memo/readAllUser/5/A?signer=badUser',
+                                follow_redirects=True)
+        assert response.status_code == 404
+
+        response = client.get('/sign/memo/readAllUser/5/A',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Sign readAllUser-5A Success' in response.data
+
+        response = client.get('/sign/memo/readAllUser/5/A',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Sign readAllUser-5A Failed' in response.data
+
+        response = client.get('/sign/memo/readAllUser/5/B',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Sign readAllUser-5-B Failed' in response.data
+
+        # Now the unsign tests
+        response = client.get('/unsign/memo/readAllUser/5/A?signer=avgUser',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Unsign readAllUser-5A Failed' in response.data
+
+        response = client.get('/unsign/memo/readAllUser/5/A?signer=badUser',
+                                follow_redirects=True)
+        assert response.status_code == 404
+
+        response = client.get('/unsign/memo/readAllUser/5/A?signer=readAllUser',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Unsign readAllUser-5A Failed' in response.data
+
+        response = client.get('/unsign/memo/readAllUser/5/A',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Unsign readAllUser-5A success' in response.data     
+
+        response = client.get('/unsign/memo/readAllUser/5/B',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Unsign readAllUser-5-B Failed' in response.data
+
+        response = client.get('/history',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'adminUser' in response.data
+        assert b'readAllUser-5A' in response.data
+        assert b'MemoActivity.Create' in response.data
+        assert b'MemoActivity.Unsign' in response.data
+        assert b'MemoActivity.Sign' in response.data
+        assert b'MemoActivity.Signoff' in response.data
+
+
+
+def test_obsolete_nologin(client, session):
+    """
+    Flow:
+        Obsolete memo
+    """
+    with client:
+        response = client.get('/obsolete/memo/avgUser/1/Z',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Please log in to access this page.' in response.data
+
+def test_obsolete_badMemo(client, session):
+    """
+    Flow:
+        Login
+        Obsolete memo
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: readAllUser' in response.data
+
+        response = client.get('/obsolete/memo/avgUser/1/Z',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Obsolete avgUser-1-Z Failed' in response.data
+
+def test_obsolete_memo_wo_permission(client, session):
+    """
+    Flow:
+        Login
+        Obsolete memo
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: readAllUser' in response.data
+
+        response = client.get('/obsolete/memo/avgUser/1/C',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Obsolete avgUser-1C Failed' in response.data
+
+def test_obsolete_memo_w_permission(client, session):
+    """
+    Flow:
+        Login
+        Obsolete memo
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: readAllUser' in response.data
+
+        response = client.get('/obsolete/memo/readAllUser/1/C',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Obsolete readAllUser-1C Success' in response.data
+
+def test_cancel_nologin(client, session):
+    """
+    Flow:
+        Cancel memo
+    """
+    with client:
+        response = client.get('/cancel/memo/avgUser/1/Z',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Please log in to access this page.' in response.data
+
+def test_cancel_badMemo(client, session):
+    """
+    Flow:
+        Login
+        Cancel memo
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: readAllUser' in response.data
+
+        response = client.get('/cancel/memo/avgUser/1/Z',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Cannot cancel memo avgUser-1-Z' in response.data
+
+def test_cancel_memo_wo_permission(client, session):
+    """
+    Flow:
+        Login
+        Cancel memo
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='avgUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: avgUser' in response.data
+
+        response = client.get('/cancel/memo/readAllUser/3/A',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Cancel readAllUser-3A Failed' in response.data
+
+def test_cancel_memo_w_permission(client, session):
+    """
+    Flow:
+        Login
+        Cancel memo
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: readAllUser' in response.data
+
+        response = client.get('/cancel/memo/readAllUser/3/A',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Canceled readAllUser-3A' in response.data
+
+def test_reject_nologin(client, session):
+    """
+    Flow:
+        Reject memo
+    """
+    with client:
+        response = client.get('/reject/memo/avgUser/1/Z',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Please log in to access this page.' in response.data
+
+def test_reject_badUser(client, session):
+    """
+    Flow:
+        Login
+        Reject memo
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='adminUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: adminUser' in response.data
+
+        response = client.get('/reject/memo/avgUser/1/Z?signer=badUser',
+                                follow_redirects=True)
+        assert response.status_code == 404
+
+def test_reject_badMemo(client, session):
+    """
+    Flow:
+        Login
+        Reject memo
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: readAllUser' in response.data
+
+        response = client.get('/reject/memo/avgUser/1/Z',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Cannot unsign memo avgUser-1-Z' in response.data
+
+def test_reject_memo_wo_permission(client, session):
+    """
+    Flow:
+        Login
+        Reject memo
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='avgUser2@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: avgUser2' in response.data
+
+        response = client.get('/reject/memo/readAllUser/4/A',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Reject readAllUser-4-A Failed' in response.data
+
+def test_reject_memo_w_permission(client, session):
+    """
+    Flow:
+        Login
+        Reject memo
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: readAllUser' in response.data
+
+        response = client.get('/reject/memo/readAllUser/4/A',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Rejected readAllUser-4-A' in response.data
+
+def test_search_load(client, session):
+    """
+    Flow:
+        Load search page
+    """
+    with client:
+        response = client.get('/search',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        title_search = re.search('name="title"[^<>]+?value="([^<>"]*)"', str(response.data))
+        keywords_search = re.search('name="keywords"[^<>]+?value="([^<>"]*)"', str(response.data))
+        memo_ref_search = re.search('name="memo_ref"[^<>]+?value="([^<>"]*)"', str(response.data))
+        username_search = re.search('name="username"[^<>]+?value="([^<>"]*)"', str(response.data))
+        inbox_search = re.search('name="inbox"[^<>]+?value="([^<>"]*)"', str(response.data))
+        assert title_search and title_search.group(1) == ''
+        assert keywords_search and keywords_search.group(1) == ''
+        assert memo_ref_search and memo_ref_search.group(1) == ''
+        assert username_search and username_search.group(1) == ''
+        assert inbox_search and inbox_search.group(1) == ''
+
+def test_search_post_load(client, session):
+    """
+    Flow:
+        Load search page
+    """
+    with client:
+        response = client.post('/search',data=dict(),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        title_search = re.search('name="title"[^<>]+?value="([^<>"]*)"', str(response.data))
+        keywords_search = re.search('name="keywords"[^<>]+?value="([^<>"]*)"', str(response.data))
+        memo_ref_search = re.search('name="memo_ref"[^<>]+?value="([^<>"]*)"', str(response.data))
+        username_search = re.search('name="username"[^<>]+?value="([^<>"]*)"', str(response.data))
+        inbox_search = re.search('name="inbox"[^<>]+?value="([^<>"]*)"', str(response.data))
+        assert title_search and title_search.group(1) == ''
+        assert keywords_search and keywords_search.group(1) == ''
+        assert memo_ref_search and memo_ref_search.group(1) == ''
+        assert username_search and username_search.group(1) == ''
+        assert inbox_search and inbox_search.group(1) == ''
+
+def test_search_get_title(client, session):
+    """
+    Flow:
+        Load search page
+    """
+    with client:
+        response = client.get('/search?search=title:avgUser memo',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'href="/memo/avgUser/3/A?detail">avgUser memo 3-1</a>' in response.data
+        assert b'href="/memo/avgUser/2/A?detail">avgUser memo 2-1</a>' in response.data
+        assert b'href="/memo/avgUser/1/B?detail">avgUser memo 1-2</a>' in response.data
+        assert b'href="/memo/avgUser/1/A?detail">avgUser memo 1-1</a>' in response.data
+
+def test_search_get_keyword(client, session):
+    """
+    Flow:
+        Load search page
+    """
+    with client:
+        response = client.get('/search?search=keywords:Outstanding',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'href="/memo/readAllUser/4/A?detail">readAllUser memo 4-1</a>' in response.data
+        assert b'href="/memo/readAllUser/3/A?detail">readAllUser memo 3-1</a>' in response.data
+        assert b'href="/memo/readAllUser/1/B?detail">readAllUser memo 1-2</a>' in response.data
+        assert b'href="/memo/readAllUser/1/A?detail">readAllUser memo 1-1</a>' in response.data
+
+def test_search_post_title(client, session):
+    """
+    Flow:
+        Search by title
+    """
+    with client:
+        response = client.post('/search', data=dict(title='avgUser'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'href="/memo/avgUser/3/A?detail">avgUser memo 3-1</a>' in response.data
+        assert b'href="/memo/avgUser/2/A?detail">avgUser memo 2-1</a>' in response.data
+        assert b'href="/memo/avgUser/1/B?detail">avgUser memo 1-2</a>' in response.data
+        assert b'href="/memo/avgUser/1/A?detail">avgUser memo 1-1</a>' in response.data
+
+def test_search_post_keyword(client, session):
+    """
+    Flow:
+        Search by keyword
+    """
+    with client:
+        response = client.post('/search?detail', data=dict(keywords='Outstanding'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'href="/memo/readAllUser/4/A?detail">readAllUser memo 4-1</a>' in response.data
+        assert b'href="/memo/readAllUser/3/A?detail">readAllUser memo 3-1</a>' in response.data
+        assert b'href="/memo/readAllUser/1/B?detail">readAllUser memo 1-2</a>' in response.data
+        assert b'href="/memo/readAllUser/1/A?detail">readAllUser memo 1-1</a>' in response.data
+
+def test_search_post_memo_ref(client, session):
+    """
+    Flow:
+        search by memo number, shows all versions of memo
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='adminUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: adminUser' in response.data
+
+        response = client.post('/search?detail', data=dict(memo_ref='avgUser-1'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'href="/memo/avgUser/3/A?detail">avgUser memo 3-1</a>' not in response.data
+        assert b'href="/memo/avgUser/2/A?detail">avgUser memo 2-1</a>' not in response.data
+        assert b'href="/memo/avgUser/1/C?detail">avgUser memo 1-3</a>' in response.data
+        assert b'href="/memo/avgUser/1/B?detail">avgUser memo 1-2</a>' in response.data
+        assert b'href="/memo/avgUser/1/A?detail">avgUser memo 1-1</a>' in response.data
+
+def test_search_post_user(client, session):
+    """
+    Flow:
+        Load search by user, loads active memos
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='adminUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: adminUser' in response.data
+
+        response = client.post('/search?detail', data=dict(username='avgUser'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'href="/memo/avgUser/3/A?detail">avgUser memo 3-1</a>' in response.data
+        assert b'href="/memo/avgUser/2/A?detail">avgUser memo 2-1</a>' in response.data
+        assert b'href="/memo/avgUser/1/C?detail">avgUser memo 1-3</a>' in response.data
+
+def test_search_post_inbox(client, session):
+    """
+    Flow:
+        login
+        View Inbox
+    """
+    with client:
+        response = client.post('/login',
+                                data=dict(email='avgUser@gmail.com', password='u'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account: avgUser' in response.data        
+
+        response = client.post('/search?detail', data=dict(inbox='adminUser'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'readAllUser memo 4-1' in response.data
