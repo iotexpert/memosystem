@@ -51,6 +51,10 @@ class UpdateAccountForm(FlaskForm):
     picture = FileField('Update Profile Picture', validators=[FileAllowed(['jpg', 'png'])])
     submit = SubmitField('Update')
 
+    def validate_delegates(self,delegates):
+        users = User.valid_usernames(delegates.data)
+        if len(users['invalid_usernames']) > 0:
+            raise ValidationError(f'Invalid users {users["invalid_usernames"]}')
 
     def validate_username(self, username):
         

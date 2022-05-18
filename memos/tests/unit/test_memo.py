@@ -125,3 +125,14 @@ def test_has_access(db, session):
     assert ReadConfWithAvg.has_access(avgUser)  # Access to with distribution
     assert not ReadConfWOAvg.has_access(avgUser)  # No access with out distribution
 
+def test_create_revise(db, session):
+    readAllUser = User.find(username='readAllUser')
+    avgUser = User.find(username='avgUser')
+
+    assert not Memo.create_revise(readAllUser, avgUser) # avgUser not a delegate for readAllUser
+
+def test_get_inbox(db, session):
+    assert not Memo.get_inbox(user=None)
+
+def test_get_drafts(db, session):
+    assert not Memo.get_drafts(user=None)
