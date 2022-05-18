@@ -35,13 +35,3 @@ def rev_to_b10(letters):
             (ord(letter) - A_UPPERCASE + 1) * ALPHABET_SIZE**i
             for i, letter in enumerate(reversed(letters.upper()))
     )
-        
-        
-if __name__ == "__main__":  
-    for i in range(30):
-        b26 = b10_to_rev(i)
-        b10 = rev_to_b10(b26)
-        print(f"i={i} b26 = {b26} b10={b10}")
-
-
-    

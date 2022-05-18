@@ -14,10 +14,6 @@ class MemoHistory(db.Model):
     memo_activity = db.Column(db.Enum(MemoActivity))      # For some reason the attribute names "activity" and "action" are illegal
     ref_user_id = db.Column(db.String(120), db.ForeignKey('user.username'),nullable=False)
 
-
-    def __str__(self): # pragma nocover
-        return f"{self.date} {self.user.username} {self.memo_ref} {self.memo_activity}"
-
     @staticmethod
     def activity(memo=None,memo_activity=None,user=None):
         if user==None:

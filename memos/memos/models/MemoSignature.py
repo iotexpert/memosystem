@@ -18,12 +18,11 @@ class MemoSignature(db.Model):
         return signlist
     
     @staticmethod
-    def sign(memo_id=memo_id,signer=None,delegate=None):
-     
-        #assert signer!=None and type(signer)==type(User)    
+    def sign(memo_id,signer,delegate=None):
+        current_app.logger.debug(f"memo_id ={memo_id} signer={signer} delegate={delegate}")
 
-        
-        current_app.logger.info(f"memo_id ={memo_id} signer={signer} delegate={delegate}")
+        if not signer:
+            return False
 
         memosig = MemoSignature.query.filter_by(memo_id=memo_id,signer_id=signer.username).first()
         
@@ -48,16 +47,18 @@ class MemoSignature(db.Model):
         return True
 
     @staticmethod
-    def unsign(memo_id=memo_id,signer=None,delegate=None): 
-        
-        current_app.logger.info(f"Type for user = {type(signer)}")      
+    def unsign(memo_id,signer):
+        current_app.logger.debug(f"Unsign memo {memo_id} for user = {signer}")      
+
+        if not signer:
+            return False
      
         memosig = MemoSignature.query.filter_by(memo_id=memo_id,signer_id=signer.username).first()
         
         if memosig == None:
             return False
 
-        # if the memo is already signed... ok sure.
+        # if the memo is not signed...
         if memosig.signed != True:
             return False
         
@@ -111,21 +112,16 @@ class MemoSignature(db.Model):
     # True of False if you have signed
     # The actual signer object
     @staticmethod
-    def is_signer(memo_id=None,signer=None):
+    def is_signer(memo_id,signer):
         
-        current_app.logger.info(f"memo={memo_id} signer={signer}")
+        current_app.logger.debug(f"memo={memo_id} signer={signer}")
        
-        if memo_id == None:
-            return {'is_signer':False,'status':False,'signature':None}
-       
-        if signer == None:
-            return {'is_signer':False,'status':False,'signature':None}
-    
-        msig = MemoSignature.query.filter_by(memo_id=memo_id,signer_id=signer.username).first()
-        if msig != None:
-            return {'is_signer':True,'status':msig.signed,'signature':msig}
-        else:
-            return {'is_signer':False,'status':False,'signature':None}
+        if memo_id and signer:
+            msig = MemoSignature.query.filter_by(memo_id=memo_id,signer_id=signer.username).first()
+            if msig != None:
+                return {'is_signer':True,'status':msig.signed,'signature':msig}
+        
+        return {'is_signer':False,'status':False,'signature':None}
 
     @staticmethod
     def get_signatures(signer=None,signed=True):

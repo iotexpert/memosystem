@@ -286,18 +286,16 @@ class Memo(db.Model):
             
     @property
     def references(self):
-        # this function will return a list of refeference objects + a string of the references
-        refs = MemoReference.get_refs(self)
-        rval = []
-        for ref in refs:
-            userid=ref[0]
-            memo = Memo.find(username=userid,memo_number=ref[1],memo_version=ref[2])
-            if ref[2] == None:
-                refstring=f"{userid}-{ref[1]}"
+        # this function will return a list of reference objects + a string of the references
+        refs = []
+        ref_list = MemoReference.query.filter_by(source_id=self.id).all()
+        for ref in ref_list:
+            if ref.ref_memo_version == None:
+                refstring=f"{ref.ref_user_id}-{ref.ref_memo_number}"
             else:
-                refstring=f"{userid}-{ref[1]}-{ref[2]}"
-            rval.append((refstring,memo))
-        return {'reflist':rval,'ref_string':self._references}
+                refstring=f"{ref.ref_user_id}-{ref.ref_memo_number}-{ref.ref_memo_version}"
+            refs.append(refstring)
+        return {'reflist':refs,'ref_string':r' '.join(refs)}
     
     @references.setter
     def references(self,references):
@@ -311,7 +309,21 @@ class Memo(db.Model):
 
     @property
     def backrefs(self):
-        return MemoReference.get_back_refs(self)
+        # this function will return a list of reference objects + a string of the references
+        refs=[]
+        ref_list = MemoReference.query.filter_by(ref_user_id=self.user_id,ref_memo_number=self.number).all()
+        for ref in ref_list:
+            if ref.ref_memo_version and ref.ref_memo_version != self.version:
+                continue
+
+            memo = Memo.query.get(ref.source_id)
+            if not memo:
+                continue # pragma nocover  - This only happens if a memo was deleted without cascading to the Memoreference.
+            refstring=f"{memo.user_id}-{memo.number}-{memo.version}"
+
+            refs.append(refstring)
+            refs = list(set(refs))
+        return {'reflist':refs,'ref_string':' '.join(refs)}
         
 ######################################################################
 # 
@@ -389,7 +401,7 @@ class Memo(db.Model):
     def create_revise(owner,delegate,memo_number=None):
         """ This function will return None or a new Memo if the owner/delgate and revise this memo """ 
         if owner.is_delegate(delegate) != True:
-            return None # pragma nocover
+            return None
 
         memo = Memo.query.join(User).filter(User.username==owner.username,Memo.number==memo_number).order_by(Memo.version.desc()).first()
  
@@ -444,9 +456,9 @@ class Memo(db.Model):
 # signer function
     def sign(self,signer=None,delegate=None):
 
-        current_app.logger.info(f"signer = {signer} delegate={delegate}")
+        current_app.logger.debug(f"signer = {signer} delegate={delegate}")
         if not self.can_sign(signer,delegate):
-            current_app.logger.info("NOT!!@ allowed to sign")
+            current_app.logger.info(f"signer = {signer} delegate={delegate} NOT!!@ allowed to sign")
             return False
         
         current_app.logger.info("allowed to sign")
@@ -461,7 +473,7 @@ class Memo(db.Model):
         if not self.can_unsign(signer,delegate):
             return False
         
-        MemoSignature.unsign(self.id,signer,delegate)
+        MemoSignature.unsign(self.id,signer)
         MemoHistory.activity(memo=self,user=delegate,memo_activity=MemoActivity.Unsign)
         self.process_state(acting=delegate)
         return True
@@ -589,9 +601,9 @@ class Memo(db.Model):
         
 
     @staticmethod
-    def get_inbox(user=None,page=1,pagesize=None):
+    def get_inbox(user,page=1,pagesize=None):
         if user == None:
-            return None #pragma nocover
+            return None
         
         msigs = MemoSignature.get_signatures(user,signed=False)
         
@@ -602,7 +614,7 @@ class Memo(db.Model):
     @staticmethod
     def get_drafts(user,page=1,pagesize=None):
         if user == None:
-            return None #pragma nocover
+            return None
         
         memolist = Memo.query.join(User).filter(Memo.memo_state==MemoState.Draft,User.username==user.username).order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)      
         return memolist
