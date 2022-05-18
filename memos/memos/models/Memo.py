@@ -213,7 +213,7 @@ class Memo(db.Model):
         js['references']= self.references['ref_string']
         js['files']=[]
         for file in self.get_files():
-            js['files'].append(file.filename)
+            js['files'].append((file.filename,file.uuid))
 
         path = os.path.join(self.get_fullpath())
         #current_app.logger.info(f"Making Directory {path}")
