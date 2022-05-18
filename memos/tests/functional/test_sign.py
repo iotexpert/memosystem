@@ -12,7 +12,7 @@ def test_cancel(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='adminUser@gmail.com', password='u'),
+                                data=dict(username='adminUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: adminUser' in response.data
@@ -45,7 +45,7 @@ def test_cancel2(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='avgUser@gmail.com', password='u'),
+                                data=dict(username='avgUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: avgUser' in response.data
@@ -83,7 +83,7 @@ def test_invalid_dist(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='avgUser@gmail.com', password='u'),
+                                data=dict(username='avgUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: avgUser' in response.data
@@ -113,7 +113,7 @@ def test_revise(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='avgUser@gmail.com', password='u'),
+                                data=dict(username='avgUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: avgUser' in response.data
@@ -159,7 +159,7 @@ def test_publish_2_files(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                data=dict(username='readAllUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: readAllUser' in response.data
@@ -261,7 +261,7 @@ def test_create_invalid_user(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                data=dict(username='readAllUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: readAllUser' in response.data
@@ -277,7 +277,7 @@ def test_create_for_nondelegated_user(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                data=dict(username='readAllUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: readAllUser' in response.data
@@ -296,7 +296,7 @@ def test_create_with_post(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='avgUser@gmail.com', password='u'),
+                                data=dict(username='avgUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: avgUser' in response.data
@@ -338,7 +338,7 @@ def test_check_inbox_self(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='adminUser@gmail.com', password='u'),
+                                data=dict(username='adminUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: adminUser' in response.data        
@@ -357,7 +357,7 @@ def test_check_inbox_other(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='avgUser@gmail.com', password='u'),
+                                data=dict(username='avgUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: avgUser' in response.data        
@@ -375,7 +375,7 @@ def test_check_inbox_badUser(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='avgUser@gmail.com', password='u'),
+                                data=dict(username='avgUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: avgUser' in response.data        
@@ -393,7 +393,7 @@ def test_check_inbox_notDelegate(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                data=dict(username='readAllUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: readAllUser' in response.data        
@@ -411,7 +411,7 @@ def test_check_drafts_other(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='adminUser@gmail.com', password='u'),
+                                data=dict(username='adminUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: adminUser' in response.data        
@@ -429,7 +429,7 @@ def test_check_drafts_badUser(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='avgUser@gmail.com', password='u'),
+                                data=dict(username='avgUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: avgUser' in response.data        
@@ -447,7 +447,7 @@ def test_check_drafts_notDelegate(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                data=dict(username='readAllUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: readAllUser' in response.data        
@@ -480,7 +480,7 @@ def test_check_sign_unsign(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='adminUser@gmail.com', password='u'),
+                                data=dict(username='adminUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: adminUser' in response.data
@@ -576,7 +576,7 @@ def test_check_revise_and_activate(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                data=dict(username='readAllUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: readAllUser' in response.data
@@ -623,7 +623,7 @@ def test_obsolete_badMemo(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                data=dict(username='readAllUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: readAllUser' in response.data
@@ -641,7 +641,7 @@ def test_obsolete_memo_wo_permission(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                data=dict(username='readAllUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: readAllUser' in response.data
@@ -659,7 +659,7 @@ def test_obsolete_memo_w_permission(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                data=dict(username='readAllUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: readAllUser' in response.data
@@ -688,7 +688,7 @@ def test_cancel_badMemo(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                data=dict(username='readAllUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: readAllUser' in response.data
@@ -706,7 +706,7 @@ def test_cancel_memo_wo_permission(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='avgUser@gmail.com', password='u'),
+                                data=dict(username='avgUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: avgUser' in response.data
@@ -724,7 +724,7 @@ def test_cancel_memo_w_permission(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                data=dict(username='readAllUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: readAllUser' in response.data
@@ -753,7 +753,7 @@ def test_reject_badUser(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='adminUser@gmail.com', password='u'),
+                                data=dict(username='adminUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: adminUser' in response.data
@@ -770,7 +770,7 @@ def test_reject_badMemo(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                data=dict(username='readAllUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: readAllUser' in response.data
@@ -788,7 +788,7 @@ def test_reject_memo_wo_permission(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='avgUser2@gmail.com', password='u'),
+                                data=dict(username='avgUser2', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: avgUser2' in response.data
@@ -806,7 +806,7 @@ def test_reject_memo_w_permission(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                data=dict(username='readAllUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: readAllUser' in response.data
@@ -919,7 +919,7 @@ def test_search_post_memo_ref(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='adminUser@gmail.com', password='u'),
+                                data=dict(username='adminUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: adminUser' in response.data
@@ -940,7 +940,7 @@ def test_search_post_user(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='adminUser@gmail.com', password='u'),
+                                data=dict(username='adminUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: adminUser' in response.data
@@ -960,7 +960,7 @@ def test_search_post_inbox(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='avgUser@gmail.com', password='u'),
+                                data=dict(username='avgUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Account: avgUser' in response.data        

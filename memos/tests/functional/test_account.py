@@ -17,14 +17,14 @@ def test_register(client, session):
 
     # attempt login with bad password
     response = client.post('/login', 
-        data=dict(email='john.doe@gmail.com',password='bad pass', submit='Login'),
+        data=dict(username='jdoe',password='bad pass', submit='Login'),
         follow_redirects=True)
     assert response.status_code == 200
     assert b'Login Unsuccessful' in response.data
 
     # successful login
     response = client.post('/login', 
-        data=dict(email='john.doe@gmail.com',password='pass', submit='Login'),
+        data=dict(username='jdoe',password='pass', submit='Login'),
         follow_redirects=True)
     assert response.status_code == 200
     assert b'Account: jdoe' in response.data
@@ -47,7 +47,7 @@ def test_register(client, session):
 def test_account_access_admin(client, session):
     # login as admin
     response = client.post('/login',
-                            data=dict(email='adminUser@gmail.com', password='u'),
+                            data=dict(username='adminUser', password='u'),
                             follow_redirects=True)
     assert response.status_code == 200
     assert b'Account: adminUser' in response.data
@@ -72,7 +72,7 @@ def test_account_access_admin(client, session):
 def test_account_access_nonadmin(client, session):
     # login as normal user
     response = client.post('/login',
-                            data=dict(email='avgUser@gmail.com', password='u'),
+                            data=dict(username='avgUser', password='u'),
                             follow_redirects=True)
     assert response.status_code == 200
     assert b'Account: avgUser' in response.data
