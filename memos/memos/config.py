@@ -3,7 +3,12 @@ import os
 class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    SQLALCHEMY_ECHO=True
+    if os.environ.get('SQLALCHEMY_ECHO') == 'True':
+        SQLALCHEMY_ECHO=True
+    else:
+        SQLALCHEMY_ECHO=False
+
+
 
     SECRET_KEY = os.environ.get('MEMOS_SECRET_KEY')
     

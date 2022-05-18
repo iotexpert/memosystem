@@ -21,7 +21,9 @@ os.environ['FLASK_ENV'] = 'development'
 
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 #os.environ['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://user:password@test.local/MEMOS'
-#os.environ['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+#os.environ['SQLALCHEMY_TRACK_MODIFICATIONS'] = 'False'
+# set this to 'SQLALCHEMY_ECHO' to 'True' or 'False' to print (or not) the SQL
+os.environ['SQLALCHEMY_ECHO'] = 'False'
 
 os.environ['MEMOS_SECRET_KEY'] = '5791628bb0b13ce0c676dfde280ba245'
 
