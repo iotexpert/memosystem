@@ -155,7 +155,7 @@ def test_valid_login_adminUser(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='adminUser@gmail.com', password='u'),
+                                data=dict(username='adminUser', password='u'),
                                 follow_redirects=True)
     assert response.status_code == 200
 
@@ -181,7 +181,7 @@ def test_valid_login_readAllUser(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='readAllUser@gmail.com', password='u'),
+                                data=dict(username='readAllUser', password='u'),
                                 follow_redirects=True)
     assert response.status_code == 200
 
@@ -207,7 +207,7 @@ def test_valid_login_avgUser(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='avgUser@gmail.com', password='u'),
+                                data=dict(username='avgUser', password='u'),
                                 follow_redirects=True)
         
     assert response.status_code == 200
@@ -234,7 +234,7 @@ def test__for_avgUser(client, session):
     """
     with client:
         response = client.post('/login',
-                                data=dict(email='avgUser@gmail.com', password='u'),
+                                data=dict(username='avgUser', password='u'),
                                 follow_redirects=True)
         
     assert response.status_code == 200

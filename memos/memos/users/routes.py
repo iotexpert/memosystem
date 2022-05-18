@@ -41,17 +41,17 @@ def login():
         ldap_user = None
         if ldap: #pragma nocover  -- testing ldap is very environment centric.
             try:
-                ldap_user = ldap.get_object_details(form.email.data)
+                ldap_user = ldap.get_object_details(form.username.data)
             except:
                 ldap_user = None
 
             if ldap_user:
-                ldap_pw_ok = ldap.bind_user(form.email.data, form.password.data)
+                ldap_pw_ok = ldap.bind_user(form.username.data, form.password.data)
                 login_ok = ldap_pw_ok
 
-        user = User.query.filter_by(email=form.email.data).first()
+        user = User.query.filter_by(username=form.username.data).first()
         
-        current_app.logger.info(f"User = {user} form={form.email.data}")
+        current_app.logger.debug(f"User = {user} form={form.username.data}")
 
         # If we validated a user with ldap, but they don't exist in the database, add them.
         if user is None and ldap_pw_ok: #pragma nocover  -- testing ldap is very environment centric.
@@ -87,7 +87,7 @@ def login():
             next_page = request.args.get('next')
             return redirect(next_page) if next_page else redirect(url_for('main.home'))
         else:
-            flash('Login Unsuccessful. Please check email and password', 'danger')
+            flash('Login Unsuccessful. Please check username and password', 'danger')
 
     return render_template('login.html', title='Login', form=form)
 
