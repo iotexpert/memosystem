@@ -1,13 +1,20 @@
 # Memo System
-
+The Memo System is a light weight document managment for maintaining and distributing internal memos.  This readme provides and overview of the system and instructions for installation and configuration.  This document has the following sections:
 1. Architecture
-2. Close the memosystem
+2. Clone the memosystem
 3. Configuration
 4. Initialization
-5. Using Docker
+5. Useful Docker Commands
 
 # Architecture
+![Architecture](https://github.com/iotexpert/memosystem/blob/main/3tier.png?raw=true)
 ![Architecture](https://github.com/iotexpert/memosystem/blob/main/arch.png?raw=true)
+# Clone the Memosystem
+Pick out a location where you want the system to reside and then clone this repsitory e.g
+```
+cd /some/place/to/store
+git clone git@github.com:iotexpert/memosystem.git
+```
 # Configuration
 In order to use the system you will need to take the following steps:
 1. Copy the configuration file templates to make the docker and settings configuration
@@ -126,23 +133,42 @@ docker compose build memosystem
 docker up -d memosystem
 ```
 # Initialization
-Now that you have running containers for the database and the memosytem software, you will need to initialize the system.  In order to intialize the system there is a python program called "configure.py" that performs two functions
-1. Initialize the tables in the database based on the database configuration
-2. Copy the static files from the "memos/memos/template_static_files" into the "memos/memos/static" directory
-You should run the configure.py inside of a running Docker container.  To do this run:
-```
-docker compose exec memosystem python configure.py
-```
+Now that you have running containers for the database and the memosytem software, you will need to initialize the system.  To a first order for the system to work you need
+1. The table structure created in the database server
+2. The static files copied into the filesystem
+There is a python program called "configure" that can perform a bunch of different functions
 
-# Using Docker
-cd memos
-docker build -t memosystem .
-docker run -d -p 5000:5000 -v /Users/arh/proj/memosystem/memo_files:/app/memos/static --name memosystem memosystem
-docker exec memosystem python configure.py
+|Option|Description|
+|---|---|
+|-db or --database|Initialize all of the tables in the database|
+|-s or --static|Copy all the static files from /memos/template_static_files to /memos/static|
+|--all or -a|Intialize tables & copy static files i.e. -db & -s|
+|-u or --user user:email:pw or configure --user user:email:pw|Create a new user e.g. configure -u arh:alan@alan.com:secret123|
+|-ad or --admin user true\|false|Make the user an admin e.g. configure -ad arh true|
+|-ra or --readall user true\|false|Make the user a readll e.g. configure -ra harrold true|
+|-p or --password user pw|Reset the password of the user to pw e.g. configure -p arh secret456|
+|--resetdb|DESTRUCTIVE BLOW AWAY OF ALL DATABSE TABLES!!!! Gone forever|
+|--clear|DESTRUCTIVE BLOW AWAY OF ALL MEMO FILES!!!! Gone forever|
 
-metal flask + sqlite
-metal flask + metal mysql
-metal flask + docker mysql
-docker flask + sqlite
-docker flask + nginx + sqlite
-docker flask + nginx + mysql
+To get the system going the first you will want to do something like this:
+```
+docker compose build
+docker compose up -d
+docker exec memosystem configure --all
+docker exec memosystem configure --user user1:user1@something.com:secret123
+docker exec memosystem configure -ad user1 true
+```
+In general if you have docker running you can run the configure command like this:
+```
+docker compose exec configure -u arh:arh@badass.com:secret314
+```
+Or you can shell into the docker container and then run the command like this:
+```
+docker exec -it memosystem /bin/sh
+configure -ad harrold true
+exit
+```
+# Using Some usefull Docker Commands
+
+|Command|Function|Example|
+|---|---|---|
