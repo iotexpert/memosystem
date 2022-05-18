@@ -14,6 +14,25 @@ from flask import current_app
 from memos import db,create_app
 from memos.models.User import User
 from memos.models.Memo import Memo
+from memos.models.MemoSignature import MemoSignature
+from memos.models.MemoActivity import MemoActivity
+from memos.models.MemoHistory import MemoHistory
+from memos.models.MemoReference import MemoReference
+from memos.models.MemoSubscription import MemoSubscription
+from memos.models.MemoFile import MemoFile
+
+def reset_db():
+    
+    for table in [MemoSignature,MemoActivity,MemoHistory,MemoReference,MemoSubscription,MemoFile,Memo,User]:
+        try:
+            table.__table__.drop(db.engine)
+        except:
+            print(f"{table} already dropped")
+
+
+def clear_static():
+
+    shutil.rmtree("memos/static",ignore_errors=True)
 
 def init_app():
     app = create_app()
@@ -41,48 +60,83 @@ def create_user(uepw=None):
         return()
 
     temp = uepw.split(":")
-    if len(temp)<3 or len(temp)>4:
-        print("String should be user:password or user:password:admin")
+    if len(temp) != 3:
+        print("String should be user:email:password")
+        return
 
     username = temp[0]
     email = temp[1]
     password = temp[2]
 
-    if len(temp) == 4:
-        admin = True
-    else:
-        admin = False
 
-    print(f"User = {username} Email = {email} Password = {password} Admin={admin}")
+    print(f"User = {username} Email = {email} Password = {password}")
 
-    user =  User(username=username, password=User.create_hash_pw(password),email=email, admin=admin)
+    user =  User(username=username, password=User.create_hash_pw(password),email=email)
     db.session.add(user)
     db.session.commit()
 
 def update_admin(username,admin):
-    print("update admin not implemented")
-
+    
+    if admin[0] == 't' or admin[0] == 'T':
+        admin = True
+    else:
+        admin = False
+        
+    user = User.find(username=username)
+    if user is None:
+        print(f"User = {username} not found")
+    else:
+        user.admin = admin
+        db.session.add(user)
+        db.session.commit()
+        print(f"User {user} Admin={user.admin}")
 
 def update_readall(username,readall):
-    print("update readall not implemented")
 
+    if readall[0] == 't' or readall[0] == 'T':
+        readall = True
+    else:
+        readall = False
+        
+    user = User.find(username=username)
+    if user is None:
+        print(f"User = {username} not found")
+    else:
+        user.readAll = readall
+        db.session.add(user)
+        db.session.commit()
+        print(f"User {user} readall={user.readAll}")
 
+def update_password(username,password):
+
+    user = User.find(username=username)
+    if user is None:
+        print(f"User = {username} not found")
+    else:
+        user.password = User.create_hash_pw(password)
+        db.session.add(user)
+        db.session.commit()
+        print(f"User {user} password ={password} hash={user.password}")
+        
+        
 def print_usage():
 
-    print("--all -a                      : configure database & copyfiles")
-    print("-f                            : copy files")
-    print("-c                            : configure database")
-    print("-u user:email:pw[:admin]      : create user ... user:email:pw or admin user:email:pw:admin")
     print("-h --help                     : This help message")
+    print("--all -a                      : configure database & copyfiles")
+    print("-db --database                : configure database")
+    print("-s --static                   : copy static files")
+    print("-u user:email:pw[:admin]      : create user ... user:email:pw or user:email:pw:admin")
     print("-ad --admin user true|false   : Change the admin state of the user")
     print("-ra --readall user true|false : Change the readall state of the user")
-
+    print("-p --password user pw         : Set the password for user")
+    print("--resetdb                     : reset database... better be SURE!")
+    print("--clear                       : clear memo files... better be SURE!")
 
 if __name__ == "__main__":
 
     app = None
     init_app()
-    
+        
     args = sys.argv[1:]
 
     if len(args) == 0 or "-h" in args or "--help" in args:
@@ -94,10 +148,10 @@ if __name__ == "__main__":
         copy_static()
         sys.exit()
 
-    if "-c" in args:
+    if "-db" in args or "--database" in args:
         create_db()
         
-    if "-f" in args:
+    if "-s" in args or "--static" in args:
         copy_static()
         
     if "-u" in args:
@@ -107,26 +161,60 @@ if __name__ == "__main__":
             print("Error in args")
             sys.exit()
             
-        create_user(args[pos+1])             
+        create_user(args[pos+1])
+     
 
     if "-ad" in args or "--admin" in args:
-        update_admin()
-        pass
-        pos = args.index("-u")
-        if len(args) < pos or args[pos+1][0] == "-":
-            print(f"pos = {pos} arg[pos]={args[pos]}")
-            print("Error in args")
+        try:
+            pos = args.index("-ad")
+        except ValueError:
+            pos = args.index("--admin")
+         
+        if pos + 3 > len(args):
+            print_usage()
             sys.exit()
             
-        create_user(args[pos+1])             
+        if args[pos+2] not in ["true","false"]:
+            print_usage()
+            sys.exit()
 
+        update_admin(args[pos+1],args[pos+2])
+        
+        
     if "-ra" in args or "--readall" in args:
-        update_readall()
-        pass
-        pos = args.index("-u")
-        if len(args) < pos or args[pos+1][0] == "-":
-            print(f"pos = {pos} arg[pos]={args[pos]}")
-            print("Error in args")
+        try:
+            pos = args.index("-ra")
+        except ValueError:
+            pos = args.index("--readall")
+         
+        if pos + 3 > len(args):
+            print_usage()
             sys.exit()
             
-        create_user(args[pos+1])             
+        if args[pos+2] not in ["true","false"]:
+            print_usage()
+            sys.exit()
+
+        update_readall(args[pos+1],args[pos+2])
+  
+
+    if "-p" in args or "--password" in args:
+        try:
+            pos = args.index("-p")
+        except ValueError:
+            pos = args.index("--password")
+         
+        if pos + 3 > len(args):
+            print_usage()
+            sys.exit()
+ 
+        update_password(args[pos+1],args[pos+2])
+        
+             
+    if "--resetdb" in args:
+        reset_db()
+        sys.exit()
+    
+    if "--clear" in args:
+        clear_static()
+ 
