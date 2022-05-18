@@ -55,13 +55,6 @@ class UpdateAccountForm(FlaskForm):
         if len(users['invalid_usernames']) > 0:
             raise ValidationError(f'Invalid users {users["invalid_usernames"]}')
 
-    def validate_username(self, username):
-        
-        if username.data != current_user.username:
-            user = User.query.filter_by(username=username.data).first()
-            if user:
-                raise ValidationError('That username is taken. Please choose a different one.')
-
     def validate_email(self, email):
         if email.data != current_user.email:
             user = User.query.filter_by(email=email.data).first()
