@@ -14,7 +14,7 @@ users = Blueprint('users', __name__)
 
 @users.route("/register", methods=['GET', 'POST'])
 def register():
-    if ldap:
+    if ldap: #pragma nocover  -- testing ldap is very environment centric.
         redirect(url_for('users.login'))
         
     if current_user.is_authenticated:
@@ -39,7 +39,7 @@ def login():
         login_ok = False
         ldap_pw_ok = False
         ldap_user = None
-        if ldap:
+        if ldap: #pragma nocover  -- testing ldap is very environment centric.
             try:
                 ldap_user = ldap.get_object_details(form.email.data)
             except:
@@ -54,14 +54,14 @@ def login():
         current_app.logger.info(f"User = {user} form={form.email.data}")
 
         # If we validated a user with ldap, but they don't exist in the database, add them.
-        if user is None and ldap_pw_ok:
+        if user is None and ldap_pw_ok: #pragma nocover  -- testing ldap is very environment centric.
             user = User(username=ldap_user[os.environ["LDAP_USER_NAME"]][0].decode('ASCII'), 
                 email=ldap_user[os.environ["LDAP_EMAIL"]][0].decode('ASCII'), password='xx')
             db.session.add(user)
             db.session.commit()
 
         # If we validated a user with ldap, Update their permissions from LDAP groups.
-        if ldap_user:
+        if ldap_user: #pragma nocover  -- testing ldap is very environment centric.
             user.admin = False
             user.readAll = False
             admin_groups = os.environ["LDAP_ADMIN_GRP"].split(";")
@@ -79,7 +79,7 @@ def login():
         if ldap_user is None and user:
             try:
                  login_ok = user.check_password(form.password.data)
-            except:  # blanked password from ldap creation has a 'bad salt'
+            except:  # pragma nocover - blanked password from ldap creation has a 'bad salt'
                 pass
 
         if login_ok:
@@ -179,7 +179,7 @@ def account(username=None):
             form.pagesize.render_kw['disabled'] = True
             disable_submit_button = True
 
-        if ldap: # all of these characteristics come from the LDAP groups
+        if ldap: # pragma nocover - all of these characteristics come from the LDAP groups
             form.username.render_kw['disabled'] = True
             form.email.render_kw['disabled'] = True
             form.admin.render_kw['disabled'] = True
