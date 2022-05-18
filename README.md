@@ -4,13 +4,20 @@ The Memo System is a light weight document managment for maintaining and distrib
 2. Clone the memosystem
 3. Configuration
 4. Initialization
-5. Useful Docker Commands
+5. Filesystem
+6. Useful Docker Commands
 
 # Architecture
+The system is built using a classic three-tier-client-architecture.  The system is written in Python and uses the SQLAlchemy library to provide an abstration layer to the database which allows the use of MySQL/SQLite or SQL Server.  The system uses the database to store the meta data of the memos.  The raw datafiles are stored in the raw filesystems.  The system is built to enable simple use of docker to containerize the database and the python flask webserver.  The picture below is an overview of the top level architecture.
+
+
 ![Architecture](https://github.com/iotexpert/memosystem/blob/main/3tier.png?raw=true)
+
+The picture below shows an example implementation where the memosystem is implemented using docker and a mysql docker instance.
+
 ![Architecture](https://github.com/iotexpert/memosystem/blob/main/arch.png?raw=true)
 # Clone the Memosystem
-Pick out a location where you want the system to reside and then clone this repsitory e.g
+The first step in building the system is to pick out a location where you want the system to reside and then clone this repsitory e.g
 ```
 cd /some/place/to/store
 git clone git@github.com:iotexpert/memosystem.git
@@ -143,7 +150,7 @@ There is a python program called "configure" that can perform a bunch of differe
 |-db or --database|Initialize all of the tables in the database|
 |-s or --static|Copy all the static files from /memos/template_static_files to /memos/static|
 |--all or -a|Intialize tables & copy static files i.e. -db & -s|
-|-u or --user user:email:pw or configure --user user:email:pw|Create a new user e.g. configure -u arh:alan@alan.com:secret123|
+|-u or --user user\:email\:pw or configure --user user\:email:pw|Create a new user e.g. configure -u arh:alan@alan.com:secret123|
 |-ad or --admin user true\|false|Make the user an admin e.g. configure -ad arh true|
 |-ra or --readall user true\|false|Make the user a readll e.g. configure -ra harrold true|
 |-p or --password user pw|Reset the password of the user to pw e.g. configure -p arh secret456|
@@ -168,7 +175,41 @@ docker exec -it memosystem /bin/sh
 configure -ad harrold true
 exit
 ```
+# Filesystem
+The raw memo files are stored in the directory memos/static/memos/username/memo#/memoversion/.   Individual memo files are assinged a random 48-bit UUID to mask their contents.  In order to know the mapping of the original filename to the memo you can either look in the database or in the json meta data file.  The file called meta-username-memo#-memoversion.json olds a copy of all of the meta data associated with that memo.  For instance meta-arh-1-a contains
+```json
+{"title": "test1", "number": 1, "version": "A", "confidential": false, "distribution": "", "keywords": "", "userid": "arh", "memo_state": "MemoState.Active", "signers": "", "references": "", "files": [("0fb820d8-5b9d-4c56-a6ba-4099a815b284","Alan Hawse IR Website.jpg")]}
+```
+If you look at the filesystem you can see that there are two files, the json and the 48-bit UUID file, which is really "Alan Hawse ..."
+```
+(env) arh (testdocker *) A $ pwd
+/Users/arh/proj/memosystem/memo_files/static/memos/arh/1/A
+(env) arh (testdocker *) A $ ls
+0fb820d8-5b9d-4c56-a6ba-4099a815b284	meta-arh-1-A.json
+(env) arh (testdocker *) A $ 
+```
+This was done to provide a mechanism to rebuild the memosystem in the event of something catostrophic.
+
 # Using Some usefull Docker Commands
 
-|Command|Function|Example|
-|---|---|---|
+|Command|Function|
+|---|---|
+|docker compose build memosystem|Use the Docker compose file + the dockerfile to make images for the memosystem and the mysql database|
+|docker compose build mysql|Build an image for mysql|
+|docker ps|Show all running docker containers|
+|docker compose up memosystem|Start the container for the memosystem|
+|docker compose up -d memosystem|Start the memosystem container in the background (detached)|
+|docker compose up -d mysql|Start the mysql server in the background|
+|docker compose up|Bring up both the memosystem and mysql|
+|docker compose restart|restart the mysql and memosystem|
+|docker compose down|Stop the running containers for the memosystem and mysql|
+|docker compose stop memosystem|stop the memosystem container|
+|docker exec memosystem command|run the "command" inside of the memosystem container e.g ls /app|
+|docker exec -it memosystem /bin/sh|Start an interactive shell inside of the running memosystem container|
+|docker cp filename memosystem:/app|Copy a file from the host filesystem INTO the memosystem container|
+|docker container ls|List the active containers ... same as docker ps|
+|docker container rm memosystem|Remove the memosystem container|
+|docker container prune|Remove all containers that are not running|
+|docker image ls|List the active docker images|
+|docker image rm memosystem|remove the docker image for the memosystem|
+|docker image prune|Prune the inactive images|
