@@ -125,7 +125,7 @@ def print_usage():
     print("--all -a                      : configure database & copyfiles")
     print("-db --database                : configure database")
     print("-s --static                   : copy static files")
-    print("-u user:email:pw[:admin]      : create user ... user:email:pw or user:email:pw:admin")
+    print("-u user:email:pw              : create user ... user:email:pw")
     print("-ad --admin user true|false   : Change the admin state of the user")
     print("-ra --readall user true|false : Change the readall state of the user")
     print("-p --password user pw         : Set the password for user")
