@@ -16,7 +16,6 @@ def test_register(client, session):
         follow_redirects=True)
     assert response.status_code == 200
     assert b'That username is taken. Please choose a different one' in response.data
-    assert b'That email is taken. Please choose a different one.' in response.data
 
     # attempt login with bad password
     response = client.post('/login', 
@@ -98,7 +97,6 @@ def test_account_access_nonadmin(client, session):
         follow_redirects=True)
     assert response.status_code == 200
     assert b'avgUser@gmail.com' in response.data
-    assert b'That email is taken.' in response.data
     assert b"Invalid users [&#39;reallyBadUser&#39;]" in response.data
     assert b"Invalid users [&#39;badUser&#39;]" in response.data
 

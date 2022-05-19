@@ -4,7 +4,7 @@ def test_home_page_get(client, session):
     """
     response = client.get('/')
     assert response.status_code == 200
-    assert b'Document Manager' in response.data
+    assert b'Memo System' in response.data
     assert b'Home' in response.data
     assert b'Search' in response.data
     assert b'Login' in response.data
@@ -20,7 +20,7 @@ def test_home_page_get_memo(client, session):
     """
     response = client.get('/memo')
     assert response.status_code == 200
-    assert b'Document Manager' in response.data
+    assert b'Memo System' in response.data
     assert b'Home' in response.data
     assert b'Search' in response.data
     assert b'Login' in response.data
@@ -36,7 +36,7 @@ def test_home_page_get_memo_avgUser(client, session):
     """
     response = client.get('/memo/avgUser')
     assert response.status_code == 200
-    assert b'Document Manager' in response.data
+    assert b'Memo System' in response.data
     assert b'Home' in response.data
     assert b'Search' in response.data
     assert b'Login' in response.data
@@ -50,7 +50,7 @@ def test_home_page_get_memo_avgUser_1(client, session):
     """
     response = client.get('/memo/avgUser/1')
     assert response.status_code == 200
-    assert b'Document Manager' in response.data
+    assert b'Memo System' in response.data
     assert b'Home' in response.data
     assert b'Search' in response.data
     assert b'Login' in response.data
@@ -67,7 +67,7 @@ def test_home_page_get_memo_avgUser_1_b(client, session):
     """
     response = client.get('/memo/avgUser-1')
     assert response.status_code == 200
-    assert b'Document Manager' in response.data
+    assert b'Memo System' in response.data
     assert b'Home' in response.data
     assert b'Search' in response.data
     assert b'Login' in response.data
@@ -84,7 +84,7 @@ def test_home_page_get_memo_avgUser_1_3(client, session):
     """
     response = client.get('/memo/avgUser/1/C')
     assert response.status_code == 200
-    assert b'Document Manager' in response.data
+    assert b'Memo System' in response.data
     assert b'Home' in response.data
     assert b'Search' in response.data
     assert b'Login' in response.data
@@ -101,7 +101,7 @@ def test_home_page_get_memo_avgUser_1_3b(client, session):
     """
     response = client.get('/memo/avgUser-1-C')
     assert response.status_code == 200
-    assert b'Document Manager' in response.data
+    assert b'Memo System' in response.data
     assert b'Home' in response.data
     assert b'Search' in response.data
     assert b'Login' in response.data
@@ -118,7 +118,7 @@ def test_home_page_get_memo_avgUser_1_3c(client, session):
     """
     response = client.get('/memo/avgUser/1C')
     assert response.status_code == 200
-    assert b'Document Manager' in response.data
+    assert b'Memo System' in response.data
     assert b'Home' in response.data
     assert b'Search' in response.data
     assert b'Login' in response.data
@@ -135,7 +135,7 @@ def test_home_page_get_memo_avgUser_1_4(client, session):
     """
     response = client.get('/memo/avgUser/1/4')
     assert response.status_code == 200
-    assert b'Document Manager' in response.data
+    assert b'Memo System' in response.data
     assert b'Home' in response.data
     assert b'Search' in response.data
     assert b'Login' in response.data
@@ -161,7 +161,7 @@ def test_valid_login_adminUser(client, session):
 
     print(response.data)
     assert b'Account: adminUser' in response.data
-    assert b'Document Manager' in response.data
+    assert b'Memo System' in response.data
     assert b'Home' in response.data
     assert b'Search' in response.data
     assert b'Login' not in response.data
@@ -187,7 +187,7 @@ def test_valid_login_readAllUser(client, session):
 
     print(response.data)
     assert b'Account: readAllUser' in response.data
-    assert b'Document Manager' in response.data
+    assert b'Memo System' in response.data
     assert b'Home' in response.data
     assert b'Search' in response.data
     assert b'Login' not in response.data
@@ -214,7 +214,7 @@ def test_valid_login_avgUser(client, session):
 
     print(response.data)
     assert b'Account: avgUser' in response.data
-    assert b'Document Manager' in response.data
+    assert b'Memo System' in response.data
     assert b'Home' in response.data
     assert b'Search' in response.data
     assert b'Login' not in response.data
@@ -240,7 +240,7 @@ def test__for_avgUser(client, session):
     assert response.status_code == 200
 
     assert b'Account: avgUser' in response.data
-    assert b'Document Manager' in response.data
+    assert b'Memo System' in response.data
     assert b'Home' in response.data
     assert b'Search' in response.data
     assert b'Login' not in response.data

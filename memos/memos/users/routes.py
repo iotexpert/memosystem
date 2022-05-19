@@ -202,8 +202,12 @@ def reset_request():
     form = RequestResetForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
-        send_reset_email(user)
-        flash('An email has been sent with instructions to reset your password.', 'info')
+        if user and len(user.email) > 2:
+            send_reset_email(user)
+            flash('An email has been sent with instructions to reset your password.', 'info')
+        else:
+            flash('There is no account with that email. You must register first.', 'warning')
+            return redirect(url_for('users.reset_request'))
         return redirect(url_for('users.login'))
     return render_template('reset_request.html', title='Reset Password', form=form)
 
