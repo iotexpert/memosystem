@@ -3,7 +3,7 @@ import os
 class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    if os.environ.get('SQLALCHEMY_ECHO') == 'True':
+    if os.environ.get('SQLALCHEMY_ECHO') == 'True': # pragma nocover
         SQLALCHEMY_ECHO=True
     else:
         SQLALCHEMY_ECHO=False

@@ -149,45 +149,44 @@ def account(username=None):
         db.session.add(user)
         db.session.commit()
         flash('Your account has been updated!', 'success')
-        return redirect(url_for('users.account',username=user.username))
     
-    elif request.method == 'GET':
+    # After update, reload the page. GET starts here
 
+    form.username.render_kw['disabled'] = True
+    form.email.render_kw['disabled'] = False
+    form.delegates.render_kw['disabled'] = False
+    form.admin.render_kw['disabled'] = False
+    form.readAll.render_kw['disabled'] = False
+    form.subscriptions.render_kw['disabled'] = False
+    form.pagesize.render_kw['disabled'] = False
+
+    disable_submit_button = False
+
+    current_app.logger.info(f"username={user.username} email={user.email} readAll={user.readAll} admin={user.admin}")
+
+    form.username.data = user.username
+    form.email.data = user.email
+    form.admin.data = user.admin
+    form.readAll.data = user.readAll
+    form.delegates.data = user.delegates['usernames']
+    form.subscriptions.data = user.subscriptions
+    form.pagesize.data = user.pagesize
+
+    if not (user == current_user or current_user.admin):
         form.username.render_kw['disabled'] = True
-        form.email.render_kw['disabled'] = False
-        form.delegates.render_kw['disabled'] = False
-        form.admin.render_kw['disabled'] = False
-        form.readAll.render_kw['disabled'] = False
-        form.subscriptions.render_kw['disabled'] = False
-        form.pagesize.render_kw['disabled'] = False
+        form.email.render_kw['disabled'] = True
+        form.delegates.render_kw['disabled'] = True
+        form.admin.render_kw['disabled'] = True
+        form.readAll.render_kw['disabled'] = True
+        form.subscriptions.render_kw['disabled'] = True
+        form.pagesize.render_kw['disabled'] = True
+        disable_submit_button = True
 
-        disable_submit_button = False
-
-        current_app.logger.info(f"username={user.username} email={user.email} readAll={user.readAll} admin={user.admin}")
-
-        form.username.data = user.username
-        form.email.data = user.email
-        form.admin.data = user.admin
-        form.readAll.data = user.readAll
-        form.delegates.data = user.delegates['usernames']
-        form.subscriptions.data = user.subscriptions
-        form.pagesize.data = user.pagesize
-
-        if not (user == current_user or current_user.admin):
-            form.username.render_kw['disabled'] = True
-            form.email.render_kw['disabled'] = True
-            form.delegates.render_kw['disabled'] = True
-            form.admin.render_kw['disabled'] = True
-            form.readAll.render_kw['disabled'] = True
-            form.subscriptions.render_kw['disabled'] = True
-            form.pagesize.render_kw['disabled'] = True
-            disable_submit_button = True
-
-        if ldap: # pragma nocover - all of these characteristics come from the LDAP groups
-            form.username.render_kw['disabled'] = True
-            form.email.render_kw['disabled'] = True
-            form.admin.render_kw['disabled'] = True
-            form.readAll.render_kw['disabled'] = True
+    if ldap: # pragma nocover - all of these characteristics come from the LDAP groups
+        form.username.render_kw['disabled'] = True
+        form.email.render_kw['disabled'] = True
+        form.admin.render_kw['disabled'] = True
+        form.readAll.render_kw['disabled'] = True
         
     image_file = url_for('static', filename='profile_pics/' + user.image_file)
     
