@@ -8,7 +8,7 @@
           <p class="text-secondary">{{ user.email }}</p>
         </div>
       </div>
-        <form method="POST" action="" enctype="multipart/form-data">
+        <form method="POST" action="{{ url_for('users.account', username=user.username) }}" enctype="multipart/form-data">
             {{ form.hidden_tag() }}
             <fieldset class="form-group">
                 <legend class="border-bottom mb-4">Account Info</legend>
@@ -91,7 +91,7 @@
                             {% endfor %}
                         </div>
                     {% else %}
-                        {{ form.admin(class="form-control form-control-lg") }}
+                        {{ form.readAll(class="form-control form-control-lg") }}
                     {% endif %}
                 </div>
 
