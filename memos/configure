@@ -179,6 +179,7 @@ if __name__ == "__main__":
             sys.exit()
 
         update_admin(args[pos+1],args[pos+2])
+        sys.exit()
         
         
     if "-ra" in args or "--readall" in args:
@@ -196,7 +197,8 @@ if __name__ == "__main__":
             sys.exit()
 
         update_readall(args[pos+1],args[pos+2])
-  
+        sys.exit()
+        
 
     if "-p" in args or "--password" in args:
         try:

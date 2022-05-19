@@ -113,6 +113,8 @@ def account(username=None):
     Returns:
         _type_: _description_
     """
+    form = UpdateAccountForm()
+
     if username is None:
         user = current_user
     else:
@@ -122,24 +124,23 @@ def account(username=None):
         abort(404)        
     
     current_app.logger.info(f"User = {current_user.username} Delegate List= {user.delegates}")
-    form = UpdateAccountForm()
     disable_submit_button = None
     if form.validate_on_submit():
-        if form.picture.data:
-            picture_file = save_picture(form.picture.data)
-            current_user.image_file = picture_file
-
+        
+        current_app.logger.info(f"User = {user} current_user={current_user} formusername={form.username.data}")
         if user is not current_user and not current_user.admin:
             abort(403)
 
-#        if not ldap and current_user.admin:
-#            user.username = form.username.data
-        
-        if not ldap and current_user is not user:
+        if form.picture.data:
+            picture_file = save_picture(form.picture.data)
+            user.image_file = picture_file
+
+        if not ldap and current_user.admin:
             user.admin = form.admin.data
-            user.readAll = form.readAll.data
+            user.readAll = form.readAll.data    
 
         if not ldap:
+            current_app.logger.info(f"Email = {type(form.email.data)}")
             user.email = form.email.data
 
         user.delegates = form.delegates.data
@@ -148,7 +149,8 @@ def account(username=None):
         db.session.add(user)
         db.session.commit()
         flash('Your account has been updated!', 'success')
-        return redirect(url_for('users.account'))
+        return redirect(url_for('users.account',username=user.username))
+    
     elif request.method == 'GET':
 
         form.username.render_kw['disabled'] = True
@@ -161,13 +163,15 @@ def account(username=None):
 
         disable_submit_button = False
 
+        current_app.logger.info(f"username={user.username} email={user.email} readAll={user.readAll} admin={user.admin}")
+
         form.username.data = user.username
         form.email.data = user.email
         form.admin.data = user.admin
         form.readAll.data = user.readAll
-        form.delegates.data = current_user.delegates['usernames']
-        form.subscriptions.data = current_user.subscriptions
-        form.pagesize.data = current_user.pagesize
+        form.delegates.data = user.delegates['usernames']
+        form.subscriptions.data = user.subscriptions
+        form.pagesize.data = user.pagesize
 
         if not (user == current_user or current_user.admin):
             form.username.render_kw['disabled'] = True
@@ -185,21 +189,11 @@ def account(username=None):
             form.admin.render_kw['disabled'] = True
             form.readAll.render_kw['disabled'] = True
         
-    image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
-    return render_template('account.html', title='Account',
+    image_file = url_for('static', filename='profile_pics/' + user.image_file)
+    
+        
+    return render_template('account.html', username=user.username,title='Account',
                            image_file=image_file, form=form,user=user,disable_submit_button=disable_submit_button)
-
-'''
-@users.route("/user/<string:username>")
-def user_posts(username):
-    page = request.args.get('page', 1, type=int)
-    user = User.query.filter_by(username=username).first_or_404()
-    posts = Post.query.filter_by(author=user)\
-        .order_by(Post.date_posted.desc())\
-        .paginate(page=page, per_page=5)
-    return render_template('user_posts.html', posts=posts, user=user)
-
-'''
 
 @users.route("/reset_password", methods=['GET', 'POST'])
 def reset_request():

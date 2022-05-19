@@ -9,8 +9,8 @@ from memos.models.User import User
 class RegistrationForm(FlaskForm):
     username = StringField('Username',
                            validators=[DataRequired(), Length(min=2, max=20)])
-    email = StringField('Email',
-                        validators=[DataRequired(), Email()])
+    email = StringField('Email',render_kw={})
+
     password = PasswordField('Password', validators=[DataRequired()])
     confirm_password = PasswordField('Confirm Password',
                                      validators=[DataRequired(), EqualTo('password')])
@@ -21,12 +21,6 @@ class RegistrationForm(FlaskForm):
         if user:
             raise ValidationError('That username is taken. Please choose a different one.')
 
-    def validate_email(self, email):
-        user = User.query.filter_by(email=email.data).first()
-        if user:
-            raise ValidationError('That email is taken. Please choose a different one.')
-
-
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
@@ -36,13 +30,11 @@ class LoginForm(FlaskForm):
 
 class UpdateAccountForm(FlaskForm):
     username = StringField('Username',render_kw={})
-    email = StringField('Email',
-                        validators=[DataRequired(), Email()],render_kw={})
+    email = StringField('Email',render_kw={})
     delegates = StringField('Delegates', validators=[],render_kw={})
-    admin = BooleanField('Admin', default=False,
-                      false_values=('False', 'false', ''),render_kw={})
-    readAll = BooleanField('Read All', default=False,
-                      false_values=('False', 'false', ''),render_kw={})
+    admin = BooleanField('Admin', render_kw={})
+
+    readAll = BooleanField('Read All', render_kw={})
 
     subscriptions = StringField('Subscriptions',render_kw={})
     pagesize = StringField('Page Size',render_kw={})
@@ -55,12 +47,6 @@ class UpdateAccountForm(FlaskForm):
         if len(users['invalid_usernames']) > 0:
             raise ValidationError(f'Invalid users {users["invalid_usernames"]}')
 
-    def validate_email(self, email):
-        if email.data != current_user.email:
-            user = User.query.filter_by(email=email.data).first()
-            if user:
-                raise ValidationError('That email is taken. Please choose a different one.')
-
     def validate_subscriptions(self,subscriptions):
         users = User.valid_usernames(subscriptions.data)
         if len(users['invalid_usernames']) > 0:
@@ -71,14 +57,8 @@ class RequestResetForm(FlaskForm):
     """
     This function
     """
-    email = StringField('Email',
-                        validators=[DataRequired(), Email()])
+    email = StringField('Email',render_kw={})
     submit = SubmitField('Request Password Reset')
-
-    def validate_email(self, email):
-        user = User.query.filter_by(email=email.data).first()
-        if user is None:
-            raise ValidationError('There is no account with that email. You must register first.')
 
 
 class ResetPasswordForm(FlaskForm):
