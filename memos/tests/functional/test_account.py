@@ -1,4 +1,4 @@
-
+import io
 from flask_mail import Mail
 
 def test_register(client, session):
@@ -71,6 +71,17 @@ def test_account_access_admin(client, session):
     assert b'avgUser@gmail.com' in response.data
     assert b'Account Info' in response.data
 
+    # Update page for other account
+    with open('../JPEG_example_JPG_RIP_001.jpg', 'rb') as fh:
+        response = client.post('/account/avgUser',
+            data=dict(admin=True,readAll=True,email="avgUser@updated.com",
+                delegates="adminUser", subscriptions="adminUser", pagesize=15, picture=(fh, 'JPEG_example_JPG_RIP_001.jpg')),
+            follow_redirects=True)
+    assert response.status_code == 200
+    assert b'avgUser@updated.com' in response.data
+    assert b'Account Info' in response.data
+    assert b'Your account has been updated!' in response.data
+
 def test_account_access_nonadmin(client, session):
     # login as normal user
     response = client.post('/login',
@@ -99,6 +110,17 @@ def test_account_access_nonadmin(client, session):
     assert b'avgUser@gmail.com' in response.data
     assert b"Invalid users [&#39;reallyBadUser&#39;]" in response.data
     assert b"Invalid users [&#39;badUser&#39;]" in response.data
+
+    # Update page for other account
+    with open('../JPEG_example_JPG_RIP_001.jpg', 'rb') as fh:
+        response = client.post('/account/adminUser',
+            data=dict(admin=True,readAll=True,email="avgUser@updated.com",
+                delegates="adminUser", subscriptions="adminUser", pagesize=15, picture=(fh, 'JPEG_example_JPG_RIP_001.jpg')),
+            follow_redirects=True)
+    assert response.status_code == 403
+    assert b'403' in response.data
+    assert b'Account Info' not in response.data
+    assert b'Your account has been updated!' not in response.data
 
 def test_reset(client, session):
     response = client.get('/reset_password', follow_redirects=True)
