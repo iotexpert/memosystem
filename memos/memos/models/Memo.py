@@ -27,6 +27,8 @@ class Memo(db.Model):
     number = db.Column(db.Integer)                                      # Memo Number
     version = db.Column(db.String(2))                                   # A,B,..Z,AA,AB,...AZ,BA
     confidential = db.Column(db.Boolean, default=False)                 # if true only author, signer, distribution can read
+    pinned = db.Column(db.Boolean, default=False)                       # Can be pinned to top of memo list
+    template = db.Column(db.Boolean, default=False)                     # The memo is used as a template for the system
     distribution = db.Column(db.String(128), default='')                # user names on the distribution
     keywords = db.Column(db.String(128), default='')                    # any keyword
     title = db.Column(db.String(128), nullable=False, default='')       # The title of the memo
