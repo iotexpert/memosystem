@@ -1,32 +1,32 @@
 # Memo System
-The Memo System is a light weight document managment for maintaining and distributing internal memos.  This readme provides and overview of the system and instructions for installation and configuration.  This document has the following sections:
+The Memo System is a light weight web based document managment system for maintaining and distributing internal memos.  This readme provides an overview of the system as well as instructions for installation and configuration.  This document has the following sections:
 1. Architecture
-2. Clone the memosystem
+2. Install with git clone
 3. Configuration
 4. Initialization
 5. Filesystem
 6. Useful Docker Commands
 
 # Architecture
-The system is built using a classic three-tier-client-architecture.  The system is written in Python and uses the SQLAlchemy library to provide an abstration layer to the database which allows the use of MySQL/SQLite or SQL Server.  The system uses the database to store the meta data of the memos.  The raw datafiles are stored in the raw filesystems.  The system is built to enable simple use of docker to containerize the database and the python flask webserver.  The picture below is an overview of the top level architecture.
+The system is built using a classic three-tier-client-architecture.  The system is written in Python and uses the SQLAlchemy library to provide an abstration layer to the database which allows the use of MySQL/SQLite or SQL Server.  The system uses the database to store meta data of the memos.  The raw datafiles are stored in the underlying operating system's filesystem.  The system is built to enable simple use of Docker to containerize the database and the Python flask webserver.  The picture below is an overview of the top level architecture.
 
 
-![Architecture](https://github.com/iotexpert/memosystem/blob/main/3tier.png?raw=true)
+![Architecture](https://github.com/iotexpert/memosystem/blob/main/doc/3tier.png?raw=true)
 
-The picture below shows an example implementation where the memosystem is implemented using docker and a mysql docker instance.
+The picture below shows an example implementation where the memosystem and the database are implemented using Docker.
 
-![Architecture](https://github.com/iotexpert/memosystem/blob/main/arch.png?raw=true)
+![Architecture](https://github.com/iotexpert/memosystem/blob/main/doc/arch.png?raw=true)
 # Clone the Memosystem
-The first step in building the system is to pick out a location where you want the system to reside and then clone this repsitory e.g
+The first step in building the system is to pick out a location where you want the system to reside and then clone this repsitory e.g.
 ```
 cd /some/place/to/store
 git clone git@github.com:iotexpert/memosystem.git
 ```
 # Configuration
-In order to use the system you will need to take the following steps:
-1. Copy the configuration file templates to make the docker and settings configuration
+In order to configure the system you will need to take the following steps:
+1. Copy the configuration file templates to create your specific Docker and system configuration
 2. Choose the location of memo files and database files and create the directory structure
-3. Select and Configure the Database (SQLite or MySQL)
+3. Select and configure the database (SQLite or MySQL or SQL Server)
 4. Select AD/LDAP or Local Authentication - and configure
 5. Configure the mailer
 6. Configure HTTPS or HTTP (intelligence test)
@@ -34,9 +34,9 @@ In order to use the system you will need to take the following steps:
 All of the system configuration is done by copying the appropriate template and then making modifcations that are specific to your configuration
 |File|Template|Description|
 |---|---|---|
-|docker-compose.yml|docker-compose.yml.template||
-|memos/Dockerfile|memos/Dockerfile.template||
-|memos/settings.py|memos/settings.py.template||
+|docker-compose.yml|docker-compose.yml.template|Overall Docker configuration specifies ports etc.|
+|memos/Dockerfile|memos/Dockerfile.template|The Docker configuration for the memosystem including Flask and NGINX|
+|memos/settings.py|memos/settings.py.template|The configuration file for the Flask application|
 
 On my unix box I run the following commands to copy the templates
 ``` bash
@@ -56,7 +56,7 @@ mkdir memo_files/sqlite
 ## Configure the Database
 The system is built using [SQL Alchemy](https://www.sqlalchemy.org) to support all database interaction.  This library gives you a selection of targetable databases.  I have tested [SQLite](https://www.sqlite.org/) and [MySQL](https://mysql.com) but the others will probably work as well - YMMV.  For a production use I recommend MySQL.
 ### MySQL
-You may choose to target a MySQL server that you already have in your enterprise.  To do this you can skip the docker configuration.  In order to configure the MySQL Docker instance you will need to modify the "docker-compose.yml" (which you copied from the template) to setup the users, passwords and files.  Then you will need to modify the settings.py to setup the same.
+You may choose to target a MySQL server that you already have in your enterprise.  To do this you can skip the docker configuration.  If you want a Docker container running a private MySQL you will need to modify the "docker-compose.yml" (which you copied from the template) to setup the users, passwords and files.  Then you will need to modify the settings.py to setup to match.
 #### Configure docker-compose.yml for MySQL
 The database section of the provided template for docker-compose.yml looks like this:
 ```yml
@@ -84,13 +84,13 @@ In your docker-compose.yml configuration file you need to setup:
 3. MYSQL_USER: "memosystem"
 4. MYSQL_PASSWORD: "memopw"
 
-I reccomend that you choose a good password, though it may not "really" matter given the MySQL is hidden in a docker container.  Then you need to specify the path to your mysql files.  If you do not configure the /var/lib/mysql you will loose your database when the image is rebuilt.  The formation is "- host_path:container_path"  In the example below it is my home directory, which is alse the location of this Git repository.  Unfortunately you CANNOT use a relative path for some stupid Docker reason
+I reccomend that you choose a good password, though it may not "really" matter given the MySQL is hidden in a Docker container (don't hate me Winston).  Then you need to specify the path to your MySQL files.  If you do not configure the /var/lib/mysql you will loose your database when the image is rebuilt.  The formation of this line is "- host_path:container_path"  In the example below it is my home directory, which is alse the location of this Git repository.  Unfortunately you CANNOT use a relative path for some stupid Docker reason
 
 ```
 - /Users/arh/proj/memosystem/memo_files/mysql:/var/lib/mysql
 ```
 #### Configure the MySQL Database in settings.py
-In the settings.py file you need to configure the SQLAlchemy to talk to MySQL.  
+In the settings.py file you need to configure the SQLAlchemy to talk to MySQL.  I include an example for SQLite as well as MySQL
 ```
 #os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://user:password@mysql/memos'
@@ -126,6 +126,37 @@ In order to not loose your data you should mount a directory from the host onto 
       - /Users/arh/proj/memosystem/memo_files/sqlite:/app/memos/sqlite
 ```
 ## Authentication
+You have two choices for authenticating users:
+1. LDAP / Active Directory
+2. Users as specific in the local database (of the system)
+
+### LDAP / Active Directory
+When you use LDAP, any user in your LDAP will have access to the system.  You will need to update these environment variables in your settings_local.py
+```python
+# LDAP settings. If LDAP_HOST is not specified, ldap lookups will be skipped.
+os.environ["LDAP_HOST"] = "ldap.com" # host name of LDAP server without schema or port
+os.environ["LDAP_PORT"] = "389" # 389 or 636
+os.environ["LDAP_SCHEMA"] = "ldap" # ldap or ldaps
+os.environ['LDAP_USER'] =  'service_acct' # Sevice account to authenticate to ldap server
+os.environ['LDAP_PASSWORD'] = 'passwd' # password for service account
+os.environ["LDAP_USERNAME"] = "CN={},OU=Users,OU=Company,DC=Company,DC=local".format(os.getenv('LDAP_USER')) # Full ldap locator of service account
+os.environ["LDAP_BASE_DN"] = "OU=Company,DC=Company,DC=local" # Base OU to search for accounts in
+os.environ["LDAP_USER_OBJECT_FILTER"] = "(&(objectclass=Person)(mail=%s))" # ldap lookup condition
+os.environ["LDAP_USER_NAME"] = "sAMAccountName" # field to map to user id
+os.environ["LDAP_EMAIL"] = "mail"  # field to map to email
+os.environ["LDAP_ADMIN_GRP"] = "CN=A-GRP;CN=A2-GRP"  # Group name designating admin role (semicolon separated list)
+os.environ["LDAP_READ_GRP"] = "CN=R-Grp"  # Group name designating read all role (semicolon separated list)
+os.environ["PYTHON_LDAP_TRACE_LEVEL"] = "0"
+```
+### Local Authentication
+If you choose to use local authentication, then users will be able to create accounts by themselves using the register button.  All of this user data will be stored in a table in the local database.  The adminstrator will also be able to update the users via the "configure" command which is found in the top level.  e.g. to create a local user you can run
+```
+configure -u arh:arh@badass.com:arh_secret_password
+```
+will make an account for ARH.  If you want to make arh an administrator you can the run
+```
+configure -ad arh true
+```
 ## Mailer
 ## HTTPS / HTTP
 # Start Docker
