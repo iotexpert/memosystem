@@ -14,5 +14,4 @@ memo_files
 Dockerfile
 docker-compose.yml
 settings.py
-
-
+memos/memos/sqlite/*
