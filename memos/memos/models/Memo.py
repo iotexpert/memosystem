@@ -202,16 +202,28 @@ class Memo(db.Model):
     def saveJson(self):
         """ Create the JSON file which is a copy of all of the meta data """
         js = {}
-        js['title']=self.title
+        js['userid']=self.user_id
         js['number']=self.number
         js['version']=self.version
+        js['title']=self.title
+        if self.active_date:
+            js['active_date']=self.active_date.strftime("%m/%d/%Y")
+        if self.obsolete_date:
+            js['obsolete_date']=self.obsolete_date.strftime("%m/%d/%Y")
         js['confidential']=self.confidential
         js['distribution']=self.distribution
         js['keywords']=self.keywords
-        js['userid']=self.user_id
         js['memo_state']=f"{self.memo_state}"
         js['keywords']= self.keywords
-        js['signers']=self.signers['signers']
+        # need to write the date of the signer
+        user = User.find(username=self.user_id)
+        signlist = MemoSignature.get_signers(self)
+        signers = []
+        for sig in signlist:
+            if sig.date_signed is not None:
+                signers.append((sig.signer_id,f"{datetime.strftime(sig.date_signed,'%m/%d/%Y')}"))
+            
+        js['signers']=signers
         js['references']= self.references['ref_string']
         js['files']=[]
         for file in self.get_files():
