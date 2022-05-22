@@ -1,0 +1,235 @@
+#!/usr/bin/env python
+
+import json
+import glob
+from datetime import datetime
+from logging import CRITICAL
+import sys
+import os
+import shutil
+import re  
+
+try:
+    import settings_local
+except ImportError:
+    pass
+
+from memos.revletter import b10_to_rev, rev_to_b10,valid_rev
+
+from flask import current_app
+from memos import db,create_app
+from memos.models.User import User
+from memos.models.Memo import Memo
+from memos.models.MemoSignature import MemoSignature
+from memos.models.MemoActivity import MemoActivity
+from memos.models.MemoHistory import MemoHistory
+from memos.models.MemoReference import MemoReference
+from memos.models.MemoSubscription import MemoSubscription
+from memos.models.MemoFile import MemoFile
+from memos.models.MemoState import MemoState
+
+def init_app():
+    app = create_app()
+    app.app_context().push()
+    db.init_app(app)
+
+
+def import_memos(directory):
+    pass
+
+
+def missing_users(directory,users):
+    # Look at the JSON... userid,distribution and signers ... figure out who is missing
+    jsons = glob.glob("*json")
+    f = open(jsons[0])
+    data = json.load(f)
+    f.close()
+        
+    if 'userid' in data and isinstance(data['userid'],str):
+        users.extend(User.valid_usernames(data['userid'])['invalid_usernames'])
+
+    if 'distribution' in data and isinstance(data['distribution'],str):
+        users.extend(User.valid_usernames(data['distribution'])['invalid_usernames'])
+
+
+    if 'signers' in data and isinstance(data['signers'],list):
+        for signer in data['signers']:
+            if isinstance(signer[0],str):
+                users.extend(User.valid_usernames(signer[0])['invalid_usernames'])
+
+
+
+class ImportError(Exception):
+    pass
+
+def find_jsons(directory):    
+    jsons = glob.glob("*json")
+    print(jsons)
+
+
+def import_memo_json(json_file,import_data=False):
+    
+    f = open(json_file)
+    data = json.load(f)
+    f.close()
+    
+    directory = os.path.dirname(json_file)
+    
+    user = None
+    title = None
+    number = None
+    version = 'A'
+    confidential = False
+    distribution = ''
+    keywords = ''
+    memo_state = 'MemoState.Active'
+    signers = ''
+    references = ''
+    active_date = None
+    obsolete_date = None
+    files=None
+    
+
+    
+    if 'userid' in data:
+        userid = data['userid']
+        if not isinstance(userid,str):
+            raise ImportError(f"'userid' invalid type {type(userid)} must be type string")
+        
+        user=User.find(username=userid)
+        if user is None:
+            raise ImportError(f"userid {userid} not in database")
+            
+    if 'title' in data:
+        title = data['title']
+        
+        if not isinstance(title,str):
+            raise ImportError(f"'title' invalid type {type(title)} must be type string")
+    
+    if 'number' in data:
+        number = data['number']
+        if isinstance(number,bool) or not isinstance(number,int):
+            raise ImportError(f"'number' invalid type {type(title)} must be type integer")
+
+    if 'version' in data:
+        version = data['version']
+        if not valid_rev(version):
+            raise ImportError(f"Version {version} invalid format must be [a-zA-Z]+ ") 
+        
+    if number is None:
+        number = Memo.get_next_number(user)
+        version = 'A'
+   
+    # if the memo already exists
+    if Memo.find(username=user.username,memo_number=number,memo_version=version):
+        print(f"{userid}-{number}{version} already exists")
+        raise ImportError(f"{userid}-{number}{version} already exists")
+        
+    if 'confidential' in data:
+        confidential = data['confidential']
+        if not isinstance(confidential,bool):
+            print()
+            raise ImportError(f"Invalid type confidential={confidential} must be boolean")
+    
+    if 'distribution' in data:
+        distribution = data['distribution']
+        if not isinstance(distribution,str):
+            raise ImportError(f"distribution must be of type string not {type(distribution)}")
+        un = User.valid_usernames(distribution)
+        if len(un['invalid_usernames'])>0:
+            raise ImportError(f"Invalid User Names in distribution = {un['invalid_usernames']}")
+        
+    if 'keywords' in data:
+        keywords = data['keywords']
+
+        if not isinstance(data['keywords'],str):
+            raise ImportError(f"Invalid keywords={type(keywords)} must be type string")
+
+    if 'memo_state' in data:
+        memo_state = data['memo_state']
+        if not isinstance(memo_state,str):
+            raise ImportError(f"Memostate of type {type(memo_state)} must be type string")
+    
+        if not MemoState.is_valid(memo_state):
+            raise ImportError(f"Memostate={memo_state} illegal string")
+    
+    if 'signers' in data:
+        signers = data['signers']
+        if not isinstance(signers,list):
+            raise ImportError(f"signers must be of type list not {type(signers)}")
+        
+        for signer in signers:
+            un = User.valid_usernames(signer[0])
+            if len(un['invalid_usernames'])>0:
+                raise ImportError(f"Invalid signers = {un['invalid_usernames']}")
+
+    if 'references' in data: 
+        references = data['references']
+        
+        if not isinstance(references,str):
+            raise ImportError(f"Invalid references type={type(references)} must be str")
+        
+        vr = Memo.valid_references(references)
+        if len(vr['invalid'])>0:
+            raise ImportError(f"Invalid references = {vr['invalid']}")
+                
+    if 'active_date' in data:
+        active_date = data['active_date']
+        active_date = datetime.strptime(active_date,"%m/%d/%Y")
+
+    if 'obsolete_date' in data:
+        obsolete_date = data['obsolete_date']
+        obsolete_date = datetime.strptime(obsolete_date,"%m/%d/%Y")
+        
+    if 'files' in data:
+        files = data['files']
+        if not isinstance(files,list):
+            raise ImportError(f"files key must be of type list not type {type(files)}")
+                                                                         
+        for file in files:
+            if len(file) == 1:
+                filename = file[0]
+            elif len(file) == 2:
+                filename = file[1]
+            else:
+                raise ImportError(f"Illegal file {file}")
+            fn = os.path.join(directory,filename)
+            if not os.path.exists(fn):
+                raise ImportError(f"File does not exist {fn}")
+
+    # Create a new memo    
+
+
+def find_jsons(search_path):
+
+    rval = []
+    r = re.compile("^.*\.json$")
+
+    for root, dir, files in os.walk(search_path):
+        jsons = list(filter(r.match, files)) # Read Note below
+        for jn in jsons:
+            fname = os.path.join(root,jn)
+            rval.append(fname)
+    return rval
+
+if __name__ == "__main__":
+    app = None
+    init_app()
+    
+    current_app.logger.setLevel(CRITICAL)
+    
+    jsons = find_jsons(".")
+
+    for jn in jsons:    
+        try:
+            print(f"Checking {jn}")
+            import_memo_json(jn)
+            print(f"{jn} is a valid json")
+        except ImportError as ie:
+            print(f"{jn} invalid Import Error {ie}")
+        except json.decoder.JSONDecodeError as jde:
+            print(f"JSON Invalid {jn}")
+
+#    mu=[]
+#    missing_users(".",mu)
+#    print(mu)

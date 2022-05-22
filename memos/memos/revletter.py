@@ -1,4 +1,4 @@
-
+import re
 
 # This code came from https://codereview.stackexchange.com/questions/182733/base-26-letters-and-base-10-using-recursion
 
@@ -35,3 +35,11 @@ def rev_to_b10(letters):
             (ord(letter) - A_UPPERCASE + 1) * ALPHABET_SIZE**i
             for i, letter in enumerate(reversed(letters.upper()))
     )
+
+def valid_rev(rev):
+    if not isinstance(rev,str):
+        return False
+    
+    return bool(re.match('^[a-zA-Z]+$',rev))
+    
+    
