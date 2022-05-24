@@ -36,13 +36,13 @@ All of the system configuration is done by copying the appropriate template and 
 |---|---|---|
 |docker-compose.yml|docker-compose.yml.template|Overall Docker configuration specifies ports etc.|
 |memos/Dockerfile|memos/Dockerfile.template|The Docker configuration for the memosystem including Flask and NGINX|
-|memos/settings.py|memos/settings.py.template|The configuration file for the Flask application|
+|memos/settings_local.py|memos/settings_local.py.template|The configuration file for the Flask application|
 
 On my unix box I run the following commands to copy the templates
 ``` bash
 cp docker-compose.yml.template docker-compose.yml
 cp memos/Dockerfile.template memos/Dockerfile
-cp memos/settings_local.py.template memos/settings.py
+cp memos/settings_local.py.template memos/settings_local.py
 ```
 This will give you a local copy of the configuration files which Docker, MySQL, SQLite, Flask etc will use.
 ## Local Files
@@ -56,7 +56,7 @@ mkdir memo_files/sqlite
 ## Configure the Database
 The system is built using [SQL Alchemy](https://www.sqlalchemy.org) to support all database interaction.  This library gives you a selection of targetable databases.  I have tested [SQLite](https://www.sqlite.org/) and [MySQL](https://mysql.com) but the others will probably work as well - YMMV.  For a production use I recommend MySQL.
 ### MySQL
-You may choose to target a MySQL server that you already have in your enterprise.  To do this you can skip the docker configuration.  If you want a Docker container running a private MySQL you will need to modify the "docker-compose.yml" (which you copied from the template) to setup the users, passwords and files.  Then you will need to modify the settings.py to setup to match.
+You may choose to target a MySQL server that you already have in your enterprise.  To do this you can skip the docker configuration.  If you want a Docker container running a private MySQL you will need to modify the "docker-compose.yml" (which you copied from the template) to setup the users, passwords and files.  Then you will need to modify the settings_local.py to setup to match.
 #### Configure docker-compose.yml for MySQL
 The database section of the provided template for docker-compose.yml looks like this:
 ```yml
@@ -67,7 +67,7 @@ The database section of the provided template for docker-compose.yml looks like 
     restart: always
     environment:
     # You should change these passwords... and then
-    # type in the passwords into the file memos/memos/settings.py
+    # type in the passwords into the file memos/memos/settings_local.py
       MYSQL_ROOT_PASSWORD: "test123"
       MYSQL_DATABASE: "memos"
       MYSQL_USER: "memosystem"
@@ -84,13 +84,13 @@ In your docker-compose.yml configuration file you need to setup:
 3. MYSQL_USER: "memosystem"
 4. MYSQL_PASSWORD: "memopw"
 
-I reccomend that you choose a good password, though it may not "really" matter given the MySQL is hidden in a Docker container (don't hate me Winston).  Then you need to specify the path to your MySQL files.  If you do not configure the /var/lib/mysql you will loose your database when the image is rebuilt.  The formation of this line is "- host_path:container_path"  In the example below it is my home directory, which is alse the location of this Git repository.  Unfortunately you CANNOT use a relative path for some stupid Docker reason
+I reccomend that you choose a good password, though it may not "really" matter given the MySQL is hidden in a Docker container (don't hate me Winston).  Then you need to specify the path to your MySQL files.  If you do not configure the /var/lib/mysql you will loose your database when the image is rebuilt.  The formation of this line is "- host_path:container_path"  In the example below it is my home directory, which is also the location of this Git repository.  Unfortunately you CANNOT use a relative path for some stupid Docker reason
 
 ```
 - /Users/arh/proj/memosystem/memo_files/mysql:/var/lib/mysql
 ```
-#### Configure the MySQL Database in settings.py
-In the settings.py file you need to configure the SQLAlchemy to talk to MySQL.  I include an example for SQLite as well as MySQL
+#### Configure the MySQL Database in settings_local.py
+In the settings_local.py file you need to configure the SQLAlchemy to talk to MySQL.  I include an example for SQLite as well as MySQL
 ```
 #os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://user:password@mysql/memos'
