@@ -139,6 +139,13 @@ def test_reset(client, session):
     assert b'Reset Password' in response.data
     assert b'There is no account with that email. You must register first.' in response.data
 
+    response = client.post('/reset_password', 
+        data=dict(email="avgUser2@gmail.com", submit="Request Password Reset"),
+        follow_redirects=True)
+    assert response.status_code == 200
+    assert b'Reset Password' in response.data
+    assert b'That email is not unique' in response.data
+
     response = client.post('/login',
                             data=dict(username='avgUser', password='u'),
                             follow_redirects=True)
