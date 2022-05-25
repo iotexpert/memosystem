@@ -58,6 +58,7 @@ def db(app, request):
 
     _db.session.add(User(username='avgUser', password= User.create_hash_pw('u'),email='avgUser@gmail.com'))
     _db.session.add(User(username='avgUser2', password= User.create_hash_pw('u'),email='avgUser2@gmail.com'))
+    _db.session.add(User(username='avgUser2b', password= User.create_hash_pw('u'),email='avgUser2@gmail.com'))
     _db.session.add(User(username='adminUser', password= User.create_hash_pw('u'),email='adminUser@gmail.com',admin=True,delegates='avgUser'))
     _db.session.add(User(username='readAllUser', password= User.create_hash_pw('u'),email='readAllUser@gmail.com',readAll=True))
     _db.session.commit()
