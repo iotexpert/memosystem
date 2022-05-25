@@ -1,4 +1,4 @@
-import io
+import re
 from flask_mail import Mail
 
 def test_register(client, session):
@@ -139,18 +139,6 @@ def test_reset(client, session):
     assert b'Reset Password' in response.data
     assert b'There is no account with that email. You must register first.' in response.data
 
-    # mail = Mail()
-    # with mail.record_messages() as outbox:
-
-    #     response = client.post('/reset_password', 
-    #         data=dict(email="adminUser@gmail.com", submit="Request Password Reset"),
-    #         follow_redirects=True)
-    #     assert response.status_code == 200
-    #     assert b'Reset Password' in response.data
-
-    #     assert len(outbox) == 1
-    #     assert outbox[0].subject == "testing"
-    
     response = client.post('/login',
                             data=dict(username='avgUser', password='u'),
                             follow_redirects=True)
@@ -161,6 +149,48 @@ def test_reset(client, session):
     assert response.status_code == 200
     assert b'Account: avgUser' in response.data
 
-    response = client.get('/reset_password/BadTokenContent', follow_redirects=True)
+    response = client.get('/reset_password/DoNotCare.UserLoggedIn', follow_redirects=True)
     assert response.status_code == 200
     assert b'Account: avgUser' in response.data
+    
+    response = client.get('/logout', follow_redirects=True)
+    assert response.status_code == 200
+    assert b'Login' in response.data
+
+    response = client.get('/reset_password/BadTokenContent', follow_redirects=True)
+    assert response.status_code == 200
+    assert b'invalid or expired token' in response.data
+    assert b'Reset Password' in response.data
+
+    mail = Mail()
+    with mail.record_messages() as outbox:
+        response = client.post('/reset_password', 
+            data=dict(email="adminUser@gmail.com", submit="Request Password Reset"),
+            follow_redirects=True)
+        assert response.status_code == 200
+        assert b'An email has been sent' in response.data
+
+        assert len(outbox) == 1
+        assert outbox[0].subject == "Password Reset Request"
+        token_grp = re.search('reset_password/(.*?)\n', outbox[0].body)
+        assert token_grp
+        token = token_grp.group(1)
+        assert len(token) > 20
+
+    response = client.get(f'/reset_password/{token}', follow_redirects=True)
+    assert response.status_code == 200
+    assert not b'invalid or expired token' in response.data
+    assert b'Reset Password' in response.data
+
+    response = client.post(f'/reset_password/{token}',
+                            data=dict(password='p', confirm_password='p'),
+                            follow_redirects=True)
+    assert response.status_code == 200
+    assert b'Your password has been updated!' in response.data
+
+    response = client.post('/login',
+                            data=dict(username='adminUser', password='p'),
+                            follow_redirects=True)
+    assert response.status_code == 200
+    assert b'Account: adminUser' in response.data
+    

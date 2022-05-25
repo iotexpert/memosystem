@@ -12,7 +12,9 @@ os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../test.db'
 
 os.environ['MEMOS_SECRET_KEY'] = '1E14EDDEF7D41DADBCEA47F14ABEF'
 
-os.environ['MEMOS_EMAIL_SERVER'] = 'smtp.google.com'
-os.environ['MEMOS_EMAIL_PORT'] = '587'
-os.environ['MEMOS_EMAIL_USER'] = ''
+os.environ['MEMOS_EMAIL_SERVER'] = 'localhost'
+os.environ['MEMOS_EMAIL_PORT'] = '5025'
+os.environ['MEMOS_EMAIL_USER'] = 'TestEmailAccount@test.local'
 os.environ['MEMOS_EMAIL_PASS'] = ''
+
+os.environ['TESTING'] = 'True'

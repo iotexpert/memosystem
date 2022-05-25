@@ -32,4 +32,6 @@ class Config:
     LDAP_PASSWORD = os.getenv('LDAP_PASSWORD')
     LDAP_USER_OBJECT_FILTER = os.getenv('LDAP_USER_OBJECT_FILTER')
     LDAP_GROUP_OBJECT_FILTER = os.getenv('LDAP_GROUP_OBJECT_FILTER')
+
+    TESTING = True if os.getenv('TESTING') else False
  

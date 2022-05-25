@@ -38,6 +38,6 @@ def send_reset_email(user):
     '''
         mail.send(msg)
 
-    except BaseException as e:
+    except BaseException as e: # pragma nocover
         raise e
     return True    
