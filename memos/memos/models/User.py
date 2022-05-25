@@ -1,12 +1,12 @@
 import datetime
 import jwt
-from flask import current_app
-from memos import db, login_manager
-from flask_login import UserMixin
-from memos import bcrypt
-import re
 import numpy
-from sqlalchemy.orm import relationship
+import os
+import re
+from flask import current_app
+from flask_login import UserMixin
+from memos import bcrypt, db, login_manager
+from memos.extensions import ldap
 
 from memos.models.MemoSubscription import MemoSubscription
 
@@ -104,7 +104,31 @@ class User(db.Model, UserMixin):
         return reset_token
 
     def check_password(self,check_pw):
-        return bcrypt.check_password_hash(self.password, check_pw)
+        if ldap: #pragma nocover  -- testing ldap is very environment centric.
+            try:
+                ldap_user = ldap.get_object_details(self.username)
+            except:
+                return False
+
+            self.admin = False
+            self.readAll = False
+            admin_groups = os.environ["LDAP_ADMIN_GRP"].split(";")
+            readAll_groups = os.environ["LDAP_READ_GRP"].split(";")
+            if 'memberOf' in ldap_user and isinstance(ldap_user['memberOf'], list):
+                for grp in ldap_user['memberOf']:
+                    grp = str(grp, 'utf-8')
+                    for aGrp in admin_groups:
+                        if grp.startswith(aGrp) : self.admin = True
+                    for rGrp in readAll_groups:
+                        if grp.startswith(rGrp) : self.readAll = True                    
+            db.session.commit()
+            return ldap.bind_user(self.username, check_pw)
+            
+        try:
+            return bcrypt.check_password_hash(self.password, check_pw)
+        except:  # pragma nocover - blanked password from ldap creation has a 'bad salt'
+            return False
+        
 
     @property
     def delegate_for(self):
@@ -186,7 +210,34 @@ class User(db.Model, UserMixin):
         Returns:
             [User]: The User you are looking for... or None
         """
-        return User.query.filter_by(username=username).first()
+        user = User.query.filter_by(username=username).first()
+        if user is None and ldap: #pragma nocover  -- testing ldap is very environment centric.
+            try:
+                ldap_user = ldap.get_object_details(username)
+            except:
+                ldap_user = None
+
+            user = User(username=ldap_user[os.environ["LDAP_USER_NAME"]][0].decode('ASCII'), 
+                email=ldap_user[os.environ["LDAP_EMAIL"]][0].decode('ASCII'), password='xx')
+            db.session.add(user)
+            db.session.commit()
+
+            # If we validated a user with ldap, Update their permissions from LDAP groups.
+            if ldap_user: #pragma nocover  -- testing ldap is very environment centric.
+                user.admin = False
+                user.readAll = False
+                admin_groups = os.environ["LDAP_ADMIN_GRP"].split(";")
+                readAll_groups = os.environ["LDAP_READ_GRP"].split(";")
+                if 'memberOf' in ldap_user and isinstance(ldap_user['memberOf'], list):
+                    for grp in ldap_user['memberOf']:
+                        grp = str(grp, 'utf-8')
+                        for aGrp in admin_groups:
+                            if grp.startswith(aGrp) : user.admin = True
+                        for rGrp in readAll_groups:
+                            if grp.startswith(rGrp) : user.readAll = True
+                        
+                db.session.commit()
+        return user
 
     # this function takes a string of "users" where they are seperated by , or space and checks if they are valid
     @staticmethod

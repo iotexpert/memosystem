@@ -2,7 +2,7 @@
 import os
 from flask import render_template, url_for, flash, redirect, request, Blueprint, current_app, abort
 from flask_login import login_user, current_user, logout_user, login_required
-from memos import db, bcrypt
+from memos import db
 
 from memos.users.forms import (RegistrationForm, LoginForm, UpdateAccountForm,
                                    RequestResetForm, ResetPasswordForm)
@@ -36,53 +36,9 @@ def login():
         return redirect(url_for('main.home'))
     form = LoginForm()
     if form.validate_on_submit():
-        login_ok = False
-        ldap_pw_ok = False
-        ldap_user = None
-        if ldap: #pragma nocover  -- testing ldap is very environment centric.
-            try:
-                ldap_user = ldap.get_object_details(form.username.data)
-            except:
-                ldap_user = None
+        user = User.find(username=form.username.data)
 
-            if ldap_user:
-                ldap_pw_ok = ldap.bind_user(form.username.data, form.password.data)
-                login_ok = ldap_pw_ok
-
-        user = User.query.filter_by(username=form.username.data).first()
-        
-        current_app.logger.debug(f"User = {user} form={form.username.data}")
-
-        # If we validated a user with ldap, but they don't exist in the database, add them.
-        if user is None and ldap_pw_ok: #pragma nocover  -- testing ldap is very environment centric.
-            user = User(username=ldap_user[os.environ["LDAP_USER_NAME"]][0].decode('ASCII'), 
-                email=ldap_user[os.environ["LDAP_EMAIL"]][0].decode('ASCII'), password='xx')
-            db.session.add(user)
-            db.session.commit()
-
-        # If we validated a user with ldap, Update their permissions from LDAP groups.
-        if ldap_user: #pragma nocover  -- testing ldap is very environment centric.
-            user.admin = False
-            user.readAll = False
-            admin_groups = os.environ["LDAP_ADMIN_GRP"].split(";")
-            readAll_groups = os.environ["LDAP_READ_GRP"].split(";")
-            if 'memberOf' in ldap_user and isinstance(ldap_user['memberOf'], list):
-                for grp in ldap_user['memberOf']:
-                    grp = str(grp, 'utf-8')
-                    for aGrp in admin_groups:
-                        if grp.startswith(aGrp) : user.admin = True
-                    for rGrp in readAll_groups:
-                        if grp.startswith(rGrp) : user.readAll = True
-                    
-            db.session.commit()
-
-        if ldap_user is None and user:
-            try:
-                 login_ok = user.check_password(form.password.data)
-            except:  # pragma nocover - blanked password from ldap creation has a 'bad salt'
-                pass
-
-        if login_ok:
+        if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember.data)
             next_page = request.args.get('next')
             return redirect(next_page) if next_page else redirect(url_for('main.home'))
@@ -200,10 +156,13 @@ def reset_request():
         return redirect(url_for('main.home'))
     form = RequestResetForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
-        if user and len(user.email) > 2:
-            send_reset_email(user)
+        user = User.query.filter_by(email=form.email.data)
+        if user.count() == 1 and len(user[0].email) > 2:
+            send_reset_email(user[0])
             flash('An email has been sent with instructions to reset your password.', 'info')
+        elif user.count() > 1:
+            flash('That email is not unique to one account. Cannot send reset email. Contact system administrator.', 'warning')
+            return redirect(url_for('users.reset_request'))
         else:
             flash('There is no account with that email. You must register first.', 'warning')
             return redirect(url_for('users.reset_request'))
