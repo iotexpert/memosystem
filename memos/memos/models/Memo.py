@@ -372,32 +372,33 @@ class Memo(db.Model):
     # 2- a signature happens
     # 3- an unsign happens
     def process_state(self,acting=None):
+        self.action_date = datetime.utcnow()
         if self.memo_state == MemoState.Draft:
             if MemoSignature.status(self.id) == False:
                 self.memo_state = MemoState.Signoff
-                self.submit_date = datetime.utcnow()
+                self.submit_date = self.action_date
                 MemoHistory.activity(memo=self,memo_activity=MemoActivity.Signoff,user=acting)
+                self.save()
                 self.notify_signers(f"memo {self.user.username}-{self.number}-{self.version} has gone into signoff")
             else:
                 self.memo_state = MemoState.Active
-                self.active_date = datetime.utcnow()
+                self.active_date = self.action_date
                 MemoHistory.activity(memo=self,memo_activity=MemoActivity.Activate,user=acting)
                 self.obsolete_previous(acting=acting)
+                self.save()
                 self.notify_distribution(f"memo {self.user.username}-{self.number}-{self.version} has been published")
    
         if self.memo_state == MemoState.Signoff:
             if MemoSignature.status(self.id):
                 self.memo_state = MemoState.Active
-                self.active_date = datetime.utcnow()
-                self.notify_distribution(f"memo {self.user.username}-{self.number}-{self.version} has been published")
+                self.active_date = self.action_date
                 MemoHistory.activity(memo=self,memo_activity=MemoActivity.Activate,user=acting)
-
                 self.obsolete_previous(acting=acting)
+                self.save()
+                self.notify_distribution(f"memo {self.user.username}-{self.number}-{self.version} has been published")
             else:
                 current_app.logger.info(f"Signatures Still Required")
         
-        self.action_date = datetime.utcnow()
-        self.save()
 
 
 
