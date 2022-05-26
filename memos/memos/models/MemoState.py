@@ -15,7 +15,19 @@ class MemoState(enum.Enum):
             return True
         else:
             return False
-            
+
+    @staticmethod
+    def get_state(state):
+        if state == "MemoState.Draft":
+            return MemoState.Draft
+        elif state == "MemoState.Signoff":
+            return MemoState.Signoff
+        elif state == "MemoState.Active":
+             return MemoState.Active   
+        elif state == "MemoState.Obsolete":
+            return MemoState.Obsolete
+        else:
+            return None
 
     def compare_short_name(self,name):
         if self.value == 1 and name=="Draft":

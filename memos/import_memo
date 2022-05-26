@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from distutils.log import error
 import json
 import glob
 from datetime import datetime
@@ -34,9 +35,6 @@ def init_app():
     db.init_app(app)
 
 
-def import_memos(directory):
-    pass
-
 
 def missing_users(directory,users):
     # Look at the JSON... userid,distribution and signers ... figure out who is missing
@@ -62,9 +60,6 @@ def missing_users(directory,users):
 class ImportError(Exception):
     pass
 
-def find_jsons(directory):    
-    jsons = glob.glob("*json")
-    print(jsons)
 
 
 def import_memo_json(json_file,import_data=False):
@@ -90,88 +85,105 @@ def import_memo_json(json_file,import_data=False):
     files=None
     
 
+    error_list = []
     
     if 'userid' in data:
         userid = data['userid']
         if not isinstance(userid,str):
-            raise ImportError(f"'userid' invalid type {type(userid)} must be type string")
+            import_data = False
+            error_list.append(f"'userid' invalid type {type(userid)} must be type string")
         
         user=User.find(username=userid)
         if user is None:
-            raise ImportError(f"userid {userid} not in database")
+            import_data = False
+            error_list.append(f"userid {userid} not in database")
             
     if 'title' in data:
         title = data['title']
         
         if not isinstance(title,str):
-            raise ImportError(f"'title' invalid type {type(title)} must be type string")
+            import_data = False
+            error_list.append(f"'title' invalid type {type(title)} must be type string")
     
     if 'number' in data:
         number = data['number']
         if isinstance(number,bool) or not isinstance(number,int):
-            raise ImportError(f"'number' invalid type {type(title)} must be type integer")
+            import_data = False
+            error_list.append(f"'number' invalid type {type(title)} must be type integer")
 
     if 'version' in data:
         version = data['version']
         if not valid_rev(version):
-            raise ImportError(f"Version {version} invalid format must be [a-zA-Z]+ ") 
+            import_data = False
+            error_list.append(f"Version {version} invalid format must be [a-zA-Z]+ ") 
         
     if number is None:
         number = Memo.get_next_number(user)
         version = 'A'
    
     # if the memo already exists
-    if Memo.find(username=user.username,memo_number=number,memo_version=version):
-        print(f"{userid}-{number}{version} already exists")
-        raise ImportError(f"{userid}-{number}{version} already exists")
+    if user is not None and number is not None and version is not None:
+        if Memo.find(username=user.username,memo_number=number,memo_version=version):
+            import_data = False
+            error_list.append(f"{userid}-{number}{version} already exists")
         
     if 'confidential' in data:
         confidential = data['confidential']
         if not isinstance(confidential,bool):
-            print()
-            raise ImportError(f"Invalid type confidential={confidential} must be boolean")
+            import_data = False
+            error_list.append(f"Invalid type confidential={confidential} must be boolean")
     
     if 'distribution' in data:
         distribution = data['distribution']
         if not isinstance(distribution,str):
-            raise ImportError(f"distribution must be of type string not {type(distribution)}")
+            import_data = False
+            error_list.append(f"distribution must be of type string not {type(distribution)}")
         un = User.valid_usernames(distribution)
         if len(un['invalid_usernames'])>0:
-            raise ImportError(f"Invalid User Names in distribution = {un['invalid_usernames']}")
+            import_data = False
+            error_list.append(f"Invalid User Names in distribution = {un['invalid_usernames']}")
         
     if 'keywords' in data:
         keywords = data['keywords']
 
         if not isinstance(data['keywords'],str):
-            raise ImportError(f"Invalid keywords={type(keywords)} must be type string")
+            import_data = False
+            error_list.append(f"Invalid keywords={type(keywords)} must be type string")
 
     if 'memo_state' in data:
         memo_state = data['memo_state']
         if not isinstance(memo_state,str):
-            raise ImportError(f"Memostate of type {type(memo_state)} must be type string")
+            import_data = False
+            error_list.append(f"Memostate of type {type(data['memo_state'])} must be type string")
     
-        if not MemoState.is_valid(memo_state):
-            raise ImportError(f"Memostate={memo_state} illegal string")
+        memo_state = MemoState.get_state(memo_state)
+        if memo_state is None:
+            import_data = False
+            error_list.append(f"Memostate={data['memo_state']} illegal string")
     
     if 'signers' in data:
         signers = data['signers']
         if not isinstance(signers,list):
-            raise ImportError(f"signers must be of type list not {type(signers)}")
-        
-        for signer in signers:
-            un = User.valid_usernames(signer[0])
-            if len(un['invalid_usernames'])>0:
-                raise ImportError(f"Invalid signers = {un['invalid_usernames']}")
+            import_data = False
+            error_list.append(f"signers must be of type list [['user','MM/DD/YY'],['user','MM/DD/YY']] not {type(signers)}")
+        else:
+            for signer in signers:
+                un = User.valid_usernames(signer[0])
+                if len(un['invalid_usernames'])>0:
+                    import_data = False
+                    error_list.append(f"Invalid signers = {un['invalid_usernames']}")
 
     if 'references' in data: 
         references = data['references']
         
         if not isinstance(references,str):
-            raise ImportError(f"Invalid references type={type(references)} must be str")
+            import_data = False
+            error_list.append(f"Invalid references type={type(references)} must be str")
         
         vr = Memo.valid_references(references)
         if len(vr['invalid'])>0:
-            raise ImportError(f"Invalid references = {vr['invalid']}")
+            import_data = False
+            error_list.append(f"Invalid references = {vr['invalid']}")
                 
     if 'active_date' in data:
         active_date = data['active_date']
@@ -184,7 +196,8 @@ def import_memo_json(json_file,import_data=False):
     if 'files' in data:
         files = data['files']
         if not isinstance(files,list):
-            raise ImportError(f"files key must be of type list not type {type(files)}")
+            import_data = False
+            error_list.append(f"files key must be of type list not type {type(files)}")
                                                                          
         for file in files:
             if len(file) == 1:
@@ -192,16 +205,22 @@ def import_memo_json(json_file,import_data=False):
             elif len(file) == 2:
                 filename = file[1]
             else:
-                raise ImportError(f"Illegal file {file}")
+                import_data = False
+                error_list.append(f"Illegal file {file}")
             fn = os.path.join(directory,filename)
             if not os.path.exists(fn):
-                raise ImportError(f"File does not exist {fn}")
+                import_data = False
+                error_list.append(f"File does not exist {fn}")
 
-    # Create a new memo    
 
+    if len(error_list) > 0:
+        raise ImportError(error_list)
+
+    # Create a new memo
+    if import_data == True:
+        print("Create new memo")
 
 def find_jsons(search_path):
-
     rval = []
     r = re.compile("^.*\.json$")
 
@@ -211,6 +230,10 @@ def find_jsons(search_path):
             fname = os.path.join(root,jn)
             rval.append(fname)
     return rval
+
+# Users that dont exist
+# References that dont exist
+# Signoff, draft
 
 if __name__ == "__main__":
     app = None
@@ -223,10 +246,11 @@ if __name__ == "__main__":
     for jn in jsons:    
         try:
             print(f"Checking {jn}")
-            import_memo_json(jn)
+            import_memo_json(jn,import_data=True)
             print(f"{jn} is a valid json")
         except ImportError as ie:
-            print(f"{jn} invalid Import Error {ie}")
+            for err in ie.args[0]:
+                print(err)
         except json.decoder.JSONDecodeError as jde:
             print(f"JSON Invalid {jn}")
 
