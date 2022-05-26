@@ -8,9 +8,11 @@ import shutil
 import json
 from datetime import datetime
 
-from flask import current_app
+from flask import current_app, url_for
+from flask_mail import Message
+from importlib_metadata import version
 
-from memos import db
+from memos import db, mail
 from memos.models.User import User
 from memos.models.MemoState import MemoState
 from memos.models.MemoFile import MemoFile
@@ -398,14 +400,44 @@ class Memo(db.Model):
         self.save()
 
 
-    # TODO: ARH
+
     def notify_distribution(self,message):
         current_app.logger.info(F"Notify Distribution {self.distribution} {message}")
+        try:
+            users = User.valid_usernames(self.distribution)
+            recipients=[]
+            for recipient in users['valid_users']:
+                recipients.append(recipient.email)
+            msg = Message(message,
+                        sender=os.environ['MEMOS_EMAIL_USER'],
+                        recipients=recipients)
+            msg.body = f'''{message}
+        Use the following link:
+        {url_for('memos.main', username=self.user_id, memo_number=self.number, memo_version=version, _external=True)}
+        '''
+            mail.send(msg)
+        except BaseException as e: # pragma nocover
+            raise e
 
-    # TODO: ARH
     def notify_signers(self,message):
         current_app.logger.info(F"Notify signers {message}")
-
+        try:            
+            signlist = MemoSignature.get_signers(self)
+            recipients=[]
+            for recipient in signlist:
+                signer = User.find(recipient.signer_id)
+                if len(signer.email) > 2:
+                    recipients.append(signer.email)
+            msg = Message(message,
+                        sender=os.environ['MEMOS_EMAIL_USER'],
+                        recipients=recipients)
+            msg.body = f'''{message}
+        Use the following link:
+        {url_for('memos.main', username=self.user_id, memo_number=self.number, memo_version=self.version, _external=True)}
+        '''
+            mail.send(msg)
+        except BaseException as e: # pragma nocover
+            raise e
 ################################################################################
 # State machine functions called by the viewcontroller
 ################################################################################

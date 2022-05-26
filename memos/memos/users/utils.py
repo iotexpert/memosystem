@@ -6,11 +6,6 @@ from flask import url_for, current_app
 from flask_mail import Message
 from memos import mail
 
-from memos.models.User import User
-from memos.models.Memo import Memo
-from memos.models.MemoFile import MemoFile
-from memos.models.MemoSignature import MemoSignature
-
 def save_picture(form_picture):
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_picture.filename)

@@ -123,7 +123,7 @@ class User(db.Model, UserMixin):
                         if grp.startswith(rGrp) : self.readAll = True                    
             db.session.commit()
             return ldap.bind_user(self.username, check_pw)
-            
+
         try:
             return bcrypt.check_password_hash(self.password, check_pw)
         except:  # pragma nocover - blanked password from ldap creation has a 'bad salt'
@@ -210,13 +210,15 @@ class User(db.Model, UserMixin):
         Returns:
             [User]: The User you are looking for... or None
         """
+        if username is None:
+            return None
         user = User.query.filter_by(username=username).first()
         if user is None and ldap: #pragma nocover  -- testing ldap is very environment centric.
             try:
                 ldap_user = ldap.get_object_details(username)
             except:
-                ldap_user = None
-
+                return None
+                
             user = User(username=ldap_user[os.environ["LDAP_USER_NAME"]][0].decode('ASCII'), 
                 email=ldap_user[os.environ["LDAP_EMAIL"]][0].decode('ASCII'), password='xx')
             db.session.add(user)
