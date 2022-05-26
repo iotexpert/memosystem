@@ -1,6 +1,8 @@
 {% if memo.signers['siglist']|length > 0%}
 Signers:<br>
+<ul>
 {% for sig in memo.signers['siglist'] %}
+<li>
 {{sig.signer.username}}
 {% if sig.signed == True %}
 {% if sig.signer != sig.delegate %}
@@ -8,10 +10,11 @@ by {{sig.delegate.username}}
 {% endif %}
 on {{sig.date_signed}}
 {% else %}
-Unsigned
+ - Unsigned
 {% endif %}
-<br>
+</li>
 {% endfor %}
+</ul>
 {% endif %}
 {% if memo.keywords|length >0 %}
 Keywords:{{memo.keywords}}<br>
