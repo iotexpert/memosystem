@@ -221,7 +221,74 @@ If you look at the filesystem you can see that there are two files, the json and
 ```
 This was done to provide a mechanism to rebuild the memosystem in the event of something catostrophic.
 
-# Using Some usefull Docker Commands
+
+# Azure
+
+```
+docker login azure
+```
+ 
+ ```
+ docker context create aci myacicontext
+```
+
+```
+docker context use myacicontext
+```
+
+```
+arh (azure *) memos $ docker context ls
+NAME                TYPE                DESCRIPTION                               DOCKER ENDPOINT               KUBERNETES ENDPOINT   ORCHESTRATOR
+default             moby                Current DOCKER_HOST based configuration   unix:///var/run/docker.sock                         swarm
+myacicontext *      aci                 RG-Docker-MemoSystem@westus                                                                   
+```
+
+docker logs prod-memosystem
+
+
+az container export --name prod-memosystem --resource-group RG-Docker-Memosystem -f prod-memosystem.yaml
+az container create -g RG-Docker-Memosystem -f prod-memosystem.yaml
+
+```
+arh (azure *) memos $ docker ps
+CONTAINER ID                      IMAGE                                     COMMAND             STATUS              PORTS
+prod-memosystem_prod-memosystem   iotexpert/memos:latest                                        Running             10.9.1.4:80->80/tcp
+test-memosystem_test-memosystem   memosystem.azurecr.io/memosystem:latest                       Running             10.9.0.4:80->80/tcp
+```
+
+
+az container show --resource-group RG-Docker-Memosystem --name prod-memosystem
+az container logs --resource-group RG-Docker-Memosystem --name prod-memosystem
+alan@Azure:~$ az container list --resource-group RG-Docker-Memosystem --output table
+Name             ResourceGroup         Status     Image                                    IP:ports        Network    CPU/Memory       OsType    Location
+---------------  --------------------  ---------  ---------------------------------------  --------------  ---------  ---------------  --------  ----------
+prod-memosystem  RG-Docker-MemoSystem  Succeeded  iotexpert/memos:latest                   10.9.1.4:80,80  Private    1.0 core/1.5 gb  Linux     westus
+test-memosystem  RG-Docker-MemoSystem  Succeeded  memosystem.azurecr.io/memosystem:latest  10.9.0.4:80,80  Private    1.0 core/1.5 gb  Linux     westus
+alan@Azure:~$ 
+
+az container exec --resource-group RG-Docker-Memosystem --name prod-memosystem --exec-command "/bin/sh"
+
+
+Create a resource group
+Create vnet
+Create file storage
+Create a share
+  
+
+## Use an Azure Container Registry (ACR)
+1. Build the image
+2. Push the image into the Azure Container Registry
+3. Start a container with the image
+
+## Use the Docker Hub 
+1. Build an image
+2. Push the image to the Docker Hub
+3. Start a container with the image
+
+## Copy the configuration files
+4. Copy the configuration files into your running container
+
+# Some Usefull Docker Commands
 
 |Command|Function|
 |---|---|
@@ -244,3 +311,4 @@ This was done to provide a mechanism to rebuild the memosystem in the event of s
 |docker image ls|List the active docker images|
 |docker image rm memosystem|remove the docker image for the memosystem|
 |docker image prune|Prune the inactive images|
+

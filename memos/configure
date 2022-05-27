@@ -8,6 +8,7 @@ import os
 import shutil
 try:
     import settings_local
+    
 except ImportError:
     pass
 from flask import current_app
