@@ -13,8 +13,6 @@ class MemoReference(db.Model):
     def add_ref(memo_src_id,ref_user_id=None,ref_memo_number=None,ref_memo_version=None):
         new_ref = MemoReference(source_id=memo_src_id,ref_user_id=ref_user_id,ref_memo_number=ref_memo_number,ref_memo_version=ref_memo_version)
         db.session.add(new_ref)
-        db.session.commit()
-#        current_app.logger.info(f"Adding Reference {new_ref}")
 
 
     @staticmethod

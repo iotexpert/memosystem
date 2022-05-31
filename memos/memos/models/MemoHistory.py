@@ -31,7 +31,6 @@ class MemoHistory(db.Model):
             
         
         db.session.add(mh)
-        db.session.commit()
 
             
     @staticmethod

@@ -43,7 +43,6 @@ class MemoSignature(db.Model):
         current_app.logger.info(f"MemoSignature id={memosig.id} memo_id={memosig.memo_id} user_id={memosig.signer_id} signed ={memosig.signed} date signed ={memosig.date_signed}")
         
         db.session.add(memosig)
-        db.session.commit()
         return True
 
     @staticmethod
@@ -68,7 +67,6 @@ class MemoSignature(db.Model):
         current_app.logger.info(f"MemoSignature Unsigned id={memosig.id} memo_id={memosig.memo_id} signer_id={memosig.signer_id} acting_id={memosig.acting_id} signed ={memosig.signed} date signed ={memosig.date_signed}")
         
         db.session.add(memosig)
-        db.session.commit()
         return True
 
     @staticmethod
@@ -81,7 +79,6 @@ class MemoSignature(db.Model):
             sig.signed = False
             sig.date_signed = None
             db.session.add(sig)
-            db.session.commit()
 
     @staticmethod
     def add_signer(memo=None,signer=None):
@@ -92,7 +89,6 @@ class MemoSignature(db.Model):
          
         sig = MemoSignature(memo_id=memo.id,signed=False,signer_id=signer.username)
         db.session.add(sig)
-        db.session.commit()
 
     # look at all of the signatures.. return True if everyone has signed
     @staticmethod

@@ -351,7 +351,6 @@ class Memo(db.Model):
 
     def save(self):
         db.session.add(self)
-        db.session.commit()
         self.saveJson()
 
 
@@ -565,7 +564,6 @@ class Memo(db.Model):
         MemoHistory.activity(memo=self,user=delegate,memo_activity=MemoActivity.Cancel)
 
         db.session.delete(self)
-        db.session.commit()       
         current_app.logger.info(f"Canceling")
         
         return True

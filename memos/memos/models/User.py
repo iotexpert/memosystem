@@ -64,7 +64,6 @@ class Delegate(db.Model, UserMixin):
         new_delegate = Delegate(owner_id=owner.username,delegate_id=delegate.username)
         
         db.session.add(new_delegate)
-        db.session.commit()
         pass
     
     
@@ -120,8 +119,7 @@ class User(db.Model, UserMixin):
                     for aGrp in admin_groups:
                         if grp.startswith(aGrp) : self.admin = True
                     for rGrp in readAll_groups:
-                        if grp.startswith(rGrp) : self.readAll = True                    
-            db.session.commit()
+                        if grp.startswith(rGrp) : self.readAll = True   
             return ldap.bind_user(self.username, check_pw)
 
         try:
@@ -180,7 +178,6 @@ class User(db.Model, UserMixin):
             #current_app.logger.info(f"adding subscription {self} to {user}")
             ms = MemoSubscription(subscriber_id=self.username,subscription_id=user.username)
             db.session.add(ms)
-            db.session.commit()
     
     @staticmethod
     def create_hash_pw(plaintext):
@@ -222,7 +219,6 @@ class User(db.Model, UserMixin):
             user = User(username=ldap_user[os.environ["LDAP_USER_NAME"]][0].decode('ASCII'), 
                 email=ldap_user[os.environ["LDAP_EMAIL"]][0].decode('ASCII'), password='xx')
             db.session.add(user)
-            db.session.commit()
 
             # If we validated a user with ldap, Update their permissions from LDAP groups.
             if ldap_user: #pragma nocover  -- testing ldap is very environment centric.
@@ -238,7 +234,6 @@ class User(db.Model, UserMixin):
                         for rGrp in readAll_groups:
                             if grp.startswith(rGrp) : user.readAll = True
                         
-                db.session.commit()
         return user
 
     # this function takes a string of "users" where they are seperated by , or space and checks if they are valid
