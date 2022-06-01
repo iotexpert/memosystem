@@ -10,7 +10,6 @@ from datetime import datetime
 
 from flask import current_app, url_for
 from flask_mail import Message
-from importlib_metadata import version
 
 from memos import db, mail
 from memos.models.User import User
@@ -26,6 +25,8 @@ class Memo(db.Model):
     """This class is the single interface to a "memo" and all of the "memos"
     """
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(120), db.ForeignKey('user.username'),
+        nullable=False)                                                 # The key of the user who owns the memo
     number = db.Column(db.Integer)                                      # Memo Number
     version = db.Column(db.String(2))                                   # A,B,..Z,AA,AB,...AZ,BA
     confidential = db.Column(db.Boolean, default=False)                 # if true only author, signer, distribution can read
@@ -42,7 +43,6 @@ class Memo(db.Model):
     active_date = db.Column(db.DateTime)    # when the memo was moved to active state (from submitted)
     obsolete_date = db.Column(db.DateTime)  # when the memo was moved to obsolete state (from active)
     
-    user_id = db.Column(db.String(120), db.ForeignKey('user.username'),nullable=False)        # The key of the user who owns the memo
     _signers = db.Column(db.String(128),default='')                                 # the hidden list of signer usernames
     _references = db.Column(db.String(128),default='')                              # The hidden list of references
     memo_state = db.Column(db.Enum(MemoState))                                      # Draft, Signoff, Active, Obsolete
@@ -317,6 +317,7 @@ class Memo(db.Model):
     def references(self,references):
         self._references = references
 
+        MemoReference.query.filter_by(source_id=self.id).delete()
         refs = Memo.valid_references(references)
         for i in range(len(refs['valid_refs'])):
             parsed_ref = Memo.parse_reference(refs['valid_refs'][i])
@@ -350,7 +351,6 @@ class Memo(db.Model):
 
     def save(self):
         db.session.add(self)
-        db.session.commit()
         self.saveJson()
 
 
@@ -405,16 +405,18 @@ class Memo(db.Model):
     def notify_distribution(self,message):
         current_app.logger.info(F"Notify Distribution {self.distribution} {message}")
         try:
+            replyTo = User.find(self.user_id)
             users = User.valid_usernames(self.distribution)
             recipients=[]
             for recipient in users['valid_users']:
                 recipients.append(recipient.email)
             msg = Message(message,
                         sender=os.environ['MEMOS_EMAIL_USER'],
-                        recipients=recipients)
+                        recipients=recipients,
+                        reply_to=replyTo.email)
             msg.body = f'''{message}
         Use the following link:
-        {url_for('memos.main', username=self.user_id, memo_number=self.number, memo_version=version, _external=True)}
+        {url_for('memos.main', username=self.user_id, memo_number=self.number, memo_version=self.version, _external=True)}
         '''
             mail.send(msg)
         except BaseException as e: # pragma nocover
@@ -423,6 +425,7 @@ class Memo(db.Model):
     def notify_signers(self,message):
         current_app.logger.info(F"Notify signers {message}")
         try:            
+            replyTo = User.find(self.user_id)
             signlist = MemoSignature.get_signers(self)
             recipients=[]
             for recipient in signlist:
@@ -431,7 +434,8 @@ class Memo(db.Model):
                     recipients.append(signer.email)
             msg = Message(message,
                         sender=os.environ['MEMOS_EMAIL_USER'],
-                        recipients=recipients)
+                        recipients=recipients,
+                        reply_to=replyTo.email)
             msg.body = f'''{message}
         Use the following link:
         {url_for('memos.main', username=self.user_id, memo_number=self.number, memo_version=self.version, _external=True)}
@@ -560,7 +564,6 @@ class Memo(db.Model):
         MemoHistory.activity(memo=self,user=delegate,memo_activity=MemoActivity.Cancel)
 
         db.session.delete(self)
-        db.session.commit()       
         current_app.logger.info(f"Canceling")
         
         return True

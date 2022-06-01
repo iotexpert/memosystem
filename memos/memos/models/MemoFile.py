@@ -27,7 +27,6 @@ class MemoFile(db.Model):
 
     def save(self):
         db.session.add(self)
-        db.session.commit()
 
     def __repr__(self):
         return f"File('Document Filename = {self.filename}')"
@@ -48,4 +47,3 @@ class MemoFile(db.Model):
         memo.save()
         
         db.session.delete(self)
-        db.session.commit()  

@@ -103,21 +103,17 @@ def db(app, request):
 @pytest.fixture(scope='function')
 def session(db, request):
     """Creates a new database session for a test."""
-    connection = db.engine.connect()
-    transaction = connection.begin()
-
-    options = dict(bind=connection, binds={})
-    session = db.create_scoped_session(options=options)
-
-    db.session = session
+    if db.session.autocommit:
+        db.session.begin()
+    else:
+        db.session.begin(nested=True)
 
     def teardown():
-        transaction.rollback()
-        connection.close()
-        session.remove()
+        db.session.rollback()
+        db.session.close()
 
     request.addfinalizer(teardown)
-    return session
+    return db.session
 
 
 
