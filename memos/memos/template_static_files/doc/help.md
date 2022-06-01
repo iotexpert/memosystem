@@ -13,7 +13,7 @@ Each memo can have one or more versions.  A version starts as a draft, moves to 
 2. The user, the delgate of the user or the admin marks the memo as obsolete
 
 A memo can be in one of 4 states, Draft, Signoff, Active or Obsolete.  
-![State Flow Diagram](https://user-images.githubusercontent.com/97554412/171410253-9c89fd78-610e-4fca-ba1f-21d64415b62d.png)
+![State Flow Diagram](/static/profile_pics/StateFlow.png)
 
 # Top Banner
 The top banner contains the menu options for the system. The options available will change when you log into or out of the system.
