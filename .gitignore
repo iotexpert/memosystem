@@ -15,3 +15,4 @@ Dockerfile
 docker-compose.yml
 settings.py
 memos/memos/sqlite/*
+.DS_Store
