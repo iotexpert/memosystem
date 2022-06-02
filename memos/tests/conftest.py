@@ -50,18 +50,30 @@ def db(app, request):
             os.unlink(os.environ['SQLALCHEMY_DATABASE_URI'].replace("sqlite:///../", ""))
 
     def teardown():
-        _db.drop_all()
+        _db.close_all_sessions()
         os.unlink(os.environ['SQLALCHEMY_DATABASE_URI'].replace("sqlite:///../", ""))
 
     _db.app = app
     _db.create_all()
+    
+    request.addfinalizer(teardown)
+    return _db
 
-    _db.session.add(User(username='avgUser', password= User.create_hash_pw('u'),email='avgUser@gmail.com'))
-    _db.session.add(User(username='avgUser2', password= User.create_hash_pw('u'),email='avgUser2@gmail.com'))
-    _db.session.add(User(username='avgUser2b', password= User.create_hash_pw('u'),email='avgUser2@gmail.com'))
-    _db.session.add(User(username='adminUser', password= User.create_hash_pw('u'),email='adminUser@gmail.com',admin=True,delegates='avgUser'))
-    _db.session.add(User(username='readAllUser', password= User.create_hash_pw('u'),email='readAllUser@gmail.com',readAll=True))
-    _db.session.commit()
+
+@pytest.fixture(scope='function')
+def session(db, request):
+    Memo.query.delete()
+    MemoFile.query.delete()
+    MemoReference.query.delete()
+    MemoSignature.query.delete()
+    User.query.delete()
+
+    db.session.add(User(username='avgUser', password= User.create_hash_pw('u'),email='avgUser@gmail.com'))
+    db.session.add(User(username='avgUser2', password= User.create_hash_pw('u'),email='avgUser2@gmail.com'))
+    db.session.add(User(username='avgUser2b', password= User.create_hash_pw('u'),email='avgUser2@gmail.com'))
+    db.session.add(User(username='adminUser', password= User.create_hash_pw('u'),email='adminUser@gmail.com',admin=True,delegates='avgUser'))
+    db.session.add(User(username='readAllUser', password= User.create_hash_pw('u'),email='readAllUser@gmail.com',readAll=True))
+    db.session.commit()
 
     memos = [
         Memo(number=1, version='A',title="avgUser memo 1-1",user_id="avgUser",memo_state=MemoState.Obsolete,keywords="Average Joe ",num_files=0),
@@ -77,42 +89,25 @@ def db(app, request):
         Memo(number=4, version='A',title="readAllUser memo 4-1",user_id='readAllUser',memo_state=MemoState.Signoff,keywords="Outstanding Joe ",num_files=1),
     ]
     for memo in memos:
-        _db.session.add(memo)     
-    _db.session.commit()
+        db.session.add(memo)     
+    db.session.commit()
     
     memoSign = Memo.find(username='readAllUser',memo_number=4, memo_version='A')
-    _db.session.add(MemoSignature(memo_id = memoSign.id, signer_id = "readAllUser" ) )
-    _db.session.add(MemoSignature(memo_id = memoSign.id, signer_id = "adminUser" ) )     
-    _db.session.add(MemoSignature(memo_id = memoSign.id, signer_id = "avgUser", delegate_id = "avgUser",
+    db.session.add(MemoSignature(memo_id = memoSign.id, signer_id = "readAllUser" ) )
+    db.session.add(MemoSignature(memo_id = memoSign.id, signer_id = "adminUser" ) )     
+    db.session.add(MemoSignature(memo_id = memoSign.id, signer_id = "avgUser", delegate_id = "avgUser",
         signed = True, date_signed = datetime.now() ) )     
 
-    _db.session.add(MemoFile(memo_id = memoSign.id, filename = "testFile.txt" ) )
-    _db.session.add(MemoReference(source_id = memoSign.id, ref_user_id = "avgUser", ref_memo_number = 1, ref_memo_version = "B" ) )
-    _db.session.add(MemoReference(source_id = memoSign.id, ref_user_id = "avgUser", ref_memo_number = 2) )
+    db.session.add(MemoFile(memo_id = memoSign.id, filename = "testFile.txt" ) )
+    db.session.add(MemoReference(source_id = memoSign.id, ref_user_id = "avgUser", ref_memo_number = 1, ref_memo_version = "B" ) )
+    db.session.add(MemoReference(source_id = memoSign.id, ref_user_id = "avgUser", ref_memo_number = 2) )
     
     memoSign = Memo.find(username='readAllUser',memo_number=3, memo_version='A')
-    _db.session.add(MemoReference(source_id = memoSign.id, ref_user_id = "readAllUser", ref_memo_number = 1) )
-    _db.session.add(MemoReference(source_id = memoSign.id, ref_user_id = "readAllUser", ref_memo_number = 1, ref_memo_version = "B") )
+    db.session.add(MemoReference(source_id = memoSign.id, ref_user_id = "readAllUser", ref_memo_number = 1) )
+    db.session.add(MemoReference(source_id = memoSign.id, ref_user_id = "readAllUser", ref_memo_number = 1, ref_memo_version = "B") )
 
-    _db.session.commit()
-    
-    request.addfinalizer(teardown)
-    return _db
+    db.session.commit()
 
-
-@pytest.fixture(scope='function')
-def session(db, request):
-    """Creates a new database session for a test."""
-    if db.session.autocommit:
-        db.session.begin()
-    else:
-        db.session.begin(nested=True)
-
-    def teardown():
-        db.session.rollback()
-        db.session.close()
-
-    request.addfinalizer(teardown)
     return db.session
 
 

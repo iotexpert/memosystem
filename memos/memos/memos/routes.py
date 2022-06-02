@@ -7,7 +7,7 @@ from flask import (render_template, url_for, flash,current_app,
                    redirect, request, abort, Blueprint, send_from_directory)
 from flask_login import current_user, login_required
 from wtforms import SubmitField
-from memos.flask_sqlalchemy_txns import transaction, transactional
+from memos.flask_sqlalchemy_txns import transaction
 
 from memos.models.MemoHistory import MemoHistory
 from memos.models.User import User

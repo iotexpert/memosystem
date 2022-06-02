@@ -213,6 +213,8 @@ class User(db.Model, UserMixin):
         if user is None and ldap: #pragma nocover  -- testing ldap is very environment centric.
             try:
                 ldap_user = ldap.get_object_details(username)
+                if ldap_user is None:
+                    return None
             except:
                 return None
                 
