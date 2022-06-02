@@ -5,7 +5,8 @@ The Memo System is a light weight web based document managment system for mainta
 3. Configuration
 4. Initialization
 5. Filesystem
-6. Useful Docker Commands
+6. Azure
+7. Useful Docker Commands
 
 # Architecture
 The system is built using a classic three-tier-client-architecture.  The system is written in Python and uses the SQLAlchemy library to provide an abstration layer to the database which allows the use of MySQL/SQLite or SQL Server.  The system uses the database to store meta data of the memos.  The raw datafiles are stored in the underlying operating system's filesystem.  The system is built to enable simple use of Docker to containerize the database and the Python flask webserver.  The picture below is an overview of the top level architecture.
@@ -54,7 +55,7 @@ mkdir memo_files/mysql
 mkdir memo_files/sqlite
 ```
 ## Configure the Database
-The system is built using [SQL Alchemy](https://www.sqlalchemy.org) to support all database interaction.  This library gives you a selection of targetable databases.  I have tested [SQLite](https://www.sqlite.org/) and [MySQL](https://mysql.com) but the others will probably work as well - YMMV.  For a production use I recommend MySQL.
+The system is built using [SQL Alchemy](https://www.sqlalchemy.org) to support all database interaction.  This library gives you a selection of targetable databases.  I have tested [SQLite](https://www.sqlite.org/),  [MySQL](https://mysql.com) and Microsoft SQL Server but the others will probably work as well - YMMV.  For a production use I recommend MySQL.
 ### MySQL
 You may choose to target a MySQL server that you already have in your enterprise.  To do this you can skip the docker configuration.  If you want a Docker container running a private MySQL you will need to modify the "docker-compose.yml" (which you copied from the template) to setup the users, passwords and files.  Then you will need to modify the settings_local.py to setup to match.
 #### Configure docker-compose.yml for MySQL
@@ -124,6 +125,14 @@ In order to not loose your data you should mount a directory from the host onto 
     # of the memos... and should be backed up
       - /Users/arh/proj/memosystem/memo_files/static:/app/memos/static
       - /Users/arh/proj/memosystem/memo_files/sqlite:/app/memos/sqlite
+```
+
+### SQL Server
+I have no idea how to setup a SQL Server.  So you will have to sort that out yourself.  However, on the client side, the SQL Alchemy to SQL Server connection is done using [pyodbc](https://pypi.org/project/pyodbc/) and [Linux SQL Server odbc driver](https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server?view=sql-server-ver16)  
+
+To use a SQL Server database you will need to configure the URL which has this crazy format:
+```
+os.environ['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://user:password@server/database?driver=ODBC+Driver+18+for+SQL+Server'
 ```
 ## Authentication
 You have two choices for authenticating users:
@@ -223,70 +232,135 @@ This was done to provide a mechanism to rebuild the memosystem in the event of s
 
 
 # Azure
+Inside of my company we are running the memosystem inside of an Azure Container Instance (ACI).  To make this work you need:
+1. Azure Resource Group
+2. Azure Virtual Network and Subnet
+3. Azure Storage Account with File Shares
+4. Azure Container Instance
+5. Azure Routing
+6. Other Userful Azure Commands
 
-```
-docker login azure
-```
- 
- ```
- docker context create aci myacicontext
-```
+## Azure Portal Shell
+The simplest thing for me was to use the bash shell available on the Azure portal.  You can run it by clicking in the upper right side of the portal.
+![Architecture](https://github.com/iotexpert/memosystem/blob/main/doc/azure-portal.png?raw=true)
 
+## Azure Resource Group
+Once you have the shell going you can create a new resource group by running
 ```
-docker context use myacicontext
+az group create -l westus -n RG-Memo
 ```
-
+## Azure Virtual Network (VNET) and Subnet
+The container you make will need to be attached to a private network for use inside of your organization.  In order to create a subnet for your container inside of the resouce group run
 ```
-arh (azure *) memos $ docker context ls
-NAME                TYPE                DESCRIPTION                               DOCKER ENDPOINT               KUBERNETES ENDPOINT   ORCHESTRATOR
-default             moby                Current DOCKER_HOST based configuration   unix:///var/run/docker.sock                         swarm
-myacicontext *      aci                 RG-Docker-MemoSystem@westus                                                                   
-```
+MEMO_RG=RG-Memo
+MEMO_VNET=memo_vnet
+MEMO_ADDRESS=10.1.2.0/24
+MEMO_SUBNET=memo_subnet
 
-docker logs prod-memosystem
-
-
-az container export --name prod-memosystem --resource-group RG-Docker-Memosystem -f prod-memosystem.yaml
-az container create -g RG-Docker-Memosystem -f prod-memosystem.yaml
-
-```
-arh (azure *) memos $ docker ps
-CONTAINER ID                      IMAGE                                     COMMAND             STATUS              PORTS
-prod-memosystem_prod-memosystem   iotexpert/memos:latest                                        Running             10.9.1.4:80->80/tcp
-test-memosystem_test-memosystem   memosystem.azurecr.io/memosystem:latest                       Running             10.9.0.4:80->80/tcp
+az network vnet create --resource-group $MEMO_RG --name $MEMO_VNET \
+       --address-prefix $MEMO_ADDRESS \
+       --subnet-name $MEMO_SUBNET \
+       --subnet-prefix $MEMO_ADDRESS
 ```
 
+## Azure Storage Account with File Shares
+The files inside of the container will be BLOWN AWAY when you delete the container.  You want to make sure and save your memos (and configuration).  To do this you should create a Storage Account and a file share to mount to the inside of your Azure Container Instance.  To do this
+```
+MEMO_STORAGE_BASE=memofiles
+MEMO_LOCATION=westus
+MEMO_SHARE_NAME=memo_files
 
-az container show --resource-group RG-Docker-Memosystem --name prod-memosystem
-az container logs --resource-group RG-Docker-Memosystem --name prod-memosystem
-alan@Azure:~$ az container list --resource-group RG-Docker-Memosystem --output table
-Name             ResourceGroup         Status     Image                                    IP:ports        Network    CPU/Memory       OsType    Location
----------------  --------------------  ---------  ---------------------------------------  --------------  ---------  ---------------  --------  ----------
-prod-memosystem  RG-Docker-MemoSystem  Succeeded  iotexpert/memos:latest                   10.9.1.4:80,80  Private    1.0 core/1.5 gb  Linux     westus
-test-memosystem  RG-Docker-MemoSystem  Succeeded  memosystem.azurecr.io/memosystem:latest  10.9.0.4:80,80  Private    1.0 core/1.5 gb  Linux     westus
-alan@Azure:~$ 
+az storage account create -g $MEMO_RG -n $MEMO_STORAGE_BASE -l $MEMO_LOCATION --sku Standard_LRS
+MEMO_STORAGE_KEY=$(az storage account keys list --resource-group $MEMO_RG --account-name $MEMO_STORAGE_BASE --query "[0].value" --output
+ tsv)
+az storage share create --account-name $MEMO_STORAGE_BASE --name $MEMO_SHARE_NAME --account-key $MEMO_STORAGE_KEY
+```
 
-az container exec --resource-group RG-Docker-Memosystem --name prod-memosystem --exec-command "/bin/sh"
+## Azure Container Instance
+Now that you have a network and a fileshare the last step is to actually create the container and get it going.
+```
+MEMO_CONTAINER=container-memo
 
+az container create -g $MEMO_RG --name $MEMO_CONTAINER \
+   --vnet $MEMO_VNET --subnet $MEMO_SUBNET \
+             --image iotexpert/memos:latest \
+             --location $MEMO_LOCATION \
+             --os-type Linux \
+             --ports 80 \
+             --azure-file-volume-account-name $MEMO_STORAGE_BASE \
+             --azure-file-volume-share-name $MEMO_SHARE_NAME \
+             --azure-file-volume-account-key $MEMO_STORAGE_KEY \
+             --azure-file-volume-mount-path /app/memos/static
+```
 
-Create a resource group
-Create vnet
-Create file storage
-Create a share
-  
+## Azure Routing
+The final step is to attach your virtual network to your internal network.  This will be organization dependant.
 
-## Use an Azure Container Registry (ACR)
-1. Build the image
-2. Push the image into the Azure Container Registry
-3. Start a container with the image
+## Other Userful Azure Commands
+1. Log into the container instance
+2. Look at the running container
+3. Examine the Log Files
 
-## Use the Docker Hub 
-1. Build an image
-2. Push the image to the Docker Hub
-3. Start a container with the image
+### Log into the container instance
+```
+az container exec --resource-group RG-Docker-Memosystem --name container-memo-prod --exec-command "/bin/sh"
+```
 
-## Copy the configuration files
-4. Copy the configuration files into your running container
+### List the running containers
+```
+alan@Azure:~$ az container list -g RG-Docker-MemoSystem -o table
+Name                 ResourceGroup         Status     Image                   IP:ports        Network    CPU/Memory       OsType    Location
+-------------------  --------------------  ---------  ----------------------  --------------  ---------  ---------------  --------  ----------
+container-memo-prod  RG-Docker-MemoSystem  Succeeded  iotexpert/memos:latest  10.9.1.4:80,80  Private    1.0 core/1.5 gb  Linux     westus
+container-memo-test  RG-Docker-MemoSystem  Succeeded  iotexpert/memos:latest  10.9.0.4:80,80  Private    1.0 core/1.5 gb  Linux     westus
+```
+### Examine the log files
+```
+alan@Azure:~$ az container logs --resource-group RG-Docker-Memosystem --name container-memo-prod
+Checking for script in /app/prestart.sh
+Running script /app/prestart.sh
+Running inside /app/prestart.sh, you could add migrations to this file, e.g.:
+
+#! /usr/bin/env sh
+
+# Let the DB start
+sleep 10;
+# Run migrations
+alembic upgrade head
+
+/usr/lib/python2.7/dist-packages/supervisor/options.py:461: UserWarning: Supervisord is running as root and it is searching for its configuration file in default locations (including its current working directory); you probably want to specify a "-c" argument specifying an absolute path to a configuration file for improved security.
+  'Supervisord is running as root and it is searching '
+2022-06-02 11:15:10,223 CRIT Supervisor is running as root.  Privileges were not dropped because no user is specified in the config file.  If you intend to run as root, you can set user=root in the config file to avoid this message.
+2022-06-02 11:15:10,223 INFO Included extra file "/etc/supervisor/conf.d/supervisord.conf" during parsing
+2022-06-02 11:15:10,231 INFO RPC interface 'supervisor' initialized
+2022-06-02 11:15:10,232 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2022-06-02 11:15:10,232 INFO supervisord started with pid 1
+
+... [ a bunch of stuff deleted]
+
+vacuum = true
+die-on-term = true
+base = /app
+venv = /app/env
+module = app
+callable = app
+chdir = /app
+ini = /etc/uwsgi/uwsgi.ini
+
+... [ a bunch of stuff deleted]
+
+uWSGI running as root, you can use --uid/--gid/--chroot options
+*** WARNING: you are running uWSGI as root !!! (use the --uid flag) *** 
+python threads support enabled
+
+spawned uWSGI worker 2 (pid: 22, cores: 2)
+running "unix_signal:15 gracefully_kill_them_all" (master-start)...
+2022-06-02 11:15:13,174 INFO success: quit_on_failure entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+[pid: 22|app: 0|req: 1/1] 10.9.1.4 () {32 vars in 326 bytes} [Thu Jun  2 11:24:28 2022] GET / => generated 3674 bytes in 244 msecs (HTTP/1.1 200) 3 headers in 171 bytes (1 switches on core 0)
+10.9.1.4 - - [02/Jun/2022:11:24:28 +0000] "GET / HTTP/1.1" 200 3674 "-" "curl/7.64.0" "-"
+[pid: 20|app: 0|req: 1/2] 10.9.1.4 () {32 vars in 326 bytes} [Thu Jun  2 14:30:36 2022] GET / => generated 3674 bytes in 246 msecs (HTTP/1.1 200) 3 headers in 171 bytes (1 switches on core 0)
+10.9.1.4 - - [02/Jun/2022:14:30:36 +0000] "GET / HTTP/1.1" 200 3674 "-" "curl/7.64.0" "-"
+```
 
 # Some Usefull Docker Commands
 
