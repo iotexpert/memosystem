@@ -30,23 +30,8 @@ class MemoState(enum.Enum):
             return None
 
     def compare_short_name(self,name):
-        if self.value == 1 and name=="Draft":
-            return True
-        elif self.value == 2 and name == "Signoff":
-            return True
-        elif self.value == 3 and name == "Active":
-            return True
-        elif self.value == 4 and name == "Obsolete":
-            return True
-        return False
+        return self.name == name
 
     def short_name(self):
-        if self.value == 1:
-            return "Draft"
-        if self.value == 2:
-            return "Signoff"
-        if self.value == 3:
-            return "Active"
-        if self.value == 4:
-            return "Obsolete"
+        return self.name
 
