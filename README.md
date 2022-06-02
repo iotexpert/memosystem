@@ -277,7 +277,13 @@ az storage share create --account-name $MEMO_STORAGE_BASE --name $MEMO_SHARE_NAM
 ```
 
 ## Azure Container Instance
-Now that you have a network and a fileshare the last step is to actually create the container and get it going.
+Now that you have a network and a fileshare the last step is to actually create the container and get it going.  You have two basic choices for the source of your image, either an [Azure Container Registry](https://docs.microsoft.com/en-us/cli/azure/acr?view=azure-cli-latest) or the [Docker Hub](https://hub.docker.com).  I orignally planned on using the Azure Container Registry, but the only value I could figure out was that it was "private".  If you decide that you want to do that, you can read the instruction at the link above.  It is my intent that as we make changes to the MemoSystem we wil keep a fresh image posted to docker hub.  To do that I do the following (but you wont have to because it is already done)
+```
+docker build -t iotexpert/memos:latest .
+docker push iotexpert/memos:latest
+```
+
+The following comnmand will pull the image of the memo system from the docker hub (which you created above) and insert it into a running Azure Container Instance
 ```
 MEMO_CONTAINER=container-memo
 
