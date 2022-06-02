@@ -1,7 +1,15 @@
 FROM tiangolo/uwsgi-nginx-flask:python3.8
 ENV APP=/app
 
-RUN apt-get update && apt-get install -y python3-dev gcc  libc-dev libsasl2-dev python-dev libldap2-dev libssl-dev
+RUN apt-get update && apt-get install -y python3-dev gcc  libc-dev libsasl2-dev python-dev libldap2-dev libssl-dev unixodbc unixodbc-dev libgssapi-krb5-2
+
+# This block loads the drivers required to make pyodbc and microsoft sql server work
+# It came from https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server?view=sql-server-ver16
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+RUN curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list
+RUN apt-get update
+RUN ACCEPT_EULA=Y apt-get install -y msodbcsql18
+RUN ACCEPT_EULA=Y apt-get install -y mssql-tools18
 
 # Set the working directory to /app
 WORKDIR $APP
@@ -16,3 +24,5 @@ ENV PATH "${APP}/env/bin:${APP}:${PATH}"
 RUN pip install -r requirements.txt
 
 ENV STATIC_PATH $APP/memos/static
+
+

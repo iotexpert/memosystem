@@ -234,6 +234,8 @@ def find_jsons(search_path):
 # Users that dont exist
 # References that dont exist
 # Signoff, draft
+# Memostate draft... multiple drafts?
+
 
 if __name__ == "__main__":
     app = None
