@@ -1,8 +1,18 @@
 FROM tiangolo/uwsgi-nginx-flask:python3.8
 ENV APP=/app
 
-RUN apt-get update && apt-get install -y python3-dev gcc  libc-dev libsasl2-dev python-dev libldap2-dev libssl-dev unixodbc unixodbc-dev libgssapi-krb5-2
-
+RUN apt-get update && apt-get install -y \
+    python3-dev \
+    gcc  \
+    libc-dev \
+    libsasl2-dev \
+    python-dev \
+    libldap2-dev \
+    libssl-dev \
+    unixodbc-dev \
+    unixodbc \
+    libpq-dev 
+    
 # This block loads the drivers required to make pyodbc and microsoft sql server work
 # It came from https://docs.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server?view=sql-server-ver16
 RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
