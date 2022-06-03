@@ -2,7 +2,7 @@
     <img class="rounded-circle article-img" src="{{ url_for('static', filename='profile_pics/' + memo.user.image_file) }}">
     <div class="media-body">
       <div class="article-metadata">
-        <a class="mr-2" href="/memo/{{memo.user.username}}/{{ memo.number}}/{{memo.version}}">{{ memo.user.username }}-{{memo.number}}{{ memo.version }}</a> 
+        <a class="mr-2" href="/memo/{{memo.user.username}}/{{ memo.number}}/{{memo.version}}?detail">{{ memo.user.username }}-{{memo.number}}{{ memo.version }}</a> 
         <a class="mr-2" href="/memo/{{memo.user.username}}/{{ memo.number}}">{{ memo.user.username }}-{{memo.number}}</a>
         {% if memo.memo_state.compare_short_name("Draft") == 1 %}
         <small class="text-muted">{{ memo.action_date.strftime('%Y-%m-%d') }}</small>
