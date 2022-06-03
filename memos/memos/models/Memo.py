@@ -416,7 +416,7 @@ class Memo(db.Model):
                         reply_to=replyTo.email)
             msg.body = f'''{message}
         Use the following link:
-        {url_for('memos.main', username=self.user_id, memo_number=self.number, memo_version=self.version, _external=True)}
+        {url_for('memos.main', username=self.user_id, memo_number=self.number, memo_version=self.version, _external=True)}?detail
         '''
             mail.send(msg)
         except BaseException as e: # pragma nocover
@@ -438,7 +438,7 @@ class Memo(db.Model):
                         reply_to=replyTo.email)
             msg.body = f'''{message}
         Use the following link:
-        {url_for('memos.main', username=self.user_id, memo_number=self.number, memo_version=self.version, _external=True)}
+        {url_for('memos.main', username=self.user_id, memo_number=self.number, memo_version=self.version, _external=True)}?detail
         '''
             mail.send(msg)
         except BaseException as e: # pragma nocover
@@ -612,7 +612,7 @@ class Memo(db.Model):
             memo_list = Memo.query.join(User).filter(User.username==username,\
                                                 Memo.number==memo_number,\
                                                 Memo.version==memo_version)\
-                                                    .paginate(page = page,per_page=pagesize)
+                                                    .order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)
         elif memo_number:
             memo_list = Memo.query.join(User).filter(User.username==username,Memo.number==memo_number)\
             .order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)
