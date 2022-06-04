@@ -78,7 +78,7 @@
 
 
             <div>
-            {% for i in memo.get_files() %}
+            {% for i in memo.files %}
                 {{ form.getField('file_' ~ ((loop.index-1)|string))(class="btn btn-outline-info") }}   {{i.filename}}<br>
             {% endfor %}
             </div>

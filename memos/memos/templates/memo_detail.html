@@ -37,6 +37,6 @@ Back References:
 {% endfor %}
 <br>
 {% endif %}
-{% for file in memo.get_files() %}
+{% for file in memo.files %}
 <a class="mr-2" href="/file/memo/{{memo.user.username}}/{{memo.number}}/{{memo.version}}/{{file.uuid}}">{{file.filename}}</a><br>
 {% endfor %}

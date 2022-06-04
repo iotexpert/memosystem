@@ -90,8 +90,8 @@ def getfile(username,memo_number,memo_version,uuid):
             MemoHistory.activity(memo=memo,memo_activity=MemoActivity.IllegalFile,user=user)
             abort(403)
 
-        memo_list = memo.get_files()
-        for file in memo_list:
+        current_app.logger.info(f"memo_file = {memo.files}")
+        for file in memo.files:
             if file.uuid == uuid:
                 directory = os.path.join('static','memos',str(memo.user_id),str(memo_number),
                     memo_version)
@@ -112,7 +112,6 @@ def process_file(new_memo,formfield):
             mfile = MemoFile(memo_id=new_memo.id,filename=f.filename)
             mfile.save()
             f.save(os.path.join(path, mfile.uuid))
-            new_memo.num_files = new_memo.num_files + 1
 
 @memos.route("/cu/memo",methods=['GET', 'POST'])
 @memos.route("/cu/memo/<string:username>",methods=['GET'])
@@ -143,7 +142,7 @@ def create_revise_submit(username=None,memo_number=None):
             @staticmethod
             def create(memo):
                 """Create"""
-                for idx,_ in enumerate(memo.get_files()):
+                for idx,_ in enumerate(memo.files):
                     button_name = f"file_{idx}"
                     setattr(FileForm, button_name, SubmitField('Remove'))
             def getField(self, field_name):
@@ -195,7 +194,7 @@ def create_revise_submit(username=None,memo_number=None):
             memo.save()
 
             # Look and see if they pressed a remove button on one of the files.
-            for idx,file in enumerate(memo.get_files()):
+            for idx,file in enumerate(memo.files):
                 if hasattr(form,f'file_{idx}'):
                     status = getattr(form,f'file_{idx}')
                     if status.data is True:

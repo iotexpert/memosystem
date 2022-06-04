@@ -35,7 +35,7 @@ class Memo(db.Model):
     distribution = db.Column(db.String(128), default='')                # user names on the distribution
     keywords = db.Column(db.String(128), default='')                    # any keyword
     title = db.Column(db.String(128), nullable=False, default='')       # The title of the memo
-    num_files = db.Column(db.Integer, default=0)                        # The number of files attached to the memo
+#    num_files = db.Column(db.Integer, default=0)                        # The number of files attached to the memo
 
     action_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)  # The last time anything happened
     create_date = db.Column(db.DateTime)    # when the memo was created
@@ -196,10 +196,11 @@ class Memo(db.Model):
         path = os.path.join(current_app.root_path,"static","memos",f"{self.user_id}",f"{self.number}",f"{self.version}")
         return path
 
-    def get_files(self):
+    @property
+    def files(self):
         """ Return a list of the files attached to this memo"""
-        memo_list = MemoFile.query.filter_by(memo_id=self.id).all()
-        return memo_list
+        memo_files = MemoFile.query.filter_by(memo_id=self.id).all()
+        return memo_files
 
     def saveJson(self):
         """ Create the JSON file which is a copy of all of the meta data """
@@ -228,7 +229,7 @@ class Memo(db.Model):
         js['signers']=signers
         js['references']= self.references['ref_string']
         js['files']=[]
-        for file in self.get_files():
+        for file in self.files:
             js['files'].append((file.filename,file.uuid))
 
         path = os.path.join(self.get_fullpath())
@@ -403,7 +404,6 @@ class Memo(db.Model):
 
 
     def notify_distribution(self,message):
-        current_app.logger.info(F"Notify Distribution {self.distribution} {message}")
         try:
             replyTo = User.find(self.user_id)
             users = User.valid_usernames(self.distribution)
@@ -418,7 +418,12 @@ class Memo(db.Model):
         Use the following link:
         {url_for('memos.main', username=self.user_id, memo_number=self.number, memo_version=self.version, _external=True)}?detail
         '''
-            mail.send(msg)
+            if 'MEMOS_EMAIL_SERVER' in current_app.config:
+                mail.send(msg)
+            else:
+                current_app.logger.info(F"Notify Distribution {self.distribution} {message}")
+
+                
         except BaseException as e: # pragma nocover
             raise e
 
@@ -440,7 +445,12 @@ class Memo(db.Model):
         Use the following link:
         {url_for('memos.main', username=self.user_id, memo_number=self.number, memo_version=self.version, _external=True)}?detail
         '''
-            mail.send(msg)
+            if 'MEMOS_EMAIL_SERVER' in current_app.config:
+                mail.send(msg)
+            else:
+                current_app.logger.info(F"Notify Distribution {self.distribution} {message}")
+
+
         except BaseException as e: # pragma nocover
             raise e
 ################################################################################
@@ -466,7 +476,7 @@ class Memo(db.Model):
                             distribution = '',\
                             keywords = '',\
                             title = '',\
-                            num_files = 0,\
+#                            num_files = 0,\
                             user_id = owner.username,\
                             memo_state = MemoState.Draft,\
                             action_date = datetime.utcnow(),\
@@ -491,7 +501,7 @@ class Memo(db.Model):
                             distribution = memo.distribution,\
                             keywords = memo.keywords,\
                             title = memo.title,\
-                            num_files = 0,\
+#                            num_files = 0,\
                             user_id = memo.user_id,\
                             memo_state = MemoState.Draft,\
                             action_date = datetime.utcnow(),\
