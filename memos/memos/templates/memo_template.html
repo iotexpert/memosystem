@@ -20,8 +20,8 @@
         {{ memo.memo_state.short_name() }}</small>
        
         {% if memo.has_access(user) %}
-          {% for n in range(memo.num_files) %}
-            <a class="mr-0" href="/file/memo/{{memo.user.username}}/{{memo.number}}/{{memo.version}}/{{n}}">{{n+1}}{% if n < memo.num_files-1 %},{% endif %}</a>
+          {% for file in memo.files %}
+            <a class="mr-0" href="/file/memo/{{memo.user.username}}/{{memo.number}}/{{memo.version}}/{{file.uuid}}">{{loop.index0}}{% if loop.index0 < memo.files|length - 1 %},{% endif %}</a>
           {% endfor %}
 
           {% if user != None and memo.can_revise(delegate=user) %}
