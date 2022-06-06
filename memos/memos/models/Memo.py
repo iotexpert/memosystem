@@ -418,7 +418,7 @@ class Memo(db.Model):
         Use the following link:
         {url_for('memos.main', username=self.user_id, memo_number=self.number, memo_version=self.version, _external=True)}?detail
         '''
-            if 'MEMOS_EMAIL_SERVER' in current_app.config:
+            if 'MEMOS_EMAIL_SERVER' in os.environ:
                 mail.send(msg)
             else:
                 current_app.logger.info(F"Notify Distribution {self.distribution} {message}")
@@ -445,10 +445,10 @@ class Memo(db.Model):
         Use the following link:
         {url_for('memos.main', username=self.user_id, memo_number=self.number, memo_version=self.version, _external=True)}?detail
         '''
-            if 'MEMOS_EMAIL_SERVER' in current_app.config:
+            if 'MEMOS_EMAIL_SERVER' in os.environ:
                 mail.send(msg)
             else:
-                current_app.logger.info(F"Notify Distribution {self.distribution} {message}")
+                current_app.logger.info(F"Notify Signers {self.distribution} {message}")
 
 
         except BaseException as e: # pragma nocover
