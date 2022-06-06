@@ -243,12 +243,12 @@ class User(db.Model, UserMixin):
     def valid_usernames(userlist):
         invalid_usernames = []
         valid_usernames = []
-        users = re.split(r'\s|\,',userlist)
-        if '' in users: users.remove('')
+        users = re.split('\s|\,|\t|\;|\:',userlist)
+        while '' in users: users.remove('')
 
         for username in users:
             user = User.find(username=username)
-            if username != "" and  user == None:
+            if user == None:
                 invalid_usernames.append(username)
             else:
                 valid_usernames.append(username)
