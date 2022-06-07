@@ -35,7 +35,6 @@ class Memo(db.Model):
     distribution = db.Column(db.String(128), default='')                # user names on the distribution
     keywords = db.Column(db.String(128), default='')                    # any keyword
     title = db.Column(db.String(128), nullable=False, default='')       # The title of the memo
-#    num_files = db.Column(db.Integer, default=0)                        # The number of files attached to the memo
 
     action_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)  # The last time anything happened
     create_date = db.Column(db.DateTime)    # when the memo was created
@@ -420,7 +419,7 @@ class Memo(db.Model):
         '''
             if 'MEMOS_EMAIL_SERVER' in os.environ:
                 mail.send(msg)
-            else:
+            else: # pragma nocover
                 current_app.logger.info(F"Notify Distribution {self.distribution} {message}")
 
                 
@@ -447,7 +446,7 @@ class Memo(db.Model):
         '''
             if 'MEMOS_EMAIL_SERVER' in os.environ:
                 mail.send(msg)
-            else:
+            else: # pragma nocover
                 current_app.logger.info(F"Notify Signers {self.distribution} {message}")
 
 
@@ -476,7 +475,6 @@ class Memo(db.Model):
                             distribution = '',\
                             keywords = '',\
                             title = '',\
-#                            num_files = 0,\
                             user_id = owner.username,\
                             memo_state = MemoState.Draft,\
                             action_date = datetime.utcnow(),\
@@ -501,7 +499,6 @@ class Memo(db.Model):
                             distribution = memo.distribution,\
                             keywords = memo.keywords,\
                             title = memo.title,\
-#                            num_files = 0,\
                             user_id = memo.user_id,\
                             memo_state = MemoState.Draft,\
                             action_date = datetime.utcnow(),\

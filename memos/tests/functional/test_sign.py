@@ -602,7 +602,7 @@ def test_check_revise_and_activate(client, session):
                                 follow_redirects=True)
         assert response.status_code == 200
         assert b'Sign readAllUser-4B Success' in response.data
-        assert b'href="/memo/readAllUser/4/B">readAllUser-4B' in response.data
+        assert b'href="/memo/readAllUser/4/B?detail">readAllUser-4B' in response.data
 
 def test_obsolete_nologin(client, session):
     """

@@ -76,17 +76,17 @@ def session(db, request):
     db.session.commit()
 
     memos = [
-        Memo(number=1, version='A',title="avgUser memo 1-1",user_id="avgUser",memo_state=MemoState.Obsolete,keywords="Average Joe ",num_files=0),
-        Memo(number=1, version='B',title="avgUser memo 1-2",user_id="avgUser",memo_state=MemoState.Obsolete,keywords="Average Joe ",num_files=0),
-        Memo(number=1, version='C',title="avgUser memo 1-3",user_id="avgUser",memo_state=MemoState.Active,keywords="Average Joe ",num_files=0,confidential=True),
-        Memo(number=2, version='A',title="avgUser memo 2-1",user_id="avgUser",memo_state=MemoState.Active,keywords="Average Joe ",num_files=0),
-        Memo(number=3, version='A',title="avgUser memo 3-1",user_id="avgUser",memo_state=MemoState.Active,keywords="Average Joe ",num_files=0),
-        Memo(number=1, version='A',title="readAllUser memo 1-1",user_id='readAllUser',memo_state=MemoState.Obsolete,keywords="Outstanding Joe ",num_files=0),
-        Memo(number=1, version='B',title="readAllUser memo 1-2",user_id='readAllUser',memo_state=MemoState.Obsolete,keywords="Outstanding Joe ",num_files=0),
-        Memo(number=1, version='C',title="readAllUser memo 1-3",user_id='readAllUser',memo_state=MemoState.Active,keywords="Outstanding Joe ",num_files=0,confidential=True,distribution="avgUser"),
-        Memo(number=2, version='A',title="readAllUser memo 2-1",user_id='readAllUser',memo_state=MemoState.Active,keywords="Outstanding Joe ",num_files=0,confidential=True),
-        Memo(number=3, version='A',title="readAllUser memo 3-1",user_id='readAllUser',memo_state=MemoState.Draft,keywords="Outstanding Joe ",num_files=0),
-        Memo(number=4, version='A',title="readAllUser memo 4-1",user_id='readAllUser',memo_state=MemoState.Signoff,keywords="Outstanding Joe ",num_files=1),
+        Memo(number=1, version='A',title="avgUser memo 1-1",user_id="avgUser",memo_state=MemoState.Obsolete,keywords="Average Joe "),
+        Memo(number=1, version='B',title="avgUser memo 1-2",user_id="avgUser",memo_state=MemoState.Obsolete,keywords="Average Joe "),
+        Memo(number=1, version='C',title="avgUser memo 1-3",user_id="avgUser",memo_state=MemoState.Active,keywords="Average Joe ",confidential=True),
+        Memo(number=2, version='A',title="avgUser memo 2-1",user_id="avgUser",memo_state=MemoState.Active,keywords="Average Joe "),
+        Memo(number=3, version='A',title="avgUser memo 3-1",user_id="avgUser",memo_state=MemoState.Active,keywords="Average Joe "),
+        Memo(number=1, version='A',title="readAllUser memo 1-1",user_id='readAllUser',memo_state=MemoState.Obsolete,keywords="Outstanding Joe "),
+        Memo(number=1, version='B',title="readAllUser memo 1-2",user_id='readAllUser',memo_state=MemoState.Obsolete,keywords="Outstanding Joe "),
+        Memo(number=1, version='C',title="readAllUser memo 1-3",user_id='readAllUser',memo_state=MemoState.Active,keywords="Outstanding Joe ",confidential=True,distribution="avgUser"),
+        Memo(number=2, version='A',title="readAllUser memo 2-1",user_id='readAllUser',memo_state=MemoState.Active,keywords="Outstanding Joe ",confidential=True),
+        Memo(number=3, version='A',title="readAllUser memo 3-1",user_id='readAllUser',memo_state=MemoState.Draft,keywords="Outstanding Joe "),
+        Memo(number=4, version='A',title="readAllUser memo 4-1",user_id='readAllUser',memo_state=MemoState.Signoff,keywords="Outstanding Joe "),
     ]
     for memo in memos:
         db.session.add(memo)     
