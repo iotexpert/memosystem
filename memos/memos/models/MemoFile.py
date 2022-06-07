@@ -43,7 +43,4 @@ class MemoFile(db.Model):
         except: # pragma nocover
             pass # ARH... well this can only happen if the file is already gone... which is what we want
         
-        memo.num_files = memo.num_files - 1
-        memo.save()
-        
         db.session.delete(self)
