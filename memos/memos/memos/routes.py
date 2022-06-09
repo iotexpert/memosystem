@@ -239,6 +239,8 @@ def inbox(username=None):
             return abort(403)
 
         memo_list = Memo.get_inbox(user,page,pagesize)
+        if len(memo_list.items) == 0:
+            flash('No memos match that criteria','error')
         inbox_list = [user] + [current_user] + current_user.delegate_for['users']
 
         url_params = {
@@ -274,6 +276,8 @@ def drafts(username=None):
             return abort(403)
 
         memo_list = Memo.get_drafts(user,page,pagesize)
+        if len(memo_list.items) == 0:
+            flash('No memos match that criteria','error')
 
         url_params = {}
         if username is not None:
@@ -465,12 +469,16 @@ def search():
 
             if form.title.data and form.title.data != '':
                 memos_found = Memo.search(title=form.title.data,page=page,pagesize=pagesize)
+                if len(memos_found.items) == 0:
+                    flash('No memos match that criteria','error')
                 search_param = f"title:{form.title.data}"
                 url_params['search'] = search_param
                 return render_template('memo.html', memos=memos_found, title="memo",user=user,delegate=user,detail=detail,next_page=next_page,url_params =url_params)
 
             if form.keywords.data and form.keywords.data != '':
                 memos_found = Memo.search(keywords=form.keywords.data,page=page,pagesize=pagesize)
+                if len(memos_found.items) == 0:
+                    flash('No memos match that criteria','error')
                 search_param = f"keywords:{form.keywords.data}"
                 url_params['search'] = search_param
                 return render_template('memo.html', memos=memos_found, title="memo",user=user,delegate=user,detail=detail,next_page=next_page,url_params =url_params)
@@ -495,9 +503,13 @@ def search():
             keywords = re.split('^keywords:',search_param,maxsplit=1)
             if len(title) == 2:
                 memos_found = Memo.search(title=title[1],page=page,pagesize=pagesize)
+                if len(memos_found.items) == 0:
+                    flash('No memos match that criteria','error')
                 url_params['search']= f'title:{title[1]}'
             if len(keywords) == 2:
                 memos_found = Memo.search(keywords=keywords[1],page=page,pagesize=pagesize)
+                if len(memos_found.items) == 0:
+                    flash('No memos match that criteria','error')
                 url_params['search']= f'keywords:{keywords[1]}'
 
             next_page = "memos.search"
