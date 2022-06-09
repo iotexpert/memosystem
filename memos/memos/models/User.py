@@ -1,4 +1,5 @@
 import datetime
+import email
 import jwt
 import numpy
 import os
@@ -175,7 +176,6 @@ class User(db.Model, UserMixin):
         users = User.valid_usernames(sub_names)
         MemoSubscription.delete(self)
         for user in users['valid_users']:
-            #current_app.logger.info(f"adding subscription {self} to {user}")
             ms = MemoSubscription(subscriber_id=self.username,subscription_id=user.username)
             db.session.add(ms)
     
@@ -243,22 +243,43 @@ class User(db.Model, UserMixin):
     def valid_usernames(userlist):
         invalid_usernames = []
         valid_usernames = []
+        email_addrs = []
+        has_non_users = False
         users = re.split('\s|\,|\t|\;|\:',userlist)
         while '' in users: users.remove('')
 
-        for username in users:
-            user = User.find(username=username)
-            if user == None:
-                invalid_usernames.append(username)
+        for username in users:            
+            # See if an email is listed.
+            email_match = re.fullmatch('^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$', username)
+            if email_match:
+                email_addrs.append(str(email_match[0]))
+                user = User.query.filter_by(email=email_match[0]).first()
+                if user == None:
+                    has_non_users = True
+                else:
+                    valid_usernames.append(user.username)
             else:
-                valid_usernames.append(username)
+                user = User.query.filter_by(username=username).first()
+                if user == None:
+                    invalid_usernames.append(username)
+                    has_non_users = True
+                else:
+                    valid_usernames.append(user.username)
+                    email_addrs.append(str(user.email))
 
+        email_addrs = numpy.unique(email_addrs)
         valid_usernames = numpy.unique(valid_usernames)
         valid_users = []
         for username in valid_usernames:
             valid_users.append(User.find(username=username))
 
-        return {'valid_usernames':valid_usernames,'invalid_usernames':invalid_usernames,'valid_users':valid_users}
+        return {
+            'valid_usernames':valid_usernames,
+            'invalid_usernames':invalid_usernames,
+            'valid_users':valid_users,
+            'email_addrs':email_addrs,
+            'non_users':has_non_users
+            }
 
     @staticmethod
     def is_admin(username):

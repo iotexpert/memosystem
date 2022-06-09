@@ -44,13 +44,13 @@ class UpdateAccountForm(FlaskForm):
 
     def validate_delegates(self,delegates):
         users = User.valid_usernames(delegates.data)
-        if len(users['invalid_usernames']) > 0:
-            raise ValidationError(f'Invalid users {users["invalid_usernames"]}')
+        if users['non_users']:
+            raise ValidationError(f'Invalid users {users["invalid_usernames"]} or email addresses specified.')
 
     def validate_subscriptions(self,subscriptions):
         users = User.valid_usernames(subscriptions.data)
-        if len(users['invalid_usernames']) > 0:
-            raise ValidationError(f'Invalid users {users["invalid_usernames"]}')
+        if users['non_users']:
+            raise ValidationError(f'Invalid users {users["invalid_usernames"]} or email addresses specified.')
 
 
 class RequestResetForm(FlaskForm):
