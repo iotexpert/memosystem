@@ -407,21 +407,23 @@ class Memo(db.Model):
             replyTo = User.find(self.user_id)
             users = User.valid_usernames(self.distribution)
             recipients=[]
-            for recipient in users['valid_users']:
-                recipients.append(recipient.email)
-            msg = Message(message,
-                        sender=os.environ['MEMOS_EMAIL_USER'],
-                        recipients=recipients,
-                        reply_to=replyTo.email)
-            msg.body = f'''{message}
-        Use the following link:
-        {url_for('memos.main', username=self.user_id, memo_number=self.number, memo_version=self.version, _external=True)}?detail
-        '''
-            if 'MEMOS_EMAIL_SERVER' in os.environ:
-                mail.send(msg)
-            else: # pragma nocover
-                current_app.logger.info(F"Notify Distribution {self.distribution} {message}")
-
+            for email in users['email_addrs']:
+                recipients.append(email)
+                
+            # Only send emails if there is a distribution list.
+            if len(recipients) > 0:
+                msg = Message(message,
+                            sender=os.environ['MEMOS_EMAIL_USER'],
+                            recipients=recipients,
+                            reply_to=replyTo.email)
+                msg.body = f'''{message}
+            Use the following link:
+            {url_for('memos.main', username=self.user_id, memo_number=self.number, memo_version=self.version, _external=True)}?detail
+            '''
+                if 'MEMOS_EMAIL_SERVER' in os.environ:
+                    mail.send(msg)
+                else: # pragma nocover
+                    current_app.logger.info(F"Notify Distribution {self.distribution} {message}")
                 
         except BaseException as e: # pragma nocover
             raise e

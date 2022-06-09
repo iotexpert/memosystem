@@ -36,8 +36,8 @@ class MemoForm(FlaskForm):
 
     def validate_signers(self, distribution):
         users = User.valid_usernames(distribution.data)
-        if len(users['invalid_usernames']) > 0:
-            raise ValidationError(f'Invalid users {users["invalid_usernames"]}')
+        if users['non_users']:
+            raise ValidationError(f'Invalid users {users["invalid_usernames"]} or email addresses specified.')
     
     def validate_references(self,references):
         current_app.logger.info(f"References = {references.data}")

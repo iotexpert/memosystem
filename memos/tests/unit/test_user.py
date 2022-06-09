@@ -98,12 +98,15 @@ def test_user_subscriptions(db, session):
     assert "avgUser" in adminUser.subscriptions
 
 def test_user_valid_usernames(db, session):
-    v = User.valid_usernames("adminUser readAllUser,avgUser unknownUser")
+    v = User.valid_usernames("adminUser readAllUser, unknownUser, badUser@nowhere.com avgUser@gmail.com")
     assert "adminUser" in v["valid_usernames"]
     assert "readAllUser" in v["valid_usernames"]
     assert "avgUser" in v["valid_usernames"]
     assert "unknownUser" not in v["valid_usernames"]
     assert "unknownUser" in v["invalid_usernames"]
+    assert "badUser" not in v["valid_usernames"]
+    assert "badUser" not in v["invalid_usernames"]
+    assert v["non_users"]
     assert len(v["valid_users"]) == 3
 
 def test_user_is_admin(db, session):
