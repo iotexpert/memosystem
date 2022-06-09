@@ -360,7 +360,12 @@ def test_check_inbox_other(client, session):
                                 data=dict(username='avgUser', password='u'),
                                 follow_redirects=True)
         assert response.status_code == 200
-        assert b'Account: avgUser' in response.data        
+        assert b'Account: avgUser' in response.data
+
+        response = client.get('/inbox',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'No memos match that criteria' in response.data
 
         response = client.get('/inbox/adminUser',
                                 follow_redirects=True)
@@ -869,6 +874,11 @@ def test_search_get_title(client, session):
         assert b'href="/memo/avgUser/2/A?detail">avgUser memo 2-1</a>' in response.data
         assert b'href="/memo/avgUser/1/B?detail">avgUser memo 1-2</a>' in response.data
         assert b'href="/memo/avgUser/1/A?detail">avgUser memo 1-1</a>' in response.data
+        
+        response = client.get('/search?search=title:No+memo+present',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'No memos match that criteria' in response.data
 
 def test_search_get_keyword(client, session):
     """
@@ -883,6 +893,12 @@ def test_search_get_keyword(client, session):
         assert b'href="/memo/readAllUser/3/A?detail">readAllUser memo 3-1</a>' in response.data
         assert b'href="/memo/readAllUser/1/B?detail">readAllUser memo 1-2</a>' in response.data
         assert b'href="/memo/readAllUser/1/A?detail">readAllUser memo 1-1</a>' in response.data
+        
+        response = client.get('/search?search=keywords:No+memo+present',
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'No memos match that criteria' in response.data
+
 
 def test_search_post_title(client, session):
     """
@@ -897,6 +913,11 @@ def test_search_post_title(client, session):
         assert b'href="/memo/avgUser/2/A?detail">avgUser memo 2-1</a>' in response.data
         assert b'href="/memo/avgUser/1/B?detail">avgUser memo 1-2</a>' in response.data
         assert b'href="/memo/avgUser/1/A?detail">avgUser memo 1-1</a>' in response.data
+        
+        response = client.post('/search', data=dict(title='No+memo+present'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'No memos match that criteria' in response.data
 
 def test_search_post_keyword(client, session):
     """
@@ -911,6 +932,11 @@ def test_search_post_keyword(client, session):
         assert b'href="/memo/readAllUser/3/A?detail">readAllUser memo 3-1</a>' in response.data
         assert b'href="/memo/readAllUser/1/B?detail">readAllUser memo 1-2</a>' in response.data
         assert b'href="/memo/readAllUser/1/A?detail">readAllUser memo 1-1</a>' in response.data
+        
+        response = client.post('/search', data=dict(keywords='No+memo+present'),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'No memos match that criteria' in response.data
 
 def test_search_post_memo_ref(client, session):
     """
