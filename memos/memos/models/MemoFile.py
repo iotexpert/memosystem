@@ -1,13 +1,11 @@
 
-from sqlalchemy import Column
 from memos import db
 import uuid
 import os
-from flask import current_app
 
 class MemoFile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    _filename = db.Column(db.String(48))
+    _filename = db.Column(db.String(128))
     _uuid = db.Column(db.String(48)) 
     memo_id = db.Column(db.Integer, db.ForeignKey('memo.id'),nullable=False)
 

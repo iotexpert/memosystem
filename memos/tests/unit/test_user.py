@@ -116,3 +116,8 @@ def test_user_is_admin(db, session):
 def test_user_is_readAll(db, session):
     assert User.is_readAll('readAllUser')
     assert not User.is_readAll('avgUser')
+
+def test_user_find(db, session):
+    assert not User.find(None)
+    assert not User.find('badUser')
+    assert User.find('avgUser')
