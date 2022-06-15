@@ -1,12 +1,12 @@
-{% if memo.signers['siglist']|length > 0%}
+{% if memo.signers['siglist']|length > 0 %}
 Signers:<br>
 <ul>
 {% for sig in memo.signers['siglist'] %}
 <li>
-{{sig.signer.username}}
+{{sig.signer_id}}
 {% if sig.signed == True %}
-{% if sig.signer != sig.delegate %}
-by {{sig.delegate.username}} 
+{% if sig.signer_id != sig.delegate_id %}
+by {{sig.delegate_id}} 
 {% endif %}
 on {{sig.date_signed}}
 {% else %}

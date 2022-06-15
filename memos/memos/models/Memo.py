@@ -218,7 +218,6 @@ class Memo(db.Model):
         js['memo_state']=f"{self.memo_state}"
         js['keywords']= self.keywords
         # need to write the date of the signer
-        user = User.find(username=self.user_id)
         signlist = MemoSignature.get_signers(self)
         signers = []
         for sig in signlist:
@@ -245,9 +244,6 @@ class Memo(db.Model):
     def signers(self):
         # get the signers from the signing table and turn it back to a string and a list
         siglist = MemoSignature.get_signers(self)
-        for sig in siglist:
-            sig.signer = User.find(username=sig.signer_id)
-            sig.delegate = User.find(username=sig.delegate_id)
         return {'signers':self._signers,'siglist':siglist}
 
     @signers.setter
@@ -465,7 +461,7 @@ class Memo(db.Model):
         if owner.is_delegate(delegate) != True:
             return None
 
-        memo = Memo.query.join(User).filter(User.username==owner.username,Memo.number==memo_number).order_by(Memo.version.desc()).first()
+        memo = Memo.query.filter(Memo.user_id==owner.username,Memo.number==memo_number).order_by(Memo.version.desc()).first()
  
         # create a new memo (i.e. not a new version of an existing memo)
         if memo_number == None or memo==None:
@@ -618,21 +614,19 @@ class Memo(db.Model):
     def get_memo_list(username=None,memo_number=None,memo_version=None,page=1,pagesize=None):
 
         if memo_version:
-            memo_list = Memo.query.join(User).filter(User.username==username,\
+            memo_list = Memo.query.filter(Memo.user_id==username,\
                                                 Memo.number==memo_number,\
-                                                Memo.version==memo_version)\
-                                                    .order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)
+                                                Memo.version==memo_version)
         elif memo_number:
-            memo_list = Memo.query.join(User).filter(User.username==username,Memo.number==memo_number)\
-            .order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)
+            memo_list = Memo.query.filter(Memo.user_id==username,Memo.number==memo_number)
 
         elif username:
-            memo_list = Memo.query.join(User).filter(User.username==username,Memo.memo_state == MemoState.Active)\
-            .order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)
+            memo_list = Memo.query.filter(Memo.user_id==username,Memo.memo_state == MemoState.Active)
         else:
-            memo_list = Memo.query.join(User).filter(Memo.memo_state == MemoState.Active)\
-            .order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)
-    
+            memo_list = Memo.query.filter(Memo.memo_state == MemoState.Active)
+
+        memo_list = memo_list.order_by(Memo.action_date.desc(), Memo.user_id, Memo.number.desc(), Memo.version.desc())\
+            .paginate(page = page,per_page=pagesize)    
         return memo_list
     
     @staticmethod 
@@ -640,18 +634,20 @@ class Memo(db.Model):
         memo_list = None
         current_app.logger.info(f"Search title={title}")
         if title != None:
-            memo_list = Memo.query.filter(Memo.title.like(f"%{title}%")).order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)
+            memo_list = Memo.query.filter(Memo.title.like(f"%{title}%"))
         
         if keywords != None:
-            memo_list = Memo.query.filter(Memo.keywords.like(f"%{keywords}%")).order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)
-            
+            memo_list = Memo.query.filter(Memo.keywords.like(f"%{keywords}%"))            
+
+        if memo_list:
+            memo_list = memo_list.order_by(Memo.action_date.desc(), Memo.user_id, Memo.number.desc(), Memo.version.desc())\
+                .paginate(page = page,per_page=pagesize)
         return memo_list
 
     @staticmethod   
-    def get_next_number(user=None):
-        assert user!=None
+    def get_next_number(user):
                 
-        memo_list = Memo.query.join(User).filter(User.username==user.username)\
+        memo_list = Memo.query.filter(Memo.user_id==user.username)\
             .order_by(Memo.number.desc()).first()
         
         if memo_list == None:
@@ -666,14 +662,17 @@ class Memo(db.Model):
         
         msigs = MemoSignature.get_signatures(user,signed=False)
         
-        memolist = Memo.query.join(User).filter(Memo.memo_state==MemoState.Signoff,Memo.id.in_(msigs)).order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)      
-        current_app.logger.info(f"Inbox for {user.username} = Items={len(memolist.items)} {memolist}")
-        return memolist
+        memo_list = Memo.query.filter(Memo.memo_state==MemoState.Signoff,Memo.id.in_(msigs))
+
+        memo_list = memo_list.order_by(Memo.action_date.desc(), Memo.user_id, Memo.number.desc(), Memo.version.desc())\
+            .paginate(page = page,per_page=pagesize)
+        current_app.logger.debug(f"Inbox for {user.username} = Items={len(memo_list.items)} {memo_list}")
+        return memo_list
     
     @staticmethod
     def get_drafts(user,page=1,pagesize=None):
         if user == None:
             return None
         
-        memolist = Memo.query.join(User).filter(Memo.memo_state==MemoState.Draft,User.username==user.username).order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)      
-        return memolist
+        memo_list = Memo.query.filter(Memo.memo_state==MemoState.Draft,Memo.user_id==user.username).order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)      
+        return memo_list
