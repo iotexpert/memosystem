@@ -7,7 +7,7 @@ class MemoReference(db.Model):
     
     ref_user_id = db.Column(db.String(120), db.ForeignKey('user.username'),nullable=False)
     ref_memo_number = db.Column(db.Integer,nullable=False)
-    ref_memo_version = db.Column(db.String(10))
+    ref_memo_version = db.Column(db.String(2))
         
     @staticmethod
     def add_ref(memo_src_id,ref_user_id=None,ref_memo_number=None,ref_memo_version=None):

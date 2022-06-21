@@ -5,7 +5,7 @@ import os
 
 class MemoFile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    _filename = db.Column(db.String(128))
+    _filename = db.Column(db.String(4000))
     _uuid = db.Column(db.String(48)) 
     memo_id = db.Column(db.Integer, db.ForeignKey('memo.id'),nullable=False)
 

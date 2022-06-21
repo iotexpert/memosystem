@@ -32,9 +32,9 @@ class Memo(db.Model):
     confidential = db.Column(db.Boolean, default=False)                 # if true only author, signer, distribution can read
     pinned = db.Column(db.Boolean, default=False)                       # Can be pinned to top of memo list
     template = db.Column(db.Boolean, default=False)                     # The memo is used as a template for the system
-    distribution = db.Column(db.String(128), default='')                # user names on the distribution
-    keywords = db.Column(db.String(128), default='')                    # any keyword
-    title = db.Column(db.String(128), nullable=False, default='')       # The title of the memo
+    distribution = db.Column(db.String(4000), default='')               # user names on the distribution
+    keywords = db.Column(db.String(4000), default='')                   # any keyword
+    title = db.Column(db.String(4000), nullable=False, default='')      # The title of the memo
 
     action_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)  # The last time anything happened
     create_date = db.Column(db.DateTime)    # when the memo was created
@@ -42,8 +42,8 @@ class Memo(db.Model):
     active_date = db.Column(db.DateTime)    # when the memo was moved to active state (from submitted)
     obsolete_date = db.Column(db.DateTime)  # when the memo was moved to obsolete state (from active)
     
-    _signers = db.Column(db.String(128),default='')                                 # the hidden list of signer usernames
-    _references = db.Column(db.String(128),default='')                              # The hidden list of references
+    _signers = db.Column(db.String(4000),default='')                                # the hidden list of signer usernames
+    _references = db.Column(db.String(4000),default='')                             # The hidden list of references
     memo_state = db.Column(db.Enum(MemoState))                                      # Draft, Signoff, Active, Obsolete
 
     def __init__(self, **kwargs):
