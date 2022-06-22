@@ -36,14 +36,16 @@ if __name__ == "__main__":
     app.app_context().push()
     db.init_app(app)
 
-    if len(sys.argv) == 1:
-        datacsv = "memos/static/config/import/data.csv"
+    datacsv = "memos/static/config/import/data.csv"
         
     if len(sys.argv) == 2 and sys.argv[1][0] != "-":
         datacsv = sys.argv[0]
         
     if len(sys.argv) == 2 and (sys.argv[1] == "-h" or sys.argv[1] == "--help"):
         print("Import CSV - ")
+        print("Columns: replace,current-owner,new-owner,confidential,doc,number,rev,title,date")
+        print("There needs to be a parallel directory called import_system which should have the files")
+        print("The directory structure: import_system/user/doc#/version/files")
         print("import_csv [data.csv] - if you specificy the filename then it will import else it will default to memos/static/import/data.csv") 
         print("import_csv -u username - filter to a specific user and default = memos/static/config/import/data.csv")       
         print("import_csv -u username filename - filter to a specific user")       
@@ -62,8 +64,10 @@ if __name__ == "__main__":
         reader = csv.DictReader(csvfile,delimiter=',')
         
         for row in reader:
-            user = User.find(username=row['current-owner'])
+            if user_filter is not None and row['current-owner'] != user_filter:
+                continue
             
+            user = User.find(username=row['current-owner'])
 
             if user is None and row['new-owner'] == '':
                 print(f"Creating new user {row['current-owner']}")
@@ -73,13 +77,13 @@ if __name__ == "__main__":
                 if user is not None:
                     print(f"Made new user {user}")
                 else:
-                    print(f"Failed to create new user {row['current-owner']} skipping row")
+                    print(f"Failed to create new user {row['current-owner']} skipping row {row['doc']}")
                     continue
             
             if 'new-owner' in row and row['new-owner'] is not None and row['new-owner'] != '':
                 new_owner = User.find(username=row['new-owner'])
                 if new_owner is None:              
-                    print(f"Failed to find owner = {row['current-owner']} skipping row")
+                    print(f"Failed to find owner = {row['current-owner']} skipping row {row['doc']}")
                     continue
             else:
                 new_owner = None
@@ -150,3 +154,4 @@ if __name__ == "__main__":
                     except:
                         print(file)
                         
+            print(f"Imported {row['current-owner']} {row['doc']}")
