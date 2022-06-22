@@ -43,6 +43,7 @@ if __name__ == "__main__":
         
     if len(sys.argv) == 2 and (sys.argv[1] == "-h" or sys.argv[1] == "--help"):
         print("Import CSV - ")
+        print("Columns: replace,current-owner,new-owner,confidential,doc,number,rev,title,date")
         print("import_csv [data.csv] - if you specificy the filename then it will import else it will default to memos/static/import/data.csv") 
         print("import_csv -u username - filter to a specific user and default = memos/static/config/import/data.csv")       
         print("import_csv -u username filename - filter to a specific user")       
