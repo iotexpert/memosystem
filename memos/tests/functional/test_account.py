@@ -72,7 +72,7 @@ def test_account_access_admin(client, session):
     assert b'Account Info' in response.data
 
     # Update page for other account
-    with open('../JPEG_example_JPG_RIP_001.jpg', 'rb') as fh:
+    with open('tests/resources/JPEG_example_JPG_RIP_001.jpg', 'rb') as fh:
         response = client.post('/account/avgUser',
             data=dict(admin=True,readAll=True,email="avgUser@updated.com",
                 delegates="adminUser", subscriptions="adminUser", pagesize=15, picture=(fh, 'JPEG_example_JPG_RIP_001.jpg')),
@@ -112,7 +112,7 @@ def test_account_access_nonadmin(client, session):
     assert b"Invalid users [&#39;badUser&#39;]" in response.data
 
     # Update page for other account
-    with open('../JPEG_example_JPG_RIP_001.jpg', 'rb') as fh:
+    with open('tests/resources/JPEG_example_JPG_RIP_001.jpg', 'rb') as fh:
         response = client.post('/account/adminUser',
             data=dict(admin=True,readAll=True,email="avgUser@updated.com",
                 delegates="adminUser", subscriptions="adminUser", pagesize=15, picture=(fh, 'JPEG_example_JPG_RIP_001.jpg')),
