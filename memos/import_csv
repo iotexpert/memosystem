@@ -1,0 +1,152 @@
+#!/usr/bin/env python
+
+from importlib.metadata import distribution
+from operator import truediv
+import re
+import csv
+import sys
+from datetime import datetime
+import os
+from os import listdir
+from os.path import isfile, join
+
+import shutil
+
+try:
+    import settings_local
+    
+except ImportError:
+    pass
+
+from flask import current_app
+from memos import db,create_app
+from memos.models.User import User
+from memos.models.Memo import Memo
+from memos.models.MemoSignature import MemoSignature
+from memos.models.MemoActivity import MemoActivity
+from memos.models.MemoHistory import MemoHistory
+from memos.models.MemoReference import MemoReference
+from memos.models.MemoSubscription import MemoSubscription
+from memos.models.MemoFile import MemoFile
+from memos.models.MemoState import MemoState
+
+if __name__ == "__main__":
+
+    app = create_app()
+    app.app_context().push()
+    db.init_app(app)
+
+    if len(sys.argv) == 1:
+        datacsv = "memos/static/config/import/data.csv"
+        
+    if len(sys.argv) == 2 and sys.argv[1][0] != "-":
+        datacsv = sys.argv[0]
+        
+    if len(sys.argv) == 2 and (sys.argv[1] == "-h" or sys.argv[1] == "--help"):
+        print("Import CSV - ")
+        print("import_csv [data.csv] - if you specificy the filename then it will import else it will default to memos/static/import/data.csv") 
+        print("import_csv -u username - filter to a specific user and default = memos/static/config/import/data.csv")       
+        print("import_csv -u username filename - filter to a specific user")       
+        sys.exit()
+        
+    user_filter = None
+    if len(sys.argv) == 3 and sys.argv[1] == "-u":
+        user_filter = sys.argv[2]
+
+    if len(sys.argv) == 4 and sys.argv[1] == "-u":
+        user_filter = sys.argv[2]
+        datacsv = sys.argv[3]
+    
+    owners ={}
+    with open(datacsv, newline='') as csvfile:
+        reader = csv.DictReader(csvfile,delimiter=',')
+        
+        for row in reader:
+            user = User.find(username=row['current-owner'])
+            
+
+            if user is None and row['new-owner'] == '':
+                print(f"Creating new user {row['current-owner']}")
+                user = User(username=row['current-owner'], password="*",email="unknown@unknown.local")
+                db.session.add(user)
+                db.session.commit()
+                if user is not None:
+                    print(f"Made new user {user}")
+                else:
+                    print(f"Failed to create new user {row['current-owner']} skipping row")
+                    continue
+            
+            if 'new-owner' in row and row['new-owner'] is not None and row['new-owner'] != '':
+                new_owner = User.find(username=row['new-owner'])
+                if new_owner is None:              
+                    print(f"Failed to find owner = {row['current-owner']} skipping row")
+                    continue
+            else:
+                new_owner = None
+                    
+            if new_owner  is None:
+                new_owner = user
+            
+            # check to make sure that the number and version of the memo doesnt exist already
+            
+            memo = Memo.query.join(User).filter(User.username==new_owner.username,Memo.number==row["number"],Memo.valid_references==row['rev']).first()
+            if memo is not None:
+                if 'replace' in row and row['replace'] != "":  # if there is something in the replace column.. blow away the current memo in the system
+                    Memo.query.join(User).filter(User.username==new_owner.username,Memo.number==row["number"],Memo.valid_references==row['rev']).delete()
+                    print("Deleting current memo")
+                else:
+                    print(f"Memo {row['current-owner']}-{row['number']}{row['rev']}  {row['doc']} already exists... skipping")
+                    continue
+            
+            if 'confidential' in row and row['confidential'] is not None and row['confidential'] != '':
+                confidential = True
+                distribution = User.valid_usernames(row['confidential'])['valid_users']
+                print(f"Distribution = {distribution}")   
+            else:
+                distribution = ''
+                confidential = False
+        
+            new_memo = Memo(number = int(row['number']),\
+                            version = row['rev'],\
+                            confidential = confidential,\
+                            distribution = distribution,\
+                            keywords = str( row['doc']),\
+                            title = row['title'],\
+                            user_id = new_owner.username,\
+                            memo_state = MemoState.Active,\
+                            action_date = datetime.strptime(row['date'],"%x"),\
+                            create_date = datetime.strptime(row['date'],"%x"),\
+                            signers = '' )
+            
+            new_memo.save()
+            db.session.commit()
+                
+            base_dir = os.path.dirname(datacsv)
+            files_dir = os.path.join(base_dir,"import_system",row['current-owner'],row['doc'],row['rev'])
+            onlyfiles = [f for f in listdir(files_dir) if isfile(join(files_dir, f))]
+
+
+            path = new_memo.get_fullpath()
+            os.makedirs(path,exist_ok=True)
+
+            new_files=[]
+            for file in onlyfiles:
+                split_name = os.path.splitext(file)
+                if len(split_name) == 2 and split_name[1] == ".pdf":
+                    new_files.insert(0,file)
+                else:
+                    new_files.append(file)
+
+
+            for file in new_files:
+                fsplit = os.path.split(file)
+                if len(fsplit) > 1 and re.match(".*\?.*",file) is None:
+                    mfile = MemoFile(memo_id=new_memo.id,filename=fsplit[1])
+                    mfile.save()
+                    src = os.path.join(files_dir,file)
+                    dst = os.path.join(path,mfile.uuid)
+                    try:
+                        shutil.copyfile(src, dst)
+                    except:
+                        print(file)
+                        
