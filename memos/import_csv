@@ -36,22 +36,33 @@ if __name__ == "__main__":
     app.app_context().push()
     db.init_app(app)
 
+    if len(sys.argv) == 1:
+        datacsv = "memos/static/config/import/data.csv"
+        
+    if len(sys.argv) == 2 and sys.argv[1][0] != "-":
+        datacsv = sys.argv[0]
+        
+    if len(sys.argv) == 2 and (sys.argv[1] == "-h" or sys.argv[1] == "--help"):
+        print("Import CSV - ")
+        print("import_csv [data.csv] - if you specificy the filename then it will import else it will default to memos/static/import/data.csv") 
+        print("import_csv -u username - filter to a specific user and default = memos/static/config/import/data.csv")       
+        print("import_csv -u username filename - filter to a specific user")       
+        sys.exit()
+        
+    user_filter = None
+    if len(sys.argv) == 3 and sys.argv[1] == "-u":
+        user_filter = sys.argv[2]
+
+    if len(sys.argv) == 4 and sys.argv[1] == "-u":
+        user_filter = sys.argv[2]
+        datacsv = sys.argv[3]
     
     owners ={}
-    with open(sys.argv[1], newline='') as csvfile:
+    with open(datacsv, newline='') as csvfile:
         reader = csv.DictReader(csvfile,delimiter=',')
         
         for row in reader:
-            if row['current-owner'] not in owners:
-                owners[row['current-owner']] = 0
-                
-            owners[row['current-owner']] += 1
-
-
-            try:
-                  user = User.find(username=row['current-owner'])
-            except:
-                print(f"Failed to find owner = {row['current-owner']}")
+            user = User.find(username=row['current-owner'])
             
 
             if user is None and row['new-owner'] == '':
@@ -62,31 +73,27 @@ if __name__ == "__main__":
                 if user is not None:
                     print(f"Made new user {user}")
                 else:
-                    print(f"Failed to create new user {row['current-owner']}")
+                    print(f"Failed to create new user {row['current-owner']} skipping row")
+                    continue
             
-            if 'new-owner' in row and row['new-owner'] is not None:
-                
-                try:
-                    new_owner = User.find(username=row['new-owner'])
-                
-                except:
-                    print(f"Failed to find owner = {row['current-owner']}")
+            if 'new-owner' in row and row['new-owner'] is not None and row['new-owner'] != '':
+                new_owner = User.find(username=row['new-owner'])
+                if new_owner is None:              
+                    print(f"Failed to find owner = {row['current-owner']} skipping row")
+                    continue
             else:
                 new_owner = None
                     
             if new_owner  is None:
                 new_owner = user
-
-            if new_owner is None:
-                print(f"{row['current-owner']} {row['new-owner']} unknown unable to import {row['doc']}")
-                continue
             
             # check to make sure that the number and version of the memo doesnt exist already
             
             memo = Memo.query.join(User).filter(User.username==new_owner.username,Memo.number==row["number"],Memo.valid_references==row['rev']).first()
             if memo is not None:
                 if 'replace' in row and row['replace'] != "":  # if there is something in the replace column.. blow away the current memo in the system
-                    pass
+                    Memo.query.join(User).filter(User.username==new_owner.username,Memo.number==row["number"],Memo.valid_references==row['rev']).delete()
+                    print("Deleting current memo")
                 else:
                     print(f"Memo {row['current-owner']}-{row['number']}{row['rev']}  {row['doc']} already exists... skipping")
                     continue
@@ -94,9 +101,7 @@ if __name__ == "__main__":
             if 'confidential' in row and row['confidential'] is not None and row['confidential'] != '':
                 confidential = True
                 distribution = User.valid_usernames(row['confidential'])['valid_users']
-                print(f"Distribution = {distribution}")
-                 
-                
+                print(f"Distribution = {distribution}")   
             else:
                 distribution = ''
                 confidential = False
@@ -116,7 +121,7 @@ if __name__ == "__main__":
             new_memo.save()
             db.session.commit()
                 
-            base_dir = os.path.dirname(sys.argv[1])
+            base_dir = os.path.dirname(datacsv)
             files_dir = os.path.join(base_dir,"import_system",row['current-owner'],row['doc'],row['rev'])
             onlyfiles = [f for f in listdir(files_dir) if isfile(join(files_dir, f))]
 
