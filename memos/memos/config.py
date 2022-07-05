@@ -35,3 +35,4 @@ class Config:
 
     TESTING = True if os.getenv('TESTING') else False
  
+    ENABLE_REGISTER = True if os.getenv('ENABLE_REGISTER') else False

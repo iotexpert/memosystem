@@ -70,7 +70,7 @@ def main(username=None,memo_number=None,memo_version=None):
 
         next_page = "memos.main"
 
-        return render_template('memo.html', memos=memo_list, title="memo",user=user,delegate=user,
+        return render_template('memo.html', config=current_app.config,memos=memo_list, title="memo",user=user,delegate=user,
                             signer=None, detail=detail,next_page=next_page,page=page,
                             url_params=url_params)
 
@@ -168,7 +168,7 @@ def create_revise_submit(username=None,memo_number=None):
             form.memo_number.data = memo.number
             form.memo_version.data = memo.version
 
-            return render_template('create_memo.html', title=f'New Memo {memo}',form=form, legend=f'New Memo {memo}', user=owner, memo=memo)
+            return render_template('create_memo.html', config=current_app.config,title=f'New Memo {memo}',form=form, legend=f'New Memo {memo}', user=owner, memo=memo)
 
         # Everthing from here down is POST
 
@@ -212,7 +212,7 @@ def create_revise_submit(username=None,memo_number=None):
             flash(f'{memo} has been created!', 'success')
             return redirect(url_for('memos.main'))
 
-        return render_template('create_memo.html', title=f'New Memo {memo}',
+        return render_template('create_memo.html', config=current_app.config,title=f'New Memo {memo}',
                             form=form, legend=f'New Memo {memo}', user=delegate, memo=memo)
 
 
@@ -249,7 +249,7 @@ def inbox(username=None):
 
         next_page = "memos.inbox"
 
-        return render_template('memo.html', memos=memo_list, title=f"Inbox {username}", legend=f'Inbox: {username}',
+        return render_template('memo.html', config=current_app.config,memos=memo_list, title=f"Inbox {username}", legend=f'Inbox: {username}',
                             user=user, delegate=delegate,next_page=next_page, url_params=url_params, inbox_list=inbox_list)
 
 
@@ -285,7 +285,7 @@ def drafts(username=None):
 
         next_page = "memos.drafts"
 
-        return render_template('memo.html', memos=memo_list, title=f"Inbox {username}", user=user, delegate=delegate,next_page=next_page, url_params=url_params)
+        return render_template('memo.html', config=current_app.config,memos=memo_list, title=f"Inbox {username}", user=user, delegate=delegate,next_page=next_page, url_params=url_params)
 
 
 ###########################################################################
@@ -473,7 +473,7 @@ def search():
                     flash('No memos match that criteria','error')
                 search_param = f"title:{form.title.data}"
                 url_params['search'] = search_param
-                return render_template('memo.html', memos=memos_found, title="memo",user=user,delegate=user,detail=detail,next_page=next_page,url_params =url_params)
+                return render_template('memo.html', config=current_app.config,memos=memos_found, title="memo",user=user,delegate=user,detail=detail,next_page=next_page,url_params =url_params)
 
             if form.keywords.data and form.keywords.data != '':
                 memos_found = Memo.search(keywords=form.keywords.data,page=page,pagesize=pagesize)
@@ -481,7 +481,7 @@ def search():
                     flash('No memos match that criteria','error')
                 search_param = f"keywords:{form.keywords.data}"
                 url_params['search'] = search_param
-                return render_template('memo.html', memos=memos_found, title="memo",user=user,delegate=user,detail=detail,next_page=next_page,url_params =url_params)
+                return render_template('memo.html', config=current_app.config,memos=memos_found, title="memo",user=user,delegate=user,detail=detail,next_page=next_page,url_params =url_params)
 
             if form.memo_ref.data and form.memo_ref.data != '':
                 return redirect(url_for("memos.main",username=form.memo_ref.data,page=page))
@@ -492,7 +492,7 @@ def search():
             if form.inbox.data and form.inbox.data != '':
                 return redirect(url_for("memos.inbox",username=form.inbox.data,page=page))
 
-            return render_template('memo_search.html', title='Memo Search ',legend='Search',form=form)
+            return render_template('memo_search.html', config=current_app.config,title='Memo Search ',legend='Search',form=form)
 
 
     # Everything below here is GET
@@ -513,9 +513,9 @@ def search():
                 url_params['search']= f'keywords:{keywords[1]}'
 
             next_page = "memos.search"
-            return render_template('memo.html', memos=memos_found, title="memo",user=user,delegate=user,detail=detail,next_page=next_page,url_params=url_params)
+            return render_template('memo.html', config=current_app.config,memos=memos_found, title="memo",user=user,delegate=user,detail=detail,next_page=next_page,url_params=url_params)
 
-        return render_template('memo_search.html', title='Memo Search ',legend='Search',form=form)
+        return render_template('memo_search.html', config=current_app.config,title='Memo Search ',legend='Search',form=form)
 
 
 @memos.route("/history")

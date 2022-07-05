@@ -10,11 +10,12 @@ main = Blueprint('main', __name__)
 def help():
     with transaction():
         md_text= open(os.path.join(current_app.root_path,"static","doc","help.md"),"r").read()
-        return render_template('help.html', title='Help', md_text=md_text)
+        return render_template('help.html', config=current_app.config, title='Help', md_text=md_text)
 
 
 @main.route("/home")
 def home():
     with transaction():
+        current_app.logger.info(current_app.config['LDAP_HOST'])
         return redirect(url_for("memos.main"))
 

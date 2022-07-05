@@ -31,3 +31,6 @@ os.environ['MEMOS_EMAIL_SERVER'] = 'smtp.google.com'
 os.environ['MEMOS_EMAIL_PORT'] = '587'
 os.environ['MEMOS_EMAIL_USER'] = ''
 os.environ['MEMOS_EMAIL_PASS'] = ''
+
+# if you want to turn on registration and your are not using LDAP
+#os.environ['ENABLE_REGISTER']='true'
