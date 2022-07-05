@@ -47,7 +47,7 @@
                 <a class="nav-item nav-link" href="{{ url_for('users.logout') }}">Logout</a>
               {% else %}
                 <a class="nav-item nav-link" href="{{ url_for('users.login') }}">Login</a>
-                {% if not ldap %}
+                {% if config is not none and 'ENABLE_REGISTER' in config and  config['ENABLE_REGISTER'] == true %}
                 <a class="nav-item nav-link" href="{{ url_for('users.register') }}">Register</a>
                 {% endif %}
               {% endif %}
