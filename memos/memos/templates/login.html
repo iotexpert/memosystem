@@ -38,15 +38,19 @@
             </fieldset>
             <div class="form-group">
                 {{ form.submit(class="btn btn-primary") }}
+                {% if config is not none and 'ENABLE_REGISTER' in config and  config['ENABLE_REGISTER'] == true %}
                 <small class="text-muted ml-2">
                     <a href="{{ url_for('users.reset_request') }}">Forgot Password?</a>
                 </small>
+                {% endif %}
             </div>
         </form>
     </div>
+    {% if config is not none and 'ENABLE_REGISTER' in config and  config['ENABLE_REGISTER'] == true %}
     <div class="border-top pt-3">
         <small class="text-muted">
             Need An Account? <a class="ml-2" href="{{ url_for('users.register') }}">Sign Up Now</a>
         </small>
     </div>
+    {% endif %}
 {% endblock content %}

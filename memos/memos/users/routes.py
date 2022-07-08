@@ -15,6 +15,8 @@ users = Blueprint('users', __name__)
 
 @users.route("/register", methods=['GET', 'POST'])
 def register():
+    if not ('ENABLE_REGISTER' in current_app.config and  current_app.config['ENABLE_REGISTER'] == 'true'):
+        abort(404) 
     with transaction():
         if ldap: #pragma nocover  -- testing ldap is very environment centric.
             redirect(url_for('users.login'))
@@ -155,6 +157,10 @@ def account(username=None):
 
 @users.route("/reset_password", methods=['GET', 'POST'])
 def reset_request():
+    
+    if not ('ENABLE_REGISTER' in current_app.config and  current_app.config['ENABLE_REGISTER'] == 'true'):
+        abort(404) 
+        
     with transaction():
         if current_user.is_authenticated:
             return redirect(url_for('main.home'))
@@ -176,6 +182,9 @@ def reset_request():
 
 @users.route("/reset_password/<token>", methods=['GET', 'POST'])
 def reset_token(token):
+    if not ('ENABLE_REGISTER' in current_app.config and  current_app.config['ENABLE_REGISTER'] == 'true'):
+        abort(404) 
+        
     with transaction():
         if current_user.is_authenticated:
             return redirect(url_for('main.home'))
