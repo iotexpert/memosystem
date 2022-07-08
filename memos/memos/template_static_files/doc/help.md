@@ -10,7 +10,7 @@ The idea is to capture information in a searchable system, instead of transmitti
 ## State Machine
 Each memo can have one or more versions.  A version starts as a draft, moves to signoff when it is submitted, then to active when it is signed off (or has no signatures) and finally becomes obsolete when
 1. Another version of the memo becomes active
-2. The user, the delgate of the user or the admin marks the memo as obsolete
+2. The user, the delegate of the user or the admin marks the memo as obsolete
 
 A memo can be in one of 4 states, Draft, Signoff, Active or Obsolete.  
 ![State Flow Diagram](/static/profile_pics/StateFlow.png)
@@ -20,7 +20,7 @@ The top banner contains the menu options for the system. The options available w
 ## Home
 Lists the most recently released memos.
 ## Search
-Allows searcing through memos by *one* of the available fields:
+Allows searching through memos by *one* of the available fields:
 - Title
 - Keywords
 - Memo (user-number)
@@ -29,7 +29,7 @@ Allows searcing through memos by *one* of the available fields:
 ## Inbox
 List of memos awaiting my review. Sign and Reject buttons are here.
 ### Available Inbox
-The Available inboxes are list list of your inbox, plus all the inboxes of users you are a delegate for.
+The Available inboxes are list of your inbox, plus all the inboxes of users you are a delegate for.
 ## New Memo
 Create a new memo
 ## Drafts
@@ -49,10 +49,10 @@ Screen to display user settings.
 - Admin - Indicates access to all features
 - Read All - Indicates ability to read all confidential memos
 - Page Size - number of memos per page you want to display
-- Profile Picture - Uplaod a .png or .gif to customize your account
+- Profile Picture - Upload a .png or .gif to customize your account
 
 only administrators can alter the settings of the Admin and Read All fields.  
-In an LDAP environment, Email, Admin and Read All are set from LDAP and connot be updated.
+In an LDAP environment, Email, Admin and Read All are set from LDAP and cannot be updated.
 ## Logout
 Logs out of system
 ## Help
@@ -91,4 +91,4 @@ An administrator can pull up anyone's Inbox page by going to the /inbox/<usernam
 From that page, they can sign for that user.
 ## Account
 An administrator can pull up anyone's Inbox page by going to the /account/<username> url.  
-On that page, they can update any field except username. (If LDAP is enabled, Email, Admin and Read All are alos locked)
+On that page, they can update any field except username. (If LDAP is enabled, Email, Admin and Read All are also locked)
