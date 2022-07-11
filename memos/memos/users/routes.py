@@ -83,12 +83,12 @@ def account(username=None):
         if user is None:
             abort(404)        
         
-        current_app.logger.info(f"User = {current_user.username} Delegate List= {user.delegates}")
+#        current_app.logger.info(f"User = {current_user.username} Delegate List= {user.delegates}")
         disable_submit_button = None
         if form.validate_on_submit():
             
-            current_app.logger.info(f"User = {user} current_user={current_user} formusername={form.username.data}")
-            if user is not current_user and not current_user.admin:
+#            current_app.logger.info(f"User = {user} current_user={current_user} formusername={form.username.data}")
+            if user != current_user and not current_user.admin:
                 abort(403)
 
             if form.picture.data:
