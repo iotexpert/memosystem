@@ -52,12 +52,12 @@
           <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('memos.reject',username=memo.user.username,memo_number=memo.number,memo_version=memo.version,signer=user.username) }}">Reject</a>
           {% endif %}
             </div>
-            <h2><a class="article-title" href="/memo/{{memo.user.username}}/{{memo.number}}/{{memo.version}}?detail">{{ memo.title }}</a></h2>
+            <a class="article-title" href="/memo/{{memo.user.username}}/{{memo.number}}/{{memo.version}}?detail">{{ memo.title }}</a>
           {% if detail == True %}
           {% include 'memo_detail.html'%}
           {% endif %}
           {% else %}
-          <h2>Confidential</h2>
+          Confidential
         </div>
         {% endif %}
     </article>
