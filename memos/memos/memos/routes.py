@@ -29,11 +29,10 @@ def main(username=None,memo_number=None,memo_version=None):
         pagesize = User.get_pagesize(current_user)
         page = request.args.get('page', 1, type=int)
         detail = request.args.get('detail')
+        showAll = request.args.get('showAll')
 
-        if detail is None:
-            detail = False
-        else:
-            detail = True
+        detail = False if detail is None else True
+        showAll = False if showAll is None else True
 
         if username is not None and memo_number is None:
             combo = re.split("-",username)
@@ -59,7 +58,7 @@ def main(username=None,memo_number=None,memo_version=None):
             user = current_user
 
         memo_list = Memo.get_memo_list(username=username,memo_number=memo_number,
-                                    memo_version=memo_version,page=page,pagesize=pagesize)
+                                    memo_version=memo_version,page=page,pagesize=pagesize,showAll=showAll)
 
         if len(memo_list.items) == 0:
             flash('No memos match that criteria','error')
