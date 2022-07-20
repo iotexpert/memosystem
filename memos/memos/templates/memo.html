@@ -36,7 +36,7 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
           <-- TODO: ARH -!>
-          <form action="{{ url_for('memos.obsolete',username=current_user.username,memo_number=1,memo_version=1) }}" method="POST">
+          <form action="{{ url_for('memos.obsolete',username=current_user.username,memo_number=1,memo_version=1) }}" method="POST" onclick="return confirm('Are you sure you want to obsolete this memo?');">
             <input class="btn btn-danger" type="submit" value="Obsolete">
           </form>
         </div>
