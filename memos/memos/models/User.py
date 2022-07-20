@@ -259,7 +259,7 @@ class User(db.Model, UserMixin):
                 else:
                     valid_usernames.append(user.username)
             else:
-                user = User.query.filter_by(username=username).first()
+                user = User.find(username=username)
                 if user == None:
                     invalid_usernames.append(username)
                     has_non_users = True
