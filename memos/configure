@@ -118,20 +118,22 @@ def update_password(username,password):
         db.session.add(user)
         db.session.commit()
         print(f"User {user} password ={password} hash={user.password}")
-        
-        
-def print_usage():
 
+def rename(src,dst):
+    Memo.rename(src,dst)
+       
+def print_usage():
     print("-h  --help                     : This help message")
+    print("-r  src dst  --rename src dst  : Rename")
     print("-a  --all                      : configure database & copyfiles")
-    print("-db --database                : configure database")
+    print("-db --database                 : configure database")
     print("-s  --static                   : copy static files")
-    print("-u user:email:pw              : create user ... user:email:pw")
-    print("-ad --admin user true|false   : Change the admin state of the user")
-    print("-ra --readall user true|false : Change the readall state of the user")
-    print("-p --password user pw         : Set the password for user")
-    print("--resetdb                     : reset database... better be SURE!")
-    print("--clear                       : clear memo files... better be SURE!")
+    print("-u user:email:pw               : create user ... user:email:pw")
+    print("-ad --admin user true|false    : Change the admin state of the user")
+    print("-ra --readall user true|false  : Change the readall state of the user")
+    print("-p --password user pw          : Set the password for user")
+    print("--resetdb                      : reset database... better be SURE!")
+    print("--clear                        : clear memo files... better be SURE!")
 
 if __name__ == "__main__":
 
@@ -148,7 +150,16 @@ if __name__ == "__main__":
         create_db()
         copy_static()
         sys.exit()
-
+        
+    if "-r" in args or "--rename" in args:
+        if len(args) < 3:
+            print(len(args))
+            print("-r or --rename src dst")
+            sys.exit()
+        rename(args[1],args[2])
+        sys.exit()
+        
+        
     if "-db" in args or "--database" in args:
         create_db()
         
