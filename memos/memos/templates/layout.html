@@ -38,7 +38,7 @@
                 <a class="nav-item nav-link" href="{{ url_for('memos.inbox') }}">Inbox</a>
                 <a class="nav-item nav-link" href="{{ url_for('memos.create_revise_submit') }}">New Memo</a>
                 <a class="nav-item nav-link" href="{{ url_for('memos.drafts') }}">Drafts</a>
-                <a class="nav-item nav-link" href="{{ url_for('memos.main',username=current_user.username) }}">My Memos</a>
+                <a class="nav-item nav-link" href="{{ url_for('memos.main',username=current_user.username) }}?showAll">My Memos</a>
                 
                 {% if user and user.admin %}
                   <a class="nav-item nav-link" href="{{ url_for('main.home') }}">Admin</a>

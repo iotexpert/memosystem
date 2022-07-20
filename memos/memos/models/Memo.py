@@ -440,14 +440,14 @@ class Memo(db.Model):
                 self.submit_date = self.action_date
                 MemoHistory.activity(memo=self,memo_activity=MemoActivity.Signoff,user=acting)
                 self.save()
-                self.notify_signers(f"memo {self.user.username}-{self.number}-{self.version} has gone into signoff")
+                self.notify_signers(f"Memo: {self.title}  {self.user.username}-{self.number}-{self.version} has gone into signoff")
             else:
                 self.memo_state = MemoState.Active
                 self.active_date = self.action_date
                 MemoHistory.activity(memo=self,memo_activity=MemoActivity.Activate,user=acting)
                 self.obsolete_previous(acting=acting)
                 self.save()
-                self.notify_distribution(f"memo {self.user.username}-{self.number}-{self.version} has been published")
+                self.notify_distribution(f"Memo: {self.title}  {self.user.username}-{self.number}-{self.version} has been published")
    
         if self.memo_state == MemoState.Signoff:
             if MemoSignature.status(self.id):
@@ -456,7 +456,7 @@ class Memo(db.Model):
                 MemoHistory.activity(memo=self,memo_activity=MemoActivity.Activate,user=acting)
                 self.obsolete_previous(acting=acting)
                 self.save()
-                self.notify_distribution(f"memo {self.user.username}-{self.number}-{self.version} has been published")
+                self.notify_distribution(f"Memo: {self.title}  {self.user.username}-{self.number}-{self.version} has been published")
             else:
                 current_app.logger.info(f"Signatures Still Required")
         
@@ -467,24 +467,22 @@ class Memo(db.Model):
         try:
             replyTo = User.find(self.user_id)
             users = User.valid_usernames(self.distribution)
-            recipients=[]
+            recipients=[replyTo.email]
             for email in users['email_addrs']:
                 recipients.append(email)
-                
-            # Only send emails if there is a distribution list.
-            if len(recipients) > 0:
-                msg = Message(message,
-                            sender=os.environ['MEMOS_EMAIL_USER'],
-                            recipients=recipients,
-                            reply_to=replyTo.email)
-                msg.body = f'''{message}
-            Use the following link:
-            {url_for('memos.main', username=self.user_id, memo_number=self.number, memo_version=self.version, _external=True)}?detail
-            '''
-                if 'MEMOS_EMAIL_SERVER' in os.environ:
-                    mail.send(msg)
-                else: # pragma nocover
-                    current_app.logger.info(F"Notify Distribution {self.distribution} {message}")
+            
+            msg = Message(message,
+                        sender=os.environ['MEMOS_EMAIL_USER'],
+                        recipients=recipients,
+                        reply_to=replyTo.email)
+            msg.body = f'''{message}
+        Use the following link:
+        {url_for('memos.main', username=self.user_id, memo_number=self.number, memo_version=self.version, _external=True)}?detail
+        '''
+            if 'MEMOS_EMAIL_SERVER' in os.environ:
+                mail.send(msg)
+            else: # pragma nocover
+                current_app.logger.info(F"Notify Distribution {self.distribution} {message}")
                 
         except BaseException as e: # pragma nocover
             raise e
@@ -709,7 +707,7 @@ class Memo(db.Model):
         MemoHistory.activity(memo=self,memo_activity=MemoActivity.Reject,user=delegate)
         MemoSignature.unsign_all(self)
         self.save()
-        self.notify_signers(f"Memo {self.user.username}-{self.number}-{self.version} has been rejected for {signer.username} by {delegate.username}")
+        self.notify_signers(f"Memo: {self.title}  {self.user.username}-{self.number}-{self.version} has been rejected for {signer.username} by {delegate.username}")
         return True
     
 
@@ -731,7 +729,7 @@ class Memo(db.Model):
         return memo
 
     @staticmethod
-    def get_memo_list(username=None,memo_number=None,memo_version=None,page=1,pagesize=None):
+    def get_memo_list(username=None,memo_number=None,memo_version=None,page=1,pagesize=None, showAll=False):
 
         if memo_version:
             memo_list = Memo.query.filter(Memo.user_id==username,\
@@ -739,11 +737,11 @@ class Memo(db.Model):
                                                 Memo.version==memo_version)
         elif memo_number:
             memo_list = Memo.query.filter(Memo.user_id==username,Memo.number==memo_number)
-
-        elif username:
-            memo_list = Memo.query.filter(Memo.user_id==username,Memo.memo_state == MemoState.Active)
         else:
-            memo_list = Memo.query.filter(Memo.memo_state == MemoState.Active)
+            if username:
+                memo_list = Memo.query.filter(Memo.user_id==username)
+            if not showAll:
+                memo_list = Memo.query.filter(Memo.memo_state == MemoState.Active)
 
         memo_list = memo_list.order_by(Memo.action_date.desc(), Memo.user_id, Memo.number.desc(), Memo.version.desc())\
             .paginate(page = page,per_page=pagesize)    
