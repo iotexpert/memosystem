@@ -260,12 +260,79 @@ class Memo(db.Model):
 # References
 ######################################################################
 
+    # input is a string of form
+    # input "username-number" output {username:user, number:int, version: none}
+    # input "username-number-version" output {username:user, number:int, version: revletter string)}
+    # input "username-numberversion" output {username:user, number:int, version: revletter string)}
+    # return keymap memo username number revletter or None
     @staticmethod
     def parse_reference(reference):
-        parts = re.split(r'-',reference)
-        if len(parts) == 2:
-            parts.append(None)
-        return parts
+#        parts = re.split(r'-',reference)
+#        if len(parts) == 2:
+#            parts.append(None)
+#        return parts
+
+        # valid means a valid reference
+        # user is the owner of the memo
+        # username is the owner of the memo's username
+        # memo is the memo that you are refering to 
+        # memo_number is the memo_number (thanks for the newflash)
+        # memo_version is the memo version (thanks for the newsflash).. but None if the reference is arh-3
+        rval = { "valid": False, "user":None, "username":None, "memo":None, "memo_number":None, "memo_version": None}
+
+    
+        memo_number = None
+        memo_version = None
+
+        combo = re.split("-",reference)
+        if len(combo) == 2:
+            username = combo[0]
+            memo_number = combo[1]
+            if re.match("^[0-9]+[a-zA-Z]+",memo_number):
+                split = re.split("[a-zA-Z]",memo_number)
+                memo_version = memo_number[len(split[0]):].upper()
+                memo_number = split[0]
+        elif len(combo) == 3:
+            username = combo[0]
+            memo_number = combo[1]
+            memo_version = combo[2]
+        else:
+            return rval
+        
+        # check to make sure that the user is legal
+        user = User.find(username=username)
+        if user is None:
+            return rval
+        
+        rval["username"] = username
+        rval["user"] = user
+        
+        # check to make sure that the memo_number is actually a number
+        if re.fullmatch("^[1-9][0-9]*$",memo_number) is None:
+            memo_number = None
+            rval["valid"] = False
+            return rval
+        else:
+            memo_number = int(memo_number)
+        
+        
+        # check to make sure that the memo_version is legal (if it isnt none)
+        if memo_version is not None and re.fullmatch("[a-zA-Z]+",memo_version) is None:
+            memo_version = None
+            rval["valid"] = False
+            return rval
+
+        memo = None
+        if username is not None and memo_number is not None:
+            memo = Memo.find(username=username,memo_number=memo_number,memo_version=memo_version)
+            if memo is not None:
+                rval["valid"] = True
+        
+        rval["memo"] = memo
+        rval["memo_number"] = memo_number
+        rval["memo_version"] = memo_version
+
+        return rval
             
     @staticmethod
     def valid_references(references):
@@ -277,16 +344,11 @@ class Memo(db.Model):
             if memo_ref == '':
                 continue
             parts = Memo.parse_reference(memo_ref)
-            if len(parts) > 3 or len(parts) < 2:
+            if parts["valid"] == False:
                 invalid.append(memo_ref)
-                current_app.logger.info(f"INVALID length append {memo_ref} valid={valid_memos} invalid {invalid}")
                 continue
 
-            username = parts[0]
-            memo_number = parts[1]
-            memo_version = parts[2]
-            memo = Memo.find(username=username,memo_number=memo_number,memo_version=memo_version)
-            current_app.logger.info(f"Memo = {memo}")
+            memo = parts["memo"]
             if memo != None and (memo.memo_state == MemoState.Active or memo.memo_state == MemoState.Obsolete):
                 valid_memos.append(memo)
                 valid_refs.append(memo_ref)
@@ -317,8 +379,11 @@ class Memo(db.Model):
         refs = Memo.valid_references(references)
         for i in range(len(refs['valid_refs'])):
             parsed_ref = Memo.parse_reference(refs['valid_refs'][i])
-            user = User.find(username=parsed_ref[0])
-            MemoReference.add_ref(self.id,ref_user_id=user.username,ref_memo_number=parsed_ref[1],ref_memo_version=parsed_ref[2])
+#            user = User.find(username=parsed_ref[0])
+#            MemoReference.add_ref(self.id,ref_user_id=user.username,ref_memo_number=parsed_ref[1],ref_memo_version=parsed_ref[2])
+
+            MemoReference.add_ref(self.id,ref_user_id=parsed_ref["username"],ref_memo_number=parsed_ref["memo_number"],ref_memo_version=parsed_ref["memo_version"])
+            
 
     @property
     def backrefs(self):
@@ -550,12 +615,12 @@ class Memo(db.Model):
         return True
 
 # Owner Function
-    def cancel(self,delegate):
+    def cancel(self,delegate,validate_user=True):
         current_app.logger.info(f"Cancel: {self} Delegate={delegate}")
     
         memostring = f"{self}"
         
-        if not self.can_cancel(delegate=delegate):
+        if validate_user == True and not self.can_cancel(delegate=delegate):
             return False
         
         
@@ -569,9 +634,64 @@ class Memo(db.Model):
         MemoHistory.activity(memo=self,user=delegate,memo_activity=MemoActivity.Cancel)
 
         db.session.delete(self)
-        current_app.logger.info(f"Canceling")
+        db.session.commit() # ARH/Graham is this right
         
         return True
+
+# general function
+
+    # src = user-number-version" or "user-numberversion"
+    # dst = user-number-version" or "user-numberversion"
+    
+    # if dst has an active memo then assign the next number and obsolete the one before it
+    
+    def rename(src,dst):
+        srcref = Memo.parse_reference(src)
+        dstref = Memo.parse_reference(dst)
+
+        old_memo = srcref["memo"]
+        
+        if srcref["valid"] == False:
+            current_app.logger.info(f"Rename Invalid {srcref}")
+            return None
+
+        if dstref["valid"] == True and dstref["memo_version"] is not None and dstref["memo"] is not None:
+            current_app.logger.info(f"Rename Invalid Destination already exists {dst}")
+            return None
+
+        current_app.logger.info(f"User = {dstref['username']}")
+        current_app.logger.info(f"Number = {dstref['memo_number']}")
+        current_app.logger.info(f"Version = {dstref['memo_version']}")
+
+        new_memo = Memo(number = dstref["memo_number"],\
+                version = dstref["memo_version"],\
+                confidential = old_memo.confidential,\
+                distribution = old_memo.distribution,\
+                keywords = old_memo.keywords,\
+                title = old_memo.title,\
+                user_id = dstref["username"],\
+                memo_state = old_memo.memo_state,\
+                action_date = datetime.utcnow(),\
+                create_date = old_memo.create_date,\
+                signers = old_memo.signers['signers'] \
+                    )
+
+        db.session.add(new_memo)
+        db.session.commit()
+
+        new_memo.saveJson()
+#        Copy the files
+        files = old_memo.files
+        for file in files:
+            srcfile = os.path.join(old_memo.get_fullpath(),file._uuid)
+            dstfile = os.path.join(new_memo.get_fullpath(),file._uuid)
+            shutil.copyfile(srcfile,dstfile)
+            file.memo_id = new_memo.id
+            db.session.add(file)
+        db.session.commit()
+        
+        # delete the original memo
+        old_memo.cancel(None,validate_user=False)
 
 # signer function
     def reject(self,signer,delegate):
