@@ -690,6 +690,8 @@ class Memo(db.Model):
         
         # delete the original memo
         old_memo.cancel(None,validate_user=False)
+        
+        return True
 
 # signer function
     def reject(self,signer,delegate):

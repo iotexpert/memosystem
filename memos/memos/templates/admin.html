@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+{% block content %}
+    <div class="content-section">
+
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <fieldset class="form-group">
+                <div class="form-group">
+                    {% if form.source.errors %}
+                        {{ form.source(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.source.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        Source {{ form.source(class="form-control form-control-lg") }} Destination {{ form.destination(class="form-control form-control-lg") }}
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    {{ form.rename(class="btn btn-outline-info",formaction=url_for("admin.rename")) }}
+                </div>
+                </fieldset>
+            <fieldset class="form-group">
+                <div class="form-group">
+                    {% if form.source.errors %}
+                        {{ form.source(class="form-control form-control-lg is-invalid") }}
+                        <div class="invalid-feedback">
+                            {% for error in form.source.errors %}
+                                <span>{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        Delete {{ form.delete_ref(class="form-control form-control-lg") }}
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    {{ form.delete(class="btn btn-outline-info",formaction=url_for("admin.delete")) }}
+                </div>
+                </fieldset>
+
+            </form>
+        
+    </div>
+
+{% endblock content %}
