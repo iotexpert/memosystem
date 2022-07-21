@@ -61,7 +61,7 @@ def main(username=None,memo_number=None,memo_version=None):
                                     memo_version=memo_version,page=page,pagesize=pagesize,showAll=showAll)
 
         if len(memo_list.items) == 0:
-            flash('No memos match that criteria','error')
+            flash('No memos match that criteria','danger')
 
         url_params = {}
         if username:
@@ -201,14 +201,17 @@ def create_revise_submit(username=None,memo_number=None):
                         flash(f"Remove {file}",'success')
                         return redirect(request.url)  # redirect back to edit instead...
 
-            if form.save.data is True:
-                flash(f'{memo} has been saved!', 'success')
+            if form.submit.data is True:
+                # submit for sigantures
+                if len(memo.files) < 1:
+                    flash(f'Must have at least one file attached to Submit memo!', 'danger')
+                    return redirect(request.url)  # redirect back to edit instead...
+                memo.process_state(acting=current_user)
+                flash(f'{memo} has been created!', 'success')
                 return redirect(url_for('memos.main'))
 
-            # creation is all done... all documents added... signatures etc.
-            memo.process_state(acting=current_user)
-            # make a json backup
-            flash(f'{memo} has been created!', 'success')
+            # We are done saving changes
+            flash(f'{memo} has been saved!', 'success')
             return redirect(url_for('memos.main'))
 
         return render_template('create_memo.html', config=current_app.config,title=f'New Memo {memo}',
@@ -239,7 +242,7 @@ def inbox(username=None):
 
         memo_list = Memo.get_inbox(user,page,pagesize)
         if len(memo_list.items) == 0:
-            flash('No memos match that criteria','error')
+            flash('No memos match that criteria','danger')
         inbox_list = [user] + [current_user] + current_user.delegate_for['users']
 
         url_params = {
@@ -276,7 +279,7 @@ def drafts(username=None):
 
         memo_list = Memo.get_drafts(user,page,pagesize)
         if len(memo_list.items) == 0:
-            flash('No memos match that criteria','error')
+            flash('No memos match that criteria','danger')
 
         url_params = {}
         if username is not None:
@@ -314,9 +317,9 @@ def sign(username,memo_number,memo_version):
             if memo.sign(signer,delegate):
                 flash(f'Sign {memo} Success', 'success')
             else:
-                flash(f'Sign {memo} Failed', 'error')
+                flash(f'Sign {memo} Failed', 'danger')
         else:
-            flash(f'Sign {username}-{memo_number}-{memo_version} Failed', 'error')
+            flash(f'Sign {username}-{memo_number}-{memo_version} Failed', 'danger')
         return redirect(url_for('memos.main'))
 
 @memos.route("/unsign/memo/<string:username>/<int:memo_number>/<string:memo_version>")
@@ -347,9 +350,9 @@ def unsign(username,memo_number,memo_version):
                 flash(f'Unsign {memo} success', 'success')
                 return redirect(url_for('memos.main'))
             else:
-                flash(f'Unsign {memo} Failed', 'error')
+                flash(f'Unsign {memo} Failed', 'danger')
         else:
-            flash(f'Unsign {username}-{memo_number}-{memo_version} Failed', 'error')
+            flash(f'Unsign {username}-{memo_number}-{memo_version} Failed', 'danger')
 
         return redirect(url_for(next_page,page=page,next_page=next_page))
 
@@ -375,9 +378,9 @@ def obsolete(username,memo_number,memo_version):
             if memo.obsolete(delegate):
                 flash(f'Obsolete {memo} Success', 'success')
             else:
-                flash(f'Obsolete {memo} Failed', 'error')
+                flash(f'Obsolete {memo} Failed', 'danger')
         else:
-            flash(f'Obsolete {username}-{memo_number}-{memo_version } Failed', 'error')
+            flash(f'Obsolete {username}-{memo_number}-{memo_version } Failed', 'danger')
 
         return redirect(url_for(next_page,page=page,next_page=next_page))
 
@@ -402,9 +405,9 @@ def cancel(username=None,memo_number=0,memo_version=0):
             if memo.cancel(user):
                 flash(f'Canceled {memostring}', 'success')
             else:
-                flash(f'Cancel {memo} Failed', 'error')
+                flash(f'Cancel {memo} Failed', 'danger')
         else:
-            flash(f'Cannot cancel memo {username}-{memo_number}-{memo_version}', 'error')
+            flash(f'Cannot cancel memo {username}-{memo_number}-{memo_version}', 'danger')
 
         return redirect(url_for(next_page,page=page,next_page=next_page))
 
@@ -435,9 +438,9 @@ def reject(username,memo_number,memo_version):
             if memo.reject(signer,delegate):
                 flash(f'Rejected {memo.user.username}-{memo.number}-{memo.version}', 'success')
             else:
-                flash(f'Reject {memo.user.username}-{memo.number}-{memo.version} Failed', 'error')
+                flash(f'Reject {memo.user.username}-{memo.number}-{memo.version} Failed', 'danger')
         else:
-            flash(f'Cannot unsign memo {username}-{memo_number}-{memo_version}', 'error')
+            flash(f'Cannot unsign memo {username}-{memo_number}-{memo_version}', 'danger')
 
         return redirect(url_for(next_page,page=page,next_page=next_page))
 
@@ -469,7 +472,7 @@ def search():
             if form.title.data and form.title.data != '':
                 memos_found = Memo.search(title=form.title.data,page=page,pagesize=pagesize)
                 if len(memos_found.items) == 0:
-                    flash('No memos match that criteria','error')
+                    flash('No memos match that criteria','danger')
                 search_param = f"title:{form.title.data}"
                 url_params['search'] = search_param
                 return render_template('memo.html', config=current_app.config,memos=memos_found, title="memo",user=user,delegate=user,detail=detail,next_page=next_page,url_params =url_params)
@@ -477,7 +480,7 @@ def search():
             if form.keywords.data and form.keywords.data != '':
                 memos_found = Memo.search(keywords=form.keywords.data,page=page,pagesize=pagesize)
                 if len(memos_found.items) == 0:
-                    flash('No memos match that criteria','error')
+                    flash('No memos match that criteria','danger')
                 search_param = f"keywords:{form.keywords.data}"
                 url_params['search'] = search_param
                 return render_template('memo.html', config=current_app.config,memos=memos_found, title="memo",user=user,delegate=user,detail=detail,next_page=next_page,url_params =url_params)
@@ -503,12 +506,12 @@ def search():
             if len(title) == 2:
                 memos_found = Memo.search(title=title[1],page=page,pagesize=pagesize)
                 if len(memos_found.items) == 0:
-                    flash('No memos match that criteria','error')
+                    flash('No memos match that criteria','danger')
                 url_params['search']= f'title:{title[1]}'
             if len(keywords) == 2:
                 memos_found = Memo.search(keywords=keywords[1],page=page,pagesize=pagesize)
                 if len(memos_found.items) == 0:
-                    flash('No memos match that criteria','error')
+                    flash('No memos match that criteria','danger')
                 url_params['search']= f'keywords:{keywords[1]}'
 
             next_page = "memos.search"

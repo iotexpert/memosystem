@@ -661,17 +661,18 @@ class Memo(db.Model):
         current_app.logger.info(f"Number = {dstref['memo_number']}")
         current_app.logger.info(f"Version = {dstref['memo_version']}")
 
-        new_memo = Memo(number = dstref["memo_number"],\
-                version = dstref["memo_version"],\
-                confidential = old_memo.confidential,\
-                distribution = old_memo.distribution,\
-                keywords = old_memo.keywords,\
-                title = old_memo.title,\
-                user_id = dstref["username"],\
-                memo_state = old_memo.memo_state,\
-                action_date = datetime.utcnow(),\
-                create_date = old_memo.create_date,\
-                signers = old_memo.signers['signers'] \
+        new_memo = Memo(number = dstref["memo_number"],
+                version = dstref["memo_version"],
+                confidential = old_memo.confidential,
+                distribution = old_memo.distribution,
+                keywords = old_memo.keywords,
+                title = old_memo.title,
+                user_id = dstref["username"],
+                memo_state = old_memo.memo_state,
+                action_date = datetime.utcnow(),
+                create_date = old_memo.create_date,
+                references = old_memo.references, 
+                signers = old_memo.signers['signers']
                     )
 
         db.session.add(new_memo)
