@@ -619,20 +619,19 @@ class Memo(db.Model):
         memostring = f"{self}"
         
         if validate_user == True and not self.can_cancel(delegate=delegate):
-            return False
-        
+            return False        
         
         MemoFile.delete(self)
-        # delete all of the files in that directory & the directory
-        
-        shutil.rmtree(self.get_fullpath(), ignore_errors=True)
         
         MemoReference.delete(self)
         MemoSignature.delete_signers(self)
         MemoHistory.activity(memo=self,user=delegate,memo_activity=MemoActivity.Cancel)
 
-        db.session.delete(self)
-        db.session.commit() # ARH/Graham is this right
+        Memo.query.filter_by(id=self.id).delete()
+
+        # delete all of the files in that directory & the directory  
+        # Do this after all the database statements have executed (although still not committed)      
+        shutil.rmtree(self.get_fullpath(), ignore_errors=True)
         
         return True
 
@@ -670,27 +669,27 @@ class Memo(db.Model):
                 user_id = dstref["username"],
                 memo_state = old_memo.memo_state,
                 action_date = datetime.utcnow(),
-                create_date = old_memo.create_date,
-                references = old_memo.references, 
-                signers = old_memo.signers['signers']
+                create_date = old_memo.create_date
                     )
-
-        db.session.add(new_memo)
-        db.session.commit()
+        new_memo.save()
+        new_memo.references = old_memo.references['ref_string']  # cannot be done until there is an id assigned by the save
+        new_memo.signers = old_memo._signers                     # cannot be done until there is an id assigned by the save
+        new_memo.save()
 
         new_memo.saveJson()
-#        Copy the files
+#       Copy the files
         files = old_memo.files
         for file in files:
             srcfile = os.path.join(old_memo.get_fullpath(),file._uuid)
             dstfile = os.path.join(new_memo.get_fullpath(),file._uuid)
             shutil.copyfile(srcfile,dstfile)
             file.memo_id = new_memo.id
-            db.session.add(file)
-        db.session.commit()
+            file.save()
         
         # delete the original memo
         old_memo.cancel(None,validate_user=False)
+        
+        return True
 
 # signer function
     def reject(self,signer,delegate):

@@ -41,7 +41,7 @@
                 <a class="nav-item nav-link" href="{{ url_for('memos.main',username=current_user.username) }}?showAll">My Memos</a>
                 
                 {% if user and user.admin %}
-                  <a class="nav-item nav-link" href="{{ url_for('main.home') }}">Admin</a>
+                  <a class="nav-item nav-link" href="{{ url_for('admin.main') }}">Admin</a>
                 {% endif %}
                 <a class="nav-item nav-link" href="{{ url_for('users.account') }}">Account: {{current_user.username}}</a>
                 <a class="nav-item nav-link" href="{{ url_for('users.logout') }}">Logout</a>

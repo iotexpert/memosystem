@@ -14,9 +14,9 @@
     {% if page_num %}
       
     {% if memos.page == page_num %}
-        <a class="btn btn-info mb-4" href="{{ url_for(next_page, page=page_num,**url_params)}}">{{ page_num }}</a>
+        <a class="btn btn-info mb-4" href="{{ url_for(next_page, page=page_num, showAll=showAll,**url_params)}}">{{ page_num }}</a>
       {% else %}
-        <a class="btn btn-outline-info mb-4" href="{{ url_for(next_page, page=page_num,**url_params)}}">{{ page_num }}</a>
+        <a class="btn btn-outline-info mb-4" href="{{ url_for(next_page, page=page_num, showAll=showAll,**url_params)}}">{{ page_num }}</a>
    {% endif %}
 
     {% else %}

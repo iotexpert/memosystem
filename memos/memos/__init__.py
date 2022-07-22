@@ -34,10 +34,13 @@ def create_app(config_class=Config):
     from memos.memos.routes import memos
     from memos.errors.handlers import errors
 
+    from memos.admin.routes import admin
+
     app.register_blueprint(users)
     app.register_blueprint(memos)
     app.register_blueprint(main)
     app.register_blueprint(errors)
+    app.register_blueprint(admin)
 
     return app
 

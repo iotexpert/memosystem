@@ -12,6 +12,8 @@ from os.path import isfile, join
 
 import shutil
 
+from memos.flask_sqlalchemy_txns import transaction
+
 try:
     import settings_local
     
@@ -67,91 +69,90 @@ if __name__ == "__main__":
             if user_filter is not None and row['current-owner'] != user_filter:
                 continue
             
-            user = User.find(username=row['current-owner'])
+            with transaction():
+                user = User.find(username=row['current-owner'])
 
-            if user is None and row['new-owner'] == '':
-                print(f"Creating new user {row['current-owner']}")
-                user = User(username=row['current-owner'], password="*",email="unknown@unknown.local")
-                db.session.add(user)
-                db.session.commit()
-                if user is not None:
-                    print(f"Made new user {user}")
-                else:
-                    print(f"Failed to create new user {row['current-owner']} skipping row {row['doc']}")
-                    continue
-            
-            if 'new-owner' in row and row['new-owner'] is not None and row['new-owner'] != '':
-                new_owner = User.find(username=row['new-owner'])
-                if new_owner is None:              
-                    print(f"Failed to find owner = {row['current-owner']} skipping row {row['doc']}")
-                    continue
-            else:
-                new_owner = None
-                    
-            if new_owner  is None:
-                new_owner = user
-            
-            # check to make sure that the number and version of the memo doesnt exist already
-            
-            memo = Memo.query.join(User).filter(User.username==new_owner.username,Memo.number==row["number"],Memo.valid_references==row['rev']).first()
-            if memo is not None:
-                if 'replace' in row and row['replace'] != "":  # if there is something in the replace column.. blow away the current memo in the system
-                    Memo.query.join(User).filter(User.username==new_owner.username,Memo.number==row["number"],Memo.valid_references==row['rev']).delete()
-                    print("Deleting current memo")
-                else:
-                    print(f"Memo {row['current-owner']}-{row['number']}{row['rev']}  {row['doc']} already exists... skipping")
-                    continue
-            
-            if 'confidential' in row and row['confidential'] is not None and row['confidential'] != '':
-                confidential = True
-                distribution = User.valid_usernames(row['confidential'])['valid_users']
-                print(f"Distribution = {distribution}")   
-            else:
-                distribution = ''
-                confidential = False
-        
-            new_memo = Memo(number = int(row['number']),\
-                            version = row['rev'],\
-                            confidential = confidential,\
-                            distribution = distribution,\
-                            keywords = str( row['doc']),\
-                            title = row['title'],\
-                            user_id = new_owner.username,\
-                            memo_state = MemoState.Active,\
-                            action_date = datetime.strptime(row['date'],"%x"),\
-                            create_date = datetime.strptime(row['date'],"%x"),\
-                            signers = '' )
-            
-            new_memo.save()
-            db.session.commit()
+                if user is None and row['new-owner'] == '':
+                    print(f"Creating new user {row['current-owner']}")
+                    user = User(username=row['current-owner'], password="*",email="unknown@unknown.local")
+                    user.save()
+                    if user is not None:
+                        print(f"Made new user {user}")
+                    else:
+                        print(f"Failed to create new user {row['current-owner']} skipping row {row['doc']}")
+                        continue
                 
-            base_dir = os.path.dirname(datacsv)
-            files_dir = os.path.join(base_dir,"import_system",row['current-owner'],row['doc'],row['rev'])
-            onlyfiles = [f for f in listdir(files_dir) if isfile(join(files_dir, f))]
-
-
-            path = new_memo.get_fullpath()
-            os.makedirs(path,exist_ok=True)
-
-            new_files=[]
-            for file in onlyfiles:
-                split_name = os.path.splitext(file)
-                if len(split_name) == 2 and split_name[1] == ".pdf":
-                    new_files.insert(0,file)
+                if 'new-owner' in row and row['new-owner'] is not None and row['new-owner'] != '':
+                    new_owner = User.find(username=row['new-owner'])
+                    if new_owner is None:              
+                        print(f"Failed to find owner = {row['current-owner']} skipping row {row['doc']}")
+                        continue
                 else:
-                    new_files.append(file)
-
-
-            for file in new_files:
-                fsplit = os.path.split(file)
-                if len(fsplit) > 1 and re.match(".*\?.*",file) is None:
-                    mfile = MemoFile(memo_id=new_memo.id,filename=fsplit[1])
-                    mfile.save()
-                    src = os.path.join(files_dir,file)
-                    dst = os.path.join(path,mfile.uuid)
-                    try:
-                        shutil.copyfile(src, dst)
-                    except:
-                        print(file)
+                    new_owner = None
                         
-            print(f"Imported {row['current-owner']} {row['doc']}")
+                if new_owner  is None:
+                    new_owner = user
+                
+                # check to make sure that the number and version of the memo doesnt exist already
+                
+                memo = Memo.query.join(User).filter(User.username==new_owner.username,Memo.number==row["number"],Memo.valid_references==row['rev']).first()
+                if memo is not None:
+                    if 'replace' in row and row['replace'] != "":  # if there is something in the replace column.. blow away the current memo in the system
+                        Memo.query.join(User).filter(User.username==new_owner.username,Memo.number==row["number"],Memo.valid_references==row['rev']).delete()
+                        print("Deleting current memo")
+                    else:
+                        print(f"Memo {row['current-owner']}-{row['number']}{row['rev']}  {row['doc']} already exists... skipping")
+                        continue
+                
+                if 'confidential' in row and row['confidential'] is not None and row['confidential'] != '':
+                    confidential = True
+                    distribution = User.valid_usernames(row['confidential'])['valid_users']
+                    print(f"Distribution = {distribution}")   
+                else:
+                    distribution = ''
+                    confidential = False
+            
+                new_memo = Memo(number = int(row['number']),\
+                                version = row['rev'],\
+                                confidential = confidential,\
+                                distribution = distribution,\
+                                keywords = str( row['doc']),\
+                                title = row['title'],\
+                                user_id = new_owner.username,\
+                                memo_state = MemoState.Active,\
+                                action_date = datetime.strptime(row['date'],"%x"),\
+                                create_date = datetime.strptime(row['date'],"%x"),\
+                                signers = '' )
+                
+                new_memo.save()
+                    
+                base_dir = os.path.dirname(datacsv)
+                files_dir = os.path.join(base_dir,"import_system",row['current-owner'],row['doc'],row['rev'])
+                onlyfiles = [f for f in listdir(files_dir) if isfile(join(files_dir, f))]
+
+
+                path = new_memo.get_fullpath()
+                os.makedirs(path,exist_ok=True)
+
+                new_files=[]
+                for file in onlyfiles:
+                    split_name = os.path.splitext(file)
+                    if len(split_name) == 2 and split_name[1] == ".pdf":
+                        new_files.insert(0,file)
+                    else:
+                        new_files.append(file)
+
+
+                for file in new_files:
+                    fsplit = os.path.split(file)
+                    if len(fsplit) > 1 and re.match(".*\?.*",file) is None:
+                        mfile = MemoFile(memo_id=new_memo.id,filename=fsplit[1])
+                        mfile.save()
+                        src = os.path.join(files_dir,file)
+                        dst = os.path.join(path,mfile.uuid)
+                        try:
+                            shutil.copyfile(src, dst)
+                        except:
+                            print(file)
+                            
+                print(f"Imported {row['current-owner']} {row['doc']}")
