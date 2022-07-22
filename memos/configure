@@ -6,6 +6,8 @@ This file contains functions used to configure the memosystem.  Probably should 
 import sys
 import os
 import shutil
+
+from memos.flask_sqlalchemy_txns import transaction
 try:
     import settings_local
     
@@ -72,9 +74,9 @@ def create_user(uepw=None):
 
     print(f"User = {username} Email = {email} Password = {password}")
 
-    user =  User(username=username, password=User.create_hash_pw(password),email=email)
-    db.session.add(user)
-    db.session.commit()
+    with transaction():
+        user =  User(username=username, password=User.create_hash_pw(password),email=email)
+        user.save()
 
 def update_admin(username,admin):
     
@@ -82,15 +84,15 @@ def update_admin(username,admin):
         admin = True
     else:
         admin = False
-        
-    user = User.find(username=username)
-    if user is None:
-        print(f"User = {username} not found")
-    else:
-        user.admin = admin
-        db.session.add(user)
-        db.session.commit()
-        print(f"User {user} Admin={user.admin}")
+    
+    with transaction():
+        user = User.find(username=username)
+        if user is None:
+            print(f"User = {username} not found")
+        else:
+            user.admin = admin
+            user.save()
+            print(f"User {user} Admin={user.admin}")
 
 def update_readall(username,readall):
 
@@ -98,26 +100,25 @@ def update_readall(username,readall):
         readall = True
     else:
         readall = False
-        
-    user = User.find(username=username)
-    if user is None:
-        print(f"User = {username} not found")
-    else:
-        user.readAll = readall
-        db.session.add(user)
-        db.session.commit()
-        print(f"User {user} readall={user.readAll}")
+    
+    with transaction():
+        user = User.find(username=username)
+        if user is None:
+            print(f"User = {username} not found")
+        else:
+            user.readAll = readall
+            user.save()
+            print(f"User {user} readall={user.readAll}")
 
 def update_password(username,password):
-
-    user = User.find(username=username)
-    if user is None:
-        print(f"User = {username} not found")
-    else:
-        user.password = User.create_hash_pw(password)
-        db.session.add(user)
-        db.session.commit()
-        print(f"User {user} password ={password} hash={user.password}")
+    with transaction():
+        user = User.find(username=username)
+        if user is None:
+            print(f"User = {username} not found")
+        else:
+            user.password = User.create_hash_pw(password)
+            user.save()
+            print(f"User {user} password ={password} hash={user.password}")
 
 def rename(src,dst):
     Memo.rename(src,dst)
@@ -156,7 +157,8 @@ if __name__ == "__main__":
             print(len(args))
             print("-r or --rename src dst")
             sys.exit()
-        rename(args[1],args[2])
+        with transaction():
+            rename(args[1],args[2])
         sys.exit()
         
         

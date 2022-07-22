@@ -32,7 +32,7 @@ def main(username=None,memo_number=None,memo_version=None):
         showAll = request.args.get('showAll')
 
         detail = False if detail is None else True
-        showAll = False if showAll is None else True
+        showAll = False if showAll is None or showAll == 'False' or showAll == '0' else True
 
         if username is not None and memo_number is None:
             combo = re.split("-",username)
@@ -71,7 +71,7 @@ def main(username=None,memo_number=None,memo_version=None):
 
         return render_template('memo.html', config=current_app.config,memos=memo_list, title="memo",user=user,delegate=user,
                             signer=None, detail=detail,next_page=next_page,page=page,
-                            url_params=url_params)
+                            url_params=url_params,showAll=showAll)
 
 
 @memos.route("/file/memo/<string:username>/<int:memo_number>/<string:memo_version>/<string:uuid>")
@@ -79,6 +79,9 @@ def getfile(username,memo_number,memo_version,uuid):
     """    # this route will return the specified file"""
     with transaction():
         memo = Memo.find(username=username,memo_number=memo_number,memo_version=memo_version)
+
+        if memo is None:
+            abort(404)
 
         if current_user.is_anonymous:
             user = None
