@@ -18,3 +18,4 @@ os.environ['MEMOS_EMAIL_USER'] = 'TestEmailAccount@test.local'
 os.environ['MEMOS_EMAIL_PASS'] = ''
 
 os.environ['TESTING'] = 'True'
+os.environ['ENABLE_REGISTER']='true'

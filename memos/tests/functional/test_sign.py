@@ -98,6 +98,7 @@ def test_invalid_dist(client, session):
                                     keywords='',
                                     signers='',
                                     references='readAllUser-1 badUser-1 badUser-2-s-s',
+                                    memodoc1=(io.BytesIO(b"file content one"), 'file_one.txt'),
                                     submit='Submit'
                                     ),
                                 follow_redirects=True)
@@ -134,6 +135,25 @@ def test_revise(client, session):
                                     signers='',
                                     references='',
                                     confidential=True,
+                                    submit='submit'
+                                    ),
+                                follow_redirects=True)
+        assert response.status_code == 200
+        assert b'avgUser-3B' in response.data
+        assert b'Must have at least one file attached to Submit memo' in response.data
+        
+        response = client.post('/cu/memo/avgUser/3',
+                                data=dict(
+                                    username='avgUser',
+                                    memo_number=3,
+                                    memo_version='B',
+                                    title='avgUser memo 3-2', 
+                                    distribution='adminUser',    
+                                    keywords='',
+                                    signers='',
+                                    references='',
+                                    confidential=True,
+                                    memodoc1=(io.BytesIO(b"file content one"), 'file_one.txt'),
                                     submit='submit'
                                     ),
                                 follow_redirects=True)
@@ -217,6 +237,7 @@ def test_publish_2_files(client, session):
                                     signers='',
                                     references='',
                                     confidential=True,
+                                    memodoc1=(io.BytesIO(b"file content one"), 'file_one.txt'),
                                     submit='submit'
                                     ),
                                 follow_redirects=True)
@@ -501,6 +522,7 @@ def test_check_sign_unsign(client, session):
                                     signers='readAllUser adminUser',
                                     references='',
                                     confidential=False,
+                                    memodoc1=(io.BytesIO(b"file content one"), 'file_one.txt'),
                                     submit='submit'
                                     ),
                                 follow_redirects=True)
@@ -597,6 +619,7 @@ def test_check_revise_and_activate(client, session):
                                     signers='readAllUser',
                                     references='',
                                     confidential=False,
+                                    memodoc1=(io.BytesIO(b"file content one"), 'file_one.txt'),
                                     submit='submit'
                                     ),
                                 follow_redirects=True)
