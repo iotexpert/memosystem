@@ -38,5 +38,5 @@ Back References:
 <br>
 {% endif %}
 {% for file in memo.files %}
-<a class="mr-2" href="/file/memo/{{memo.user.username}}/{{memo.number}}/{{memo.version}}/{{file.uuid}}">{{file.filename}}</a><br>
+<a class="mr-2" href="/file/memo/{{memo.user.username}}/{{memo.number}}/{{memo.version}}/{{file.uuid}}" target="_blank">{{file.filename}}</a><br>
 {% endfor %}

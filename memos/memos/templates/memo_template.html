@@ -21,7 +21,7 @@
        
         {% if memo.has_access(user) %}
           {% for file in memo.files %}
-            <a class="mr-0" href="/file/memo/{{memo.user.username}}/{{memo.number}}/{{memo.version}}/{{file.uuid}}">{{loop.index0}}{% if loop.index0 < memo.files|length - 1 %},{% endif %}</a>
+            <a class="mr-0" href="/file/memo/{{memo.user.username}}/{{memo.number}}/{{memo.version}}/{{file.uuid}}" target="_blank">{{loop.index0}}{% if loop.index0 < memo.files|length - 1 %},{% endif %}</a>
           {% endfor %}
 
           {% if user != None and memo.can_revise(delegate=user) %}

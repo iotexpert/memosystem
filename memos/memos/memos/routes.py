@@ -98,7 +98,7 @@ def getfile(username,memo_number,memo_version,uuid):
                 directory = os.path.join('static','memos',str(memo.user_id),str(memo_number),
                     memo_version)
                 return send_from_directory(directory,file.uuid,download_name=file.filename,
-                    as_attachment=True)
+                    as_attachment=False)
 
         return abort(404)
 
