@@ -731,15 +731,16 @@ class Memo(db.Model):
     @staticmethod
     def get_memo_list(username=None,memo_number=None,memo_version=None,page=1,pagesize=None, showAll=False):
 
+        memo_list = Memo.query
         if memo_version:
-            memo_list = Memo.query.filter(Memo.user_id==username,\
+            memo_list = memo_list.filter(Memo.user_id==username,\
                                                 Memo.number==memo_number,\
                                                 Memo.version==memo_version)
         elif memo_number:
-            memo_list = Memo.query.filter(Memo.user_id==username,Memo.number==memo_number)
+            memo_list = memo_list.filter(Memo.user_id==username,Memo.number==memo_number)
         else:
             if username:
-                memo_list = Memo.query.filter(Memo.user_id==username)
+                memo_list = memo_list.filter(Memo.user_id==username)
             if not showAll:
                 memo_list = memo_list.filter(Memo.memo_state == MemoState.Active)
 
