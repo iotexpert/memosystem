@@ -35,5 +35,5 @@ class MemoHistory(db.Model):
             
     @staticmethod
     def get_history(memo_ref=None,memo=None,page=1,pagesize=None):
-        return MemoHistory.query.join(User).order_by(MemoHistory.id.desc()).paginate(page = page,per_page=pagesize)
+        return MemoHistory.query.order_by(MemoHistory.id.desc()).paginate(page = page,per_page=pagesize)
 

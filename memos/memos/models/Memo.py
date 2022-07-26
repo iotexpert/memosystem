@@ -421,7 +421,7 @@ class Memo(db.Model):
 ################################################################################       
 
     def obsolete_previous(self,acting=None):
-        prev_list = Memo.query.join(User).filter(Memo.number == self.number,Memo.version != self.version).all()
+        prev_list = Memo.query.filter(Memo.user_id == self.user_id, Memo.number == self.number,Memo.version != self.version).all()
         for memo in prev_list:
             if memo.memo_state == MemoState.Active:
                 memo.memo_state = MemoState.Obsolete
