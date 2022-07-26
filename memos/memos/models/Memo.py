@@ -741,7 +741,7 @@ class Memo(db.Model):
             if username:
                 memo_list = Memo.query.filter(Memo.user_id==username)
             if not showAll:
-                memo_list = Memo.query.filter(Memo.memo_state == MemoState.Active)
+                memo_list = memo_list.filter(Memo.memo_state == MemoState.Active)
 
         memo_list = memo_list.order_by(Memo.action_date.desc(), Memo.user_id, Memo.number.desc(), Memo.version.desc())\
             .paginate(page = page,per_page=pagesize)    
