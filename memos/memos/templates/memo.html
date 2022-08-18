@@ -7,6 +7,11 @@
     {% endfor %}
 {% endif %}
 
+  {% for memo in get_pinned().items %}
+  {% include 'memo_template.html'%}
+  {% endfor %}
+  <hr>
+
   {% for memo in memos.items %}
     {% include 'memo_template.html'%}
   {% endfor %}

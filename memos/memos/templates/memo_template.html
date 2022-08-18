@@ -1,4 +1,8 @@
+{% if memo.pinned %}
+<article class="media content-section bg-warning">
+{% else %}
 <article class="media content-section">
+  {% endif %}
     <img class="rounded-circle article-img" src="{{ url_for('static', filename='profile_pics/' + memo.user.image_file) }}">
     <div class="media-body">
       <div class="article-metadata">
@@ -38,6 +42,22 @@
 
           {% if user != None and memo.can_obsolete(delegate=user) %}
             <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('memos.obsolete',username=memo.user.username,memo_number=memo.number,memo_version=memo.version,next_page=next_page,page=page) }}" onclick="return confirm('Are you sure you want to obsolete this memo?');">Obsolete</a> 
+          {% endif %}
+
+          {% if user != None and memo.can_template(user) and not memo.template %}
+          <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('memos.template',memoref=memo,set=1) }}">Set Template</a> 
+          {% endif %}
+
+          {% if user != None and memo.can_template(user) and memo.template %}
+          <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('memos.template',memoref=memo,unset=1) }}">Unset Template</a> 
+          {% endif %}
+
+          {% if user != None and memo.can_pin(user) and not memo.pinned %}
+          <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('memos.pinned',memoref=memo,set=1) }}">Pin</a> 
+          {% endif %}
+
+          {% if user != None and memo.can_pin(user) and memo.pinned %}
+          <a class="btn btn-secondary btn-sm mt-1 mb-1" href="{{ url_for('memos.pinned',memoref=memo,unset=1) }}">Unpin</a> 
           {% endif %}
 
           {% if user != None and memo.can_cancel(delegate=user) %}

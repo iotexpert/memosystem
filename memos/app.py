@@ -1,5 +1,6 @@
 from os.path import exists,join
 from shutil import copy
+from memos.models.Memo import Memo
 
 temp_sl = join("memos","static","config","settings_local.py")
 
@@ -16,6 +17,11 @@ from memos import create_app
 
 
 app = create_app()
+
+# This will make the static member function "get_pinned" available in the template
+@app.context_processor
+def inject_pinned():
+    return dict(get_pinned=Memo.get_pinned)
 
 if __name__ == '__main__':
     app.run(debug=True)
