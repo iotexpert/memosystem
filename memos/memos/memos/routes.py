@@ -557,7 +557,6 @@ def template(memoref=None):
                             signer=None, detail=detail,next_page=next_page,page=page,
                             url_params=url_params,showAll=showAll)
 
-
     memo_parse = Memo.parse_reference(memoref)
     
     if memo_parse['valid'] is not True:
@@ -575,29 +574,18 @@ def template(memoref=None):
             memo_parse['memo'].template = False
             memo_parse['memo'].save()
 
-
     return redirect(url_for('memos.main'))
     
  
-@memos.route("/pinned")
 @memos.route("/pinned/<string:memoref>")
 def pinned(memoref=None):
     """ this function will return all of the memos in the users inbox"""
     set_pinned = request.args.get('set', None)
     unset_pinned = request.args.get('unset',None)
-    pagesize = User.get_pagesize(current_user)
-    page = request.args.get('page', 1, type=int)
-    detail = request.args.get('detail')
-    showAll = request.args.get('showAll')
-    url_params = {}
-    next_page = "memos.pinned"
 
     if memoref is None:
-        memo_list = Memo.get_pinned(page=page,pagesize=pagesize)
-        return render_template('memo.html', config=current_app.config,memos=memo_list, title="memo",user=current_user,delegate=current_user,
-                            signer=None, detail=detail,next_page=next_page,page=page,
-                            url_params=url_params,showAll=showAll)
-
+        abort(404)
+        
     memo_parse = Memo.parse_reference(memoref)
     
     if memo_parse['valid'] is not True:
@@ -605,7 +593,6 @@ def pinned(memoref=None):
 
     if current_user.is_anonymous or memo_parse['memo'].can_pin(current_user) is False:
         abort(403)
-        
         
     with transaction():
         if set_pinned is not None:
@@ -616,6 +603,4 @@ def pinned(memoref=None):
             memo_parse['memo'].pinned = False
             memo_parse['memo'].save()
 
-
     return redirect(url_for('memos.main'))
-    
