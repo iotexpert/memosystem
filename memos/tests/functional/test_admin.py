@@ -75,8 +75,8 @@ def test_rename(client, session):
         assert b'file_one.txt' in response.data
         assert b'file_three.txt' in response.data
 
-        file_one_url_5A = re.search('href="([^<>]+?)">file_one.txt', str(response.data)).group(1)
-        file_three_url_5A = re.search('href="([^<>]+?)">file_three.txt', str(response.data)).group(1)
+        file_one_url_5A = re.search('href="([^<>"]+?)"[^<>]*>file_one.txt', str(response.data)).group(1)
+        file_three_url_5A = re.search('href="([^<>"]+?)"[^<>]*>file_three.txt', str(response.data)).group(1)
 
         response = client.get(file_one_url_5A, follow_redirects=True)
         assert response.status_code == 200
@@ -148,8 +148,8 @@ def test_rename(client, session):
         assert b'file_three.txt' in response.data
 
         # Verify the files on 5B exist
-        file_one_url_5B = re.search('href="([^<>]+?)">file_one.txt', str(response.data)).group(1)
-        file_three_url_5B = re.search('href="([^<>]+?)">file_three.txt', str(response.data)).group(1)
+        file_one_url_5B = re.search('href="([^<>"]+?)"[^<>]*>file_one.txt', str(response.data)).group(1)
+        file_three_url_5B = re.search('href="([^<>"]+?)"[^<>]*>file_three.txt', str(response.data)).group(1)
 
         response = client.get(file_one_url_5B, follow_redirects=True)
         assert response.status_code == 200
@@ -198,8 +198,8 @@ def test_delete(client, session):
         assert b'file_one.txt' in response.data
         assert b'file_three.txt' in response.data
 
-        file_one_url_5A = re.search('href="([^<>]+?)">file_one.txt', str(response.data)).group(1)
-        file_three_url_5A = re.search('href="([^<>]+?)">file_three.txt', str(response.data)).group(1)
+        file_one_url_5A = re.search('href="([^<>"]+?)"[^<>]*>file_one.txt', str(response.data)).group(1)
+        file_three_url_5A = re.search('href="([^<>"]+?)"[^<>]*>file_three.txt', str(response.data)).group(1)
 
         response = client.get(file_one_url_5A, follow_redirects=True)
         assert response.status_code == 200
