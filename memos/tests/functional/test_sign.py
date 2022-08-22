@@ -250,8 +250,8 @@ def test_publish_2_files(client, session):
         assert b'file_one.txt' in response.data
         assert b'file_three.txt' in response.data
 
-        file_one_url = re.search('href="([^<>]+?)">file_one.txt', str(response.data)).group(1)
-        file_three_url = re.search('href="([^<>]+?)">file_three.txt', str(response.data)).group(1)
+        file_one_url = re.search('href="([^<>"]+?)"[^<>]*>file_one.txt', str(response.data)).group(1)
+        file_three_url = re.search('href="([^<>"]+?)"[^<>]*>file_three.txt', str(response.data)).group(1)
 
         response = client.get(file_one_url, follow_redirects=True)
         assert response.status_code == 200
