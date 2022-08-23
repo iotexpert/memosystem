@@ -159,10 +159,10 @@ class Memo(db.Model):
         return status['is_signer']
     
     def can_pin(self,user):
-        return user.admin
+        return user.admin and self.memo_state == MemoState.Active
     
     def can_template(self,user):
-        return user.admin
+        return user.admin and self.memo_state == MemoState.Active
 
     def has_access(self, user=None):
         """This function will return True of the "username" has access to self"""
@@ -186,7 +186,7 @@ class Memo(db.Model):
             return True
 
         # if the username is in the distribution list then provide access TODO: ARH do something better
-        if user.username in re.split('\s|\,|\t|\;|\:',self.distribution):
+        if user.username in re.split(r"[\s:;,]+",self.distribution):
             return True
 
         return False
@@ -346,7 +346,7 @@ class Memo(db.Model):
         valid_memos = []
         valid_refs = []
         invalid = []
-        for memo_ref in re.split(r'\s|\,|\t|\;|\:',references):
+        for memo_ref in re.split(r"[\s:;,]+",references):
             if memo_ref == '':
                 continue
             parts = Memo.parse_reference(memo_ref)
