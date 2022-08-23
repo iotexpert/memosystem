@@ -13,8 +13,14 @@
   <hr>
 
   {% for memo in memos.items %}
+  {% if not memo.pinned %}
     {% include 'memo_template.html'%}
+    {% endif %}
   {% endfor %}
+
+  {% if memos.items|length == 0 %}
+  No Memos Found
+  {% endif %}
   {% for page_num in memos.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
     {% if page_num %}
       

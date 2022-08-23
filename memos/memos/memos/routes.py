@@ -582,10 +582,7 @@ def pinned(memoref=None):
     """ this function will return all of the memos in the users inbox"""
     set_pinned = request.args.get('set', None)
     unset_pinned = request.args.get('unset',None)
-
-    if memoref is None:
-        abort(404)
-        
+      
     memo_parse = Memo.parse_reference(memoref)
     
     if memo_parse['valid'] is not True:
