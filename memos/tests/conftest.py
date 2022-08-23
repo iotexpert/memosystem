@@ -7,7 +7,7 @@ except ImportError:
     pass
 #load overrides of setting_local for testing.
 import test_settings_local
-from memos import create_app
+from memos.create import create_app
 from memos import db as _db
 
 from flask import current_app
@@ -36,6 +36,11 @@ def app(request):
         ctx.pop()
 
     request.addfinalizer(teardown)
+    # This will make the static member function "get_pinned" available in the template
+    @app.context_processor
+    def inject_pinned():
+        return dict(get_pinned=Memo.get_pinned)
+
     return app
 
 @pytest.fixture()

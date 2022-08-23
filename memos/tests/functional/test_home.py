@@ -263,3 +263,66 @@ def test_help(client, session):
         assert b'What is a Memo?' in response.data
 
 
+def test_template(client, session):
+    """
+    Test base / url
+    """
+    response = client.get('/template')
+    assert response.status_code == 200
+    
+    response = client.get('/template/asdf')
+    assert response.status_code == 404
+    
+    response = client.get('/template/avgUser-1c')
+    assert response.status_code == 403
+    
+    
+    with client:
+        response = client.post('/login',
+                                data=dict(username='adminUser', password='u'),
+                                follow_redirects=True)
+
+        response = client.get('/template/avgUser-1c?set',follow_redirects=True)
+        assert response.status_code == 200
+        
+        response = client.get('/template')
+        assert b"avgUser memo 1-3" in response.data
+        
+        response = client.get('/template/avgUser-1c?unset',follow_redirects=True)
+        assert response.status_code == 200
+
+        response = client.get('/template')
+        assert b"avgUser memo 1-3" not in response.data
+        
+
+def test_pinned(client, session):
+    """
+    Test base / url
+    """
+    response = client.get('/pinned/')
+    assert response.status_code == 404
+    
+    response = client.get('/pinned/asdf')
+    assert response.status_code == 404
+    
+    response = client.get('/pinned/avgUser-1c')
+    assert response.status_code == 403
+    
+    
+    with client:
+        response = client.post('/login',
+                                data=dict(username='adminUser', password='u'),
+                                follow_redirects=True)
+
+        response = client.get('/pinned/avgUser-1c?set',follow_redirects=True)
+        assert response.status_code == 200
+        
+        response = client.get('/')
+        assert b"bg-warning" in response.data
+        
+        response = client.get('/pinned/avgUser-1c?unset',follow_redirects=True)
+        assert response.status_code == 200
+
+        response = client.get('/')
+        assert b"bg-warning" not in response.data
+        

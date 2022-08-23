@@ -1,5 +1,5 @@
 #!/bin/bash
-export FLASK_APP=run.py
+export FLASK_APP=app.py
 export FLASK_DEBUG=True
 
 export SQLALCHEMY_DATABASE_URI='sqlite:///test.db'

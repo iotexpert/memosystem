@@ -1,5 +1,7 @@
+
 from flask import render_template, Blueprint, redirect, url_for
 from flask import current_app
+from memos.models import Memo
 import os
 
 from memos.flask_sqlalchemy_txns import transaction

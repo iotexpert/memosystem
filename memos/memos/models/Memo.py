@@ -157,6 +157,12 @@ class Memo(db.Model):
 
         # if you are a signer you can reject.. even if you have already signed
         return status['is_signer']
+    
+    def can_pin(self,user):
+        return user.admin and self.memo_state == MemoState.Active
+    
+    def can_template(self,user):
+        return user.admin and self.memo_state == MemoState.Active
 
     def has_access(self, user=None):
         """This function will return True of the "username" has access to self"""
@@ -180,7 +186,7 @@ class Memo(db.Model):
             return True
 
         # if the username is in the distribution list then provide access TODO: ARH do something better
-        if user.username in re.split('\s|\,|\t|\;|\:',self.distribution):
+        if user.username in re.split(r"[\s:;,]+",self.distribution):
             return True
 
         return False
@@ -340,7 +346,7 @@ class Memo(db.Model):
         valid_memos = []
         valid_refs = []
         invalid = []
-        for memo_ref in re.split(r'\s|\,|\t|\;|\:',references):
+        for memo_ref in re.split(r"[\s:;,]+",references):
             if memo_ref == '':
                 continue
             parts = Memo.parse_reference(memo_ref)
@@ -402,6 +408,7 @@ class Memo(db.Model):
             refs.append(refstring)
             refs = list(set(refs))
         return {'reflist':refs,'ref_string':' '.join(refs)}
+        
         
 ######################################################################
 # 
@@ -634,6 +641,7 @@ class Memo(db.Model):
         shutil.rmtree(self.get_fullpath(), ignore_errors=True)
         
         return True
+       
 
 # general function
 
@@ -795,3 +803,16 @@ class Memo(db.Model):
         
         memo_list = Memo.query.filter(Memo.memo_state==MemoState.Draft,Memo.user_id==user.username).order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)      
         return memo_list
+    
+    @staticmethod
+    def get_templates(page=1,pagesize=None):     
+        memo_list = Memo.query.filter(Memo.template==True).order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)      
+        return memo_list
+    
+    @staticmethod
+    def get_pinned(page=1,pagesize=None):     
+        memo_list = Memo.query.filter(Memo.pinned==True).order_by(Memo.action_date.desc()).paginate(page = page,per_page=pagesize)      
+        return memo_list
+    
+    
+    
