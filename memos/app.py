@@ -13,9 +13,12 @@ except ImportError:
 
 
 from memos import create_app
-
+from memos.models.Memo import Memo
 
 app = create_app()
-
+@app.context_processor
+def inject_pinned():
+    return dict(get_pinned=Memo.get_pinned)
+    
 if __name__ == '__main__':
     app.run(debug=True)
