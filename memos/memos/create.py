@@ -11,18 +11,18 @@ from memos.extensions import ldap
 from memos.config import Config
 from memos.models.Memo import Memo
 
-from memos import db,bcrypt,login_manager,mail
+from memos import db,bcrypt,login_manager,mail, migrate
 
 def create_app(config_class=Config):
     app = Flask(__name__)
     Markdown(app)
-    app.config.from_object(Config)
+    app.config.from_object(config_class)
 
     db.init_app(app)
     bcrypt.init_app(app)
     login_manager.init_app(app)
     mail.init_app(app)
-    migrate = Migrate(app, db)
+#    migrate.init_app(app, db)
     
     if ldap:
         ldap.init_app(app) #pragma nocover  -- testing ldap is very environment centric.
