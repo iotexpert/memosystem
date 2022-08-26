@@ -7,7 +7,7 @@ except ImportError:
     pass
 #load overrides of setting_local for testing.
 import test_settings_local
-from memos.create import create_app
+from memos import create_app
 from memos import db as _db
 
 from flask import current_app
@@ -25,6 +25,9 @@ from memos.models.User import User
 def app(request):
     """Session-wide test `Flask` application."""
     app = create_app(__name__)
+    @app.context_processor
+    def inject_pinned():
+        return dict(get_pinned=Memo.get_pinned)
 
     # Establish an application context before running the tests.
     ctx = app.app_context()
