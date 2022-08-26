@@ -4,7 +4,7 @@ from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
 from flask_mail import Mail
 from flaskext.markdown import Markdown
-from flask_migrate import Migrate
+#from flask_migrate import Migrate
 
 
 from memos.extensions import ldap

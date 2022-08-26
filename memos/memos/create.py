@@ -4,14 +4,15 @@ from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
 from flask_mail import Mail
 from flaskext.markdown import Markdown
-from flask_migrate import Migrate
+#from flask_migrate import Migrate
 
 
 from memos.extensions import ldap
 from memos.config import Config
 from memos.models.Memo import Memo
 
-from memos import db,bcrypt,login_manager,mail, migrate
+#from memos import db,bcrypt,login_manager,mail, migrate
+from memos import db,bcrypt,login_manager,mail
 
 def create_app(config_class=Config):
     app = Flask(__name__)
