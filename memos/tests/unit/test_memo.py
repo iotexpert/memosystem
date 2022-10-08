@@ -106,7 +106,7 @@ def test_can_reject(db, session):
     assert memoSign.can_reject(avgUser, adminUser)  # adminUser is a delgate for everyone
     assert not memoDraft.can_reject(readAllUser, readAllUser) #memo not in signoff state
 
-def test_has_access(db, session):
+def test_can_access(db, session):
     AvgConf = Memo.find(username='avgUser',memo_number=1, memo_version='C')
     ReadNotConf = Memo.find(username='readAllUser',memo_number=1, memo_version='B')
     ReadConfWithAvg = Memo.find(username='readAllUser',memo_number=1, memo_version='C')
@@ -116,14 +116,14 @@ def test_has_access(db, session):
     readAllUser = User.find(username='readAllUser')
     avgUser = User.find(username='avgUser')
 
-    assert ReadNotConf.has_access(None)  # Not confidential, memo access without user
-    assert not AvgConf.has_access(None)  # Confidential memo not access without user
-    assert AvgConf.has_access(avgUser)  # Access to self
-    assert AvgConf.has_access(readAllUser)  # Access to read all permission
-    assert AvgConf.has_access(adminUser)  # Access to admin
+    assert ReadNotConf.can_access(None,None)  # Not confidential, memo access without user
+    assert not AvgConf.can_access(None,None)  # Confidential memo not access without user
+    assert AvgConf.can_access(avgUser,avgUser)  # Access to self
+    assert AvgConf.can_access(readAllUser,readAllUser)  # Access to read all permission
+    assert AvgConf.can_access(adminUser,adminUser)  # Access to admin
 
-    assert ReadConfWithAvg.has_access(avgUser)  # Access to with distribution
-    assert not ReadConfWOAvg.has_access(avgUser)  # No access with out distribution
+    assert ReadConfWithAvg.can_access(avgUser,avgUser)  # Access to with distribution
+    assert not ReadConfWOAvg.can_access(avgUser,avgUser)  # No access with out distribution
 
 def test_create_revise(db, session):
     readAllUser = User.find(username='readAllUser')
