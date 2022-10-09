@@ -23,7 +23,7 @@
         {% endif %}
         {{ memo.memo_state.short_name() }}</small>
        
-        {% if memo.has_access(user) %}
+        {% if memo.can_access(user,delegate) %}
           {% for file in memo.files %}
             <a class="mr-0" href="/file/memo/{{memo.user.username}}/{{memo.number}}/{{memo.version}}/{{file.uuid}}" target="_blank">{{loop.index0}}{% if loop.index0 < memo.files|length - 1 %},{% endif %}</a>
           {% endfor %}

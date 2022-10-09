@@ -164,29 +164,32 @@ class Memo(db.Model):
     def can_template(self,user):
         return user.admin and self.memo_state == MemoState.Active
 
-    def has_access(self, user=None):
+    def can_access(self, user=None,delegate=None):
         """This function will return True of the "username" has access to self"""
+#        current_app.logger.info(f"self.distribution = {self.distribution} self.signers={self.signers}   ")
 
         # if it is not confidential than anyone can access
         if self.confidential == False:
             return True
 
         # at this point we know it is confidential so ... they must provide a username
-        if user is None:
+        if delegate is None:
             return False
 
         # you alway have access to your own memo's
-        if self.user.username == user.username:
+        if self.user.username == delegate.username:
             return True
 
-        if user.admin:
+        if delegate.admin:
             return True
         
-        if user.readAll:
+        if delegate.readAll:
             return True
 
-        # if the username is in the distribution list then provide access TODO: ARH do something better
-        if user.username in re.split(r"[\s:;,]+",self.distribution):
+        # if the username is in the distribution list then provide access or the delegate can sign for the user
+        current_app.logger.info(f"self.distribution = {self.distribution} self.signers={self.signers}   ")
+#        if delegate.username in re.split(r"[\s:;,]+",self.distribution) or self.can_sign(user,delegate):
+        if delegate in User.valid_usernames(self.distribution)['valid_users'] or self.can_sign(user,delegate):
             return True
 
         return False
@@ -454,7 +457,7 @@ class Memo(db.Model):
                 MemoHistory.activity(memo=self,memo_activity=MemoActivity.Activate,user=acting)
                 self.obsolete_previous(acting=acting)
                 self.save()
-                self.notify_distribution(f"Memo: {self.title}  {self.user.username}-{self.number}-{self.version} has been published")
+                self.notify_distribution(f"Memo: {self.title}  {self.user.username}-{self.number}{self.version} has been published")
    
         if self.memo_state == MemoState.Signoff:
             if MemoSignature.status(self.id):
@@ -463,7 +466,7 @@ class Memo(db.Model):
                 MemoHistory.activity(memo=self,memo_activity=MemoActivity.Activate,user=acting)
                 self.obsolete_previous(acting=acting)
                 self.save()
-                self.notify_distribution(f"Memo: {self.title}  {self.user.username}-{self.number}-{self.version} has been published")
+                self.notify_distribution(f"Memo: {self.title}  {self.user.username}-{self.number}{self.version} has been published")
             else:
                 current_app.logger.info(f"Signatures Still Required")
         

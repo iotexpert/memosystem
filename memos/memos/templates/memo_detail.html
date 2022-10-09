@@ -1,3 +1,4 @@
+<br>
 {% if memo.signers['siglist']|length > 0 %}
 Signers:<br>
 <ul>
@@ -30,7 +31,7 @@ References:
 {% endfor %}
 <br>
 {% endif %}
-{% if memo.backrefs|length %}
+{% if memo.backrefs['reflist']|length > 0 %}
 Back References:
 {% for memoref in memo.backrefs['reflist'] %}
 <a class="mr-2" href="/memo/{{memoref}}">{{memoref}}</a>

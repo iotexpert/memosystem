@@ -88,7 +88,7 @@ def getfile(username,memo_number,memo_version,uuid):
         else:
             user = current_user
 
-        if memo.has_access(user) is False:
+        if memo.can_access(user,user) is False:
             MemoHistory.activity(memo=memo,memo_activity=MemoActivity.IllegalFile,user=user)
             abort(403)
 
@@ -240,7 +240,7 @@ def inbox(username=None):
                 return abort(404)
 
         delegate = current_user
-        if not user.is_delegate(current_user):    
+        if not user.is_delegate(current_user):
             return abort(403)
 
         memo_list = Memo.get_inbox(user,page,pagesize)
