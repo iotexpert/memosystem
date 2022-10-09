@@ -188,7 +188,8 @@ class Memo(db.Model):
 
         # if the username is in the distribution list then provide access or the delegate can sign for the user
         current_app.logger.info(f"self.distribution = {self.distribution} self.signers={self.signers}   ")
-        if delegate.username in re.split(r"[\s:;,]+",self.distribution) or self.can_sign(user,delegate):
+#        if delegate.username in re.split(r"[\s:;,]+",self.distribution) or self.can_sign(user,delegate):
+        if delegate in User.valid_usernames(self.distribution)['valid_users'] or self.can_sign(user,delegate):
             return True
 
         return False
@@ -456,7 +457,7 @@ class Memo(db.Model):
                 MemoHistory.activity(memo=self,memo_activity=MemoActivity.Activate,user=acting)
                 self.obsolete_previous(acting=acting)
                 self.save()
-                self.notify_distribution(f"Memo: {self.title}  {self.user.username}-{self.number}-{self.version} has been published")
+                self.notify_distribution(f"Memo: {self.title}  {self.user.username}-{self.number}{self.version} has been published")
    
         if self.memo_state == MemoState.Signoff:
             if MemoSignature.status(self.id):
@@ -465,7 +466,7 @@ class Memo(db.Model):
                 MemoHistory.activity(memo=self,memo_activity=MemoActivity.Activate,user=acting)
                 self.obsolete_previous(acting=acting)
                 self.save()
-                self.notify_distribution(f"Memo: {self.title}  {self.user.username}-{self.number}-{self.version} has been published")
+                self.notify_distribution(f"Memo: {self.title}  {self.user.username}-{self.number}{self.version} has been published")
             else:
                 current_app.logger.info(f"Signatures Still Required")
         

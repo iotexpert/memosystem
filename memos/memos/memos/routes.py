@@ -88,7 +88,7 @@ def getfile(username,memo_number,memo_version,uuid):
         else:
             user = current_user
 
-        if memo.can_access(user) is False:
+        if memo.can_access(user,user) is False:
             MemoHistory.activity(memo=memo,memo_activity=MemoActivity.IllegalFile,user=user)
             abort(403)
 
