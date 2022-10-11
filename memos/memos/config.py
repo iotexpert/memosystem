@@ -3,6 +3,14 @@ import os
 class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,
+    }
+
+#    'pool_size': 10,
+#    'pool_recycle': 60,
+#    'pool_pre_ping': True
+
     if os.environ.get('SQLALCHEMY_ECHO') == 'True': # pragma nocover
         SQLALCHEMY_ECHO=True
     else:
