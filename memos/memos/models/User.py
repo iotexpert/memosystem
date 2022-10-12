@@ -215,12 +215,14 @@ class User(db.Model, UserMixin):
                 ldap_user = ldap.get_object_details(username)
                 if ldap_user is None:
                     return None
+                user = User(username=ldap_user[os.environ["LDAP_USER_NAME"]][0].decode('ASCII'), 
+                email=ldap_user[os.environ["LDAP_EMAIL"]][0].decode('ASCII'), password='xx')
+                db.session.add(user)
+                
             except:
                 return None
                 
-            user = User(username=ldap_user[os.environ["LDAP_USER_NAME"]][0].decode('ASCII'), 
-                email=ldap_user[os.environ["LDAP_EMAIL"]][0].decode('ASCII'), password='xx')
-            db.session.add(user)
+
 
             # If we validated a user with ldap, Update their permissions from LDAP groups.
             if ldap_user: #pragma nocover  -- testing ldap is very environment centric.
