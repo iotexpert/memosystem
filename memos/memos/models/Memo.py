@@ -150,6 +150,10 @@ class Memo(db.Model):
         if self.memo_state != MemoState.Signoff:
             return False
 
+        # you always reject your own memo
+        if self.user.username == delegate.username:
+            return True
+
         if not signer.is_delegate(delegate):
             return False
 
@@ -176,7 +180,7 @@ class Memo(db.Model):
         if delegate is None:
             return False
 
-        # you alway have access to your own memo's
+        # you always have access to your own memo's
         if self.user.username == delegate.username:
             return True
 
