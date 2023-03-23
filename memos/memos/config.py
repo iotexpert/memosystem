@@ -3,6 +3,14 @@ import os
 class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,
+    }
+
+#    'pool_size': 10,
+#    'pool_recycle': 60,
+#    'pool_pre_ping': True
+
     if os.environ.get('SQLALCHEMY_ECHO') == 'True': # pragma nocover
         SQLALCHEMY_ECHO=True
     else:
@@ -32,6 +40,7 @@ class Config:
     LDAP_PASSWORD = os.getenv('LDAP_PASSWORD')
     LDAP_USER_OBJECT_FILTER = os.getenv('LDAP_USER_OBJECT_FILTER')
     LDAP_GROUP_OBJECT_FILTER = os.getenv('LDAP_GROUP_OBJECT_FILTER')
+    LDAP_USE_SSL = LDAP_SCHEMA == 'ldaps'
 
     TESTING = True if os.getenv('TESTING') else False
  

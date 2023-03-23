@@ -2,6 +2,7 @@
 #*#
 __pycache__
 env
+.venv
 memos/memos/static
 site.db
 test.db
