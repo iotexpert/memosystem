@@ -21,6 +21,8 @@ from memos.models.MemoHistory import MemoHistory
 from memos.models.MemoActivity import MemoActivity
 from memos.revletter import b10_to_rev, rev_to_b10
 
+from memos.flask_sqlalchemy_txns import transaction
+
 class Memo(db.Model):
     """This class is the single interface to a "memo" and all of the "memos"
     """
@@ -174,7 +176,7 @@ class Memo(db.Model):
 
 #        current_app.logger.info(f"{current_app.config['ENABLE_ALL_CONFIDENTIAL']=}")
 
-        if current_app.config['ENABLE_ALL_CONFIDENTIAL'] is True and user is None:
+        if 'ENABLE_ALL_CONFIDENTIAL' in current_app.config and current_app.config['ENABLE_ALL_CONFIDENTIAL'] is True and user is None:
             return False
             
 
@@ -467,6 +469,7 @@ class Memo(db.Model):
                 MemoHistory.activity(memo=self,memo_activity=MemoActivity.Activate,user=acting)
                 self.obsolete_previous(acting=acting)
                 self.save()
+                self.config_template(None)
                 self.notify_distribution(f"Memo: {self.title}  {self.user.username}-{self.number}{self.version} has been published")
    
         if self.memo_state == MemoState.Signoff:
@@ -654,7 +657,28 @@ class Memo(db.Model):
         shutil.rmtree(self.get_fullpath(), ignore_errors=True)
         
         return True
-       
+    
+    def config_template(self,state):
+        with transaction():
+            
+            if state is None:
+                for memo in Memo.query.filter_by(user_id=self.user.username,number=self.number):
+                    if memo.template is True:
+                        state = True
+            
+            if state:
+                for memo in Memo.query.filter_by(user_id=self.user.username,number=self.number):
+                    if memo.memo_state == MemoState.Active:
+                        memo.template = True
+                    else:
+                        memo.template = False
+                    memo.save()
+                return
+            else:
+                for memo in Memo.query.filter_by(user_id=self.user.username,number=self.number):
+                    memo.template = False
+                    memo.save()            
+    
 
 # general function
 

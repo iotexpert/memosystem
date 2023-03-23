@@ -3,8 +3,8 @@ import pytest
 import os
 try:
     import settings_local
-except ImportError:
-    pass
+except ImportError:  # pragma: no cover
+    pass  # pragma: no cover
 #load overrides of setting_local for testing.
 import test_settings_local
 from memos import create_app
@@ -55,7 +55,7 @@ def db(app, request):
     """Session-wide test database."""
     if os.environ['SQLALCHEMY_DATABASE_URI'].startswith("sqlite:///../"):
         if os.path.exists(os.environ['SQLALCHEMY_DATABASE_URI'].replace("sqlite:///../", "")):
-            os.unlink(os.environ['SQLALCHEMY_DATABASE_URI'].replace("sqlite:///../", ""))
+            os.unlink(os.environ['SQLALCHEMY_DATABASE_URI'].replace("sqlite:///../", "")) # pragma: no cover
 
     def teardown():
         _db.close_all_sessions()

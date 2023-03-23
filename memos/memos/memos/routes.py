@@ -565,14 +565,12 @@ def template(memoref=None):
     if current_user.is_anonymous or memo_parse['memo'].can_template(current_user) is False:
         abort(403)
 
-    with transaction():
-        if set_template is not None:
-            memo_parse['memo'].template = True
-            memo_parse['memo'].save()
+    if set_template is not None:
+        memo_parse['memo'].config_template(True)
 
-        if unset_template is not None:
-            memo_parse['memo'].template = False
-            memo_parse['memo'].save()
+    if unset_template is not None:
+        memo_parse['memo'].config_template(False)
+
 
     return redirect(url_for('memos.main'))
     
