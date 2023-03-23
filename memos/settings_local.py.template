@@ -34,3 +34,7 @@ os.environ['MEMOS_EMAIL_PASS'] = ''
 
 # if you want to turn on registration and your are not using LDAP
 #os.environ['ENABLE_REGISTER']='true'
+
+# if you want to require a log in to see memos turn this on.  If this enviroment variable exists then
+# it will require a log in to see memos
+os.environ['MEMOS_ENABLE_ALL_CONFIDENTIAL'] = 'true'
