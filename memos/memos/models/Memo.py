@@ -172,6 +172,12 @@ class Memo(db.Model):
         """This function will return True of the "username" has access to self"""
 #        current_app.logger.info(f"self.distribution = {self.distribution} self.signers={self.signers}   ")
 
+#        current_app.logger.info(f"{current_app.config['ENABLE_ALL_CONFIDENTIAL']=}")
+
+        if current_app.config['ENABLE_ALL_CONFIDENTIAL'] is True and user is None:
+            return False
+            
+
         # if it is not confidential than anyone can access
         if self.confidential == False:
             return True

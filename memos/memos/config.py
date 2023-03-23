@@ -45,3 +45,6 @@ class Config:
     TESTING = True if os.getenv('TESTING') else False
  
     ENABLE_REGISTER = True if os.getenv('ENABLE_REGISTER') else False
+    
+    ENABLE_ALL_CONFIDENTIAL = True if os.getenv('MEMOS_ENABLE_ALL_CONFIDENTIAL') else False
+

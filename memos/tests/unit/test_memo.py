@@ -124,6 +124,15 @@ def test_can_access(db, session):
 
     assert ReadConfWithAvg.can_access(avgUser,avgUser)  # Access to with distribution
     assert not ReadConfWOAvg.can_access(avgUser,avgUser)  # No access with out distribution
+    
+    # verify that when the ENABLE_ALL_CONFIDENTIAL is set that you cannot read a file
+    # set the enviroment variable
+#    print(f"{db.app.config['ENABLE_ALL_CONFIDENTIAL']=}")
+    db.app.config['ENABLE_ALL_CONFIDENTIAL']=True
+    assert ReadNotConf.can_access(None,None) is False
+    # reset the environment variable
+    db.app.config['ENABLE_ALL_CONFIDENTIAL']=False
+
 
 def test_create_revise(db, session):
     readAllUser = User.find(username='readAllUser')
