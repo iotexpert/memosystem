@@ -470,6 +470,8 @@ class Memo(db.Model):
                 self.obsolete_previous(acting=acting)
                 self.save()
                 self.config_template(None)
+                if self.confidential:
+                    self.config_confidential()
                 self.notify_distribution(f"Memo: {self.title}  {self.user.username}-{self.number}{self.version} has been published")
    
         if self.memo_state == MemoState.Signoff:
@@ -479,6 +481,8 @@ class Memo(db.Model):
                 MemoHistory.activity(memo=self,memo_activity=MemoActivity.Activate,user=acting)
                 self.obsolete_previous(acting=acting)
                 self.save()
+                if self.confidential:
+                    self.config_confidential()
                 self.notify_distribution(f"Memo: {self.title}  {self.user.username}-{self.number}{self.version} has been published")
             else:
                 current_app.logger.info(f"Signatures Still Required")
@@ -679,7 +683,12 @@ class Memo(db.Model):
                     memo.template = False
                     memo.save()            
     
-
+    def config_confidential(self):
+        with transaction():
+            for memo in Memo.query.filter_by(user_id=self.user.username,number=self.number):
+                memo.confidential = True
+                memo.save()
+                
 # general function
 
     # src = user-number-version" or "user-numberversion"
