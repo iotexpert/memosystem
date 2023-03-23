@@ -181,3 +181,18 @@ def test_valid_references(db, session):
     assert 'readAllUser-3a' in ref['invalid']
     assert 'readAllUser-4a' in ref['invalid']
     assert 'badMemo' in ref['invalid']
+
+
+def test_config_template(db, session):
+    memoObsolete = Memo.find(username='readAllUser',memo_number=1, memo_version='A')
+    memoActive = Memo.find(username='readAllUser',memo_number=1, memo_version='C')
+    memoDraft = Memo.find(username='readAllUser',memo_number=3, memo_version='A')
+    
+    memoObsolete.template = True
+    memoObsolete.save()
+    
+    memoActive.config_template(None)
+    memoActive = Memo.find(username='readAllUser',memo_number=1, memo_version='C')
+    assert memoActive.template is True
+    
+    

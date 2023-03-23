@@ -1,7 +1,7 @@
 import os
 
 # LDAP settings
-if "LDAP_HOST" in os.environ:
+if "LDAP_HOST" in os.environ: # pragma: no cover
     del os.environ["LDAP_HOST"]  # LDAP is too site specific for general automated tests
 
 os.environ['FLASK_ENV'] = 'development'
