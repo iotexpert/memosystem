@@ -1,7 +1,7 @@
 import os
 
 # LDAP settings. If LDAP_HOST is not specified, ldap lookups will be skipped.
-os.environ["LDAP_HOST"] = "ldap.com" # host name of LDAP server without schema or port
+#os.environ["LDAP_HOST"] = "ldap.com" # host name of LDAP server without schema or port
 os.environ["LDAP_PORT"] = "389" # 389 or 636
 os.environ["LDAP_SCHEMA"] = "ldap" # ldap or ldaps
 os.environ['LDAP_USER'] =  'service_acct' # Sevice account to authenticate to ldap server
@@ -19,6 +19,7 @@ os.environ['FLASK_APP'] = "app.py"
 os.environ['FLASK_DEBUG'] = 'True'
 os.environ['FLASK_ENV'] = 'development'
 
+# Pick you database... default to sqlite
 os.environ['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 #os.environ['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://user:password@test.local/MEMOS'
 #os.environ['SQLALCHEMY_TRACK_MODIFICATIONS'] = 'False'
@@ -27,7 +28,8 @@ os.environ['SQLALCHEMY_ECHO'] = 'False'
 
 os.environ['MEMOS_SECRET_KEY'] = '5791628bb0b13ce0c676dfde280ba245'
 
-os.environ['MEMOS_EMAIL_SERVER'] = 'smtp.google.com'
+# Turn off email sending
+#os.environ['MEMOS_EMAIL_SERVER'] = 'smtp.google.com'
 os.environ['MEMOS_EMAIL_PORT'] = '587'
 os.environ['MEMOS_EMAIL_USER'] = ''
 os.environ['MEMOS_EMAIL_PASS'] = ''

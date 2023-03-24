@@ -23,7 +23,20 @@ The first step in building the system is to pick out a location where you want t
 cd /some/place/to/store
 git clone git@github.com:iotexpert/memosystem.git
 ```
-# Configuration
+# Simple Configuration with SQLLite
+If you want to do a simple 
+1. git close git@github.com:iotexpert/memosystem
+2. cd memosystem/memos
+3. python3 -m venv env
+4. source env/bin/activate
+5. pip install -r requirements.txt
+6. cp settings_local.py.template settings_local.py
+7. ./configure -db
+8. ./configure -s
+9. ./configure -u admin:admin@local.local:adminpw
+10. ./configure -ad admin true
+11. flask run --reload
+# Docker Configuration
 In order to configure the system you will need to take the following steps:
 1. Copy the configuration file templates to create your specific Docker and system configuration
 2. Choose the location of memo files and database files and create the directory structure

@@ -8,6 +8,7 @@ from flask import current_app
 from flask_login import UserMixin
 from memos import bcrypt, db, login_manager
 from memos.extensions import ldap
+from memos.flask_sqlalchemy_txns import transaction
 
 from memos.models.MemoSubscription import MemoSubscription
 
@@ -153,7 +154,7 @@ class User(db.Model, UserMixin):
     def delegates(self,delegates):
 
         Delegate.delete(owner=self)
-        for delegate_name in re.split(r'\s|\,|\t|\;|\:',delegates):
+        for delegate_name in re.split(r"[\s:;,]+",delegates):
             delegate = User.find(username=delegate_name)
             if delegate != None:
                 Delegate.add(self,delegate)
@@ -247,12 +248,13 @@ class User(db.Model, UserMixin):
         valid_usernames = []
         email_addrs = []
         has_non_users = False
-        users = re.split('\s|\,|\t|\;|\:',userlist)
+        users = re.split(r"[\s:;,]+",userlist)
         while '' in users: users.remove('')
 
         for username in users:            
             # See if an email is listed.
-            email_match = re.fullmatch('^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$', username)
+#            email_match = re.fullmatch('^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$', username)
+            email_match = re.fullmatch(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", username)
             if email_match:
                 email_addrs.append(str(email_match[0]))
                 user = User.query.filter_by(email=email_match[0]).first()
@@ -305,3 +307,8 @@ class User(db.Model, UserMixin):
             return user.pagesize
         else:
             return 20
+        
+    def save(self):
+        with transaction():
+            db.session.add(self)
+            db.session.commit()
