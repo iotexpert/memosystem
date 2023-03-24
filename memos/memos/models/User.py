@@ -8,6 +8,7 @@ from flask import current_app
 from flask_login import UserMixin
 from memos import bcrypt, db, login_manager
 from memos.extensions import ldap
+from memos.flask_sqlalchemy_txns import transaction
 
 from memos.models.MemoSubscription import MemoSubscription
 
@@ -305,3 +306,8 @@ class User(db.Model, UserMixin):
             return user.pagesize
         else:
             return 20
+        
+    def save(self):
+        with transaction():
+            db.session.add(self)
+            db.session.commit()
