@@ -1,12 +1,13 @@
 # Memo System
 The Memo System is a light weight web based document managment system for maintaining and distributing internal memos.  This readme provides an overview of the system as well as instructions for installation and configuration.  This document has the following sections:
 1. Architecture
-2. Install with git clone
-3. Configuration
-4. Initialization
-5. Filesystem
-6. Azure
-7. Useful Docker Commands
+2. Install using git clone
+3. Simple Configuration with SQLLite
+4. Docker Configuration
+5. Initialization
+6. Filesystem
+7. Azure
+8. Useful Docker Commands
 
 # Architecture
 The system is built using a classic three-tier-client-architecture.  The system is written in Python and uses the SQLAlchemy library to provide an abstration layer to the database which allows the use of MySQL/SQLite or SQL Server.  The system uses the database to store meta data of the memos.  The raw datafiles are stored in the underlying operating system's filesystem.  The system is built to enable simple use of Docker to containerize the database and the Python flask webserver.  The picture below is an overview of the top level architecture.
@@ -17,7 +18,7 @@ The system is built using a classic three-tier-client-architecture.  The system 
 The picture below shows an example implementation where the memosystem and the database are implemented using Docker.
 
 ![Architecture](https://github.com/iotexpert/memosystem/blob/main/doc/arch.png?raw=true)
-# Clone the Memosystem
+# Install using git clone
 The first step in building the system is to pick out a location where you want the system to reside and then clone this repsitory e.g.
 ```
 cd /some/place/to/store
