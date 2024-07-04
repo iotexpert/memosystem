@@ -5,17 +5,17 @@ import os
 
 class MemoFile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    _filename = db.Column(db.String(4000))
+    _fname = db.Column(db.String(4000))
     _uuid = db.Column(db.String(48)) 
     memo_id = db.Column(db.Integer, db.ForeignKey('memo.id'),nullable=False)
 
     @property
     def filename(self):
-        return self._filename
+        return self._fname
 
     @filename.setter
     def filename(self,filename):
-        self._filename = filename
+        self._fname = filename
         self._uuid = str(uuid.uuid4())       
     
     @property
