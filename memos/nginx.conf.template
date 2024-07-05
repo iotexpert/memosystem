@@ -1,0 +1,47 @@
+user  nginx;
+worker_processes 1;
+error_log  /var/log/nginx/error.log warn;
+pid        /var/run/nginx.pid;
+events {
+    worker_connections 1024;
+}
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                      '$status $body_bytes_sent "$http_referer" '
+                      '"$http_user_agent" "$http_x_forwarded_for"';
+    access_log  /var/log/nginx/access.log  main;
+    sendfile        on;
+    keepalive_timeout  65;
+    client_max_body_size 25M;
+    
+    server {
+        listen 80;
+        server_name myserver.local;
+        return 301 https://myserver.local$request_uri;
+    }
+    server {
+        listen 443 ssl;
+        server_name spiff.local;
+        ssl_certificate  /app/memos/static/config/keys/memo.crt;
+        ssl_certificate_key  /app/memos/static/config/keys/memo.key;
+        location / {
+            try_files $uri @app;
+        }
+        location @app {
+            include uwsgi_params;
+            uwsgi_pass unix:///tmp/uwsgi.sock;
+        }
+        location /static/config { return 404; }
+        location /static/sqlite { return 404; }
+
+        location /static {
+            alias /app/memos/static;
+        }
+        location ~ (\.json$) {
+        return 404;
+        }
+    }
+}
+daemon off;
